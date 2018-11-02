@@ -1,0 +1,9 @@
+{
+  "database":"ip:port",
+  "devices":[
+    {"device":"tuya","name":"", "address":"", "port":"", "id":"", "key":""},
+    {"device":"roku","name":"", "address":"", "port":"", "id":"", "key":""},
+    {"device":"roku","name":"", "address":"", "port":"", "id":"", "key":""},
+    {"device":"pi","name":"", "address":"", "port":"", "id":"", "key":""}
+  ]
+}

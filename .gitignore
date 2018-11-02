@@ -1,0 +1,6 @@
+*.txt
+*.retry
+*secrets.yml
+*/dev/*
+*.idea
+devices.json
