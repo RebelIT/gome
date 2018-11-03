@@ -31,5 +31,4 @@ func NewRouter() *mux.Router {
 var routes = Routes{
 	Route{"getDevice", "GET", "/api/device/all", getDevices},
 	Route{"addDevice", "POST", "/api/device", addDevice},
-	Route{"deleteDevice", "DELETE", "/api/device", delDevice},
 }

@@ -99,13 +99,3 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	json.NewEncoder(w).Encode(i)
 
 }
-
-func delDevice(w http.ResponseWriter,r *http.Request){
-	//DELETE - row from json and redis
-}
-
-func checkDeviceCacheExist(db string, name string) error {
-
-
-	return nil
-}
