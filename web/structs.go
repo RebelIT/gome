@@ -1,6 +1,5 @@
 package listener
 
-
 type Devices struct{
 	Device		string `json:"device"`
 	Name		string `json:"name"`
