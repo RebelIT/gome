@@ -20,6 +20,7 @@ func init() {
 	http.DefaultClient.Timeout = time.Second * 5
 }
 
+//http handler request to return specific device details
 func HandleDetails(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] getting details for: " + r.URL.Path)
 	uri := strings.Split(r.URL.Path, "/")
@@ -49,11 +50,12 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	return
 }
 
+//http handler request to check the status of a device that was found i nthe runner and stored in redis
 func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	fmt.Println("[DEBUG] getting status for: " + r.URL.Path)
 	uri := strings.Split(r.URL.Path, "/")
 	dev := uri[len(uri)-2]
-	action := uri[len(uri)-2]
+	action := uri[len(uri)-1]
 	var in Inputs
 
 	deviceFile, err := ioutil.ReadFile(FILE)
@@ -79,6 +81,7 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	return
 }
 
+//Used for Device runner for running is alive inventory stored in redis
 func DeviceStatus(db string, addr string, port string, name string) {
 	fmt.Println("[DEBUG] Starting Device Status for "+name)
 	data := Status{}
