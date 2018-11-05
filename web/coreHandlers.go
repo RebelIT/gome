@@ -3,6 +3,7 @@ package listener
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rebelit/gome/runner"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -54,6 +55,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	}
 	fmt.Println("[DEBUG] unmarshal input")
 
+	//Read devices.json and unmarshal into struct
 	deviceFile, err := os.OpenFile(FILE, os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println(err)
@@ -76,6 +78,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 		return
 	}
 
+	//Append new device to devices array struct
 	fullDevs.Devices = append(fullDevs.Devices,i)
 
 	newBytes, err := json.MarshalIndent(fullDevs, "", "    ")
@@ -85,6 +88,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 		return
 	}
 
+	//Write new file with the new device appended to struct
 	_, err = deviceFile.WriteAt(newBytes, 0)
 	if err != nil {
 		fmt.Println(err)
@@ -92,7 +96,8 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 		return
 	}
 
-	//TODO Add to cache
+	//Re-run device loader to add to DB cache
+	runner.GoGODeviceLoader()
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
