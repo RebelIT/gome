@@ -29,7 +29,6 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	//Route{"RokuControl", "POST", "/roku", roku.DeviceControl},
-	//Route{"RokuControl", "GET", "/roku", roku.GetOptRoot},
-	//Route{"RokuControl", "GET", "/roku/launch", roku.GetOptLaunch},
+	Route{"getDevice", "GET", "/api/device/all", getDevices},
+	Route{"addDevice", "POST", "/api/device", addDevice},
 }
