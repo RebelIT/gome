@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"io/ioutil"
 	"time"
@@ -30,13 +31,15 @@ func GoGoRunners() error {
 			case "pi":
 				go rpi.DeviceStatus(db, d.Addr, d.NetPort, d.Name)
 
+			case "roku":
+				go roku.DeviceStatus(db, d.Addr, d.NetPort, d.Name)
+
 			default:
 				fmt.Println("[ERROR] No device type match for "+ d.Name)
 			}
 		}
 		time.Sleep(time.Second *10)
 	}
-
 
 	return nil
 }
