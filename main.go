@@ -9,7 +9,7 @@ import (
 
 func main(){
 	listenOn := "6661"
-	go runner.GoGODeviceLoader()
+	runner.GoGODeviceLoader()
 	go runner.GoGoRunners()
 	start(listenOn)
 
