@@ -7,21 +7,7 @@ type Status struct{
 }
 
 type DeviceAction struct{
-	DeviceName	string `json:"device_name"`
 	Action		string `json:"action"`
-}
-
-type RtnOptRoot struct{
-	ActionUri		string
-}
-
-type RtnOptAction struct{
-	Actions		[]Action
-}
-
-type Action struct{
-	Uri		string	`json:"endpoint"`
-	Method	string	`json:"method"`
 }
 
 type Devices struct{

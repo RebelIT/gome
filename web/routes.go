@@ -30,8 +30,9 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	Route{"getDevice", "GET", "/api/device/all", getDevices},
-	Route{"addDevice", "POST", "/api/device", addDevice},
-	Route{"getCalendar", "GET", "/api/calendar", rpi.HandleDetails},
-	Route{"getCalendar", "GET", "/api/calendar/status", rpi.HandleStatus},
+	Route{"coreDevice", "GET", "/api/device/all", getDevices},
+	Route{"coreDevice", "POST", "/api/device", addDevice},
+	Route{"rpi", "GET", "/api/{device}/details", rpi.HandleDetails},
+	Route{"rpi", "GET", "/api/{device}/status", rpi.HandleStatus},
+	Route{"rpi", "POST", "/api/{device}/action", rpi.DeviceControl},
 }

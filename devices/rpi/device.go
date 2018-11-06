@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
+	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/cache"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 )
 //TODO:
 //TODO: function to read devices.json and only return the datbase.  probably in core handlers for all devices to use.
-//TODO:
+//TODO: a lot of this is junk code.. but it works. a lot to reactor later.
 
 const FILE  = "./devices.json"
 
@@ -54,7 +55,8 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	fmt.Println("[DEBUG] getting status for: " + r.URL.Path)
 	uri := strings.Split(r.URL.Path, "/")
-	dev := uri[len(uri)-2]
+	vars := mux.Vars(r)
+	dev := vars["device"]
 	action := uri[len(uri)-1]
 	var in Inputs
 
@@ -81,6 +83,62 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	return
 }
 
+//http handler request to perform actions against the rpi device
+func DeviceControl(w http.ResponseWriter, r *http.Request) {
+	a := DeviceAction{}
+	vars := mux.Vars(r)
+	dev := vars["device"]
+	var in Inputs
+
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &a); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	deviceFile, err := ioutil.ReadFile(FILE)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	json.Unmarshal(deviceFile, &in)
+	db := in.Database
+
+	dbRet, err := cache.GetHashKey(db, redis.Args{dev})
+	if err != nil{
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	url := "http://"+dbRet.Addr+":"+dbRet.NetPort+"/action/"+a.Action
+
+	resp, err := http.Get(url)
+	if err != nil{
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	} else{
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	return
+}
+
 //Used for Device runner for running is alive inventory stored in redis
 func DeviceStatus(db string, addr string, port string, name string) {
 	fmt.Println("[DEBUG] Starting Device Status for "+name)
@@ -102,7 +160,7 @@ func DeviceStatus(db string, addr string, port string, name string) {
 	data.Url = url
 	data.Device = name
 
-	if err := cache.CacheSetHash(db, redis.Args{name+"_"+"status"}.AddFlat(data)); err != nil {
+	if err := cache.SetHash(db, redis.Args{name+"_"+"status"}.AddFlat(data)); err != nil {
 		fmt.Println("[ERROR] Error in adding "+name+" to cache will retry")
 		return
 	}
