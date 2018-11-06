@@ -25,7 +25,7 @@ type Status struct{
 	Url		string `json:"url"`
 }
 
-func CacheSetHash(db string, args redis.Args) error {
+func SetHash(db string, args redis.Args) error {
 	c, err := redis.Dial("tcp", db)
 	if err != nil {
 		fmt.Println("[ERROR] Error writing to redis, catch it next time around")
@@ -87,7 +87,7 @@ func GetStatus(db string, key string) (Status, error)  {
 	return s, nil
 }
 
-func CacheGetHashKey(db string, args redis.Args) (Devices, error)  {
+func GetHashKey(db string, args redis.Args) (Devices, error)  {
 	s := Devices{}
 	c, err := redis.Dial("tcp", db)
 	if err != nil {
