@@ -40,7 +40,7 @@ func GoGoRunners() error {
 				fmt.Println("[ERROR] No device type match for "+ d.Name)
 			}
 		}
-		time.Sleep(time.Second *10)
+		time.Sleep(time.Second *60)
 	}
 
 	return nil

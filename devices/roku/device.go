@@ -18,7 +18,7 @@ const FILE  = "./devices.json"
 func HandleDetails(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] getting details for: " + r.URL.Path)
 	vars := mux.Vars(r)
-	dev := vars["device"]
+	dev := vars["roku"]
 
 	var in Inputs
 
@@ -50,7 +50,7 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	fmt.Println("[DEBUG] getting status for: " + r.URL.Path)
 	uri := strings.Split(r.URL.Path, "/")
 	vars := mux.Vars(r)
-	dev := vars["device"]
+	dev := vars["roku"]
 	action := uri[len(uri)-1]
 	var in Inputs
 
@@ -80,10 +80,13 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 func DeviceControl(w http.ResponseWriter, r *http.Request) {
 	a := DeviceAction{}
 	vars := mux.Vars(r)
-	dev := vars["device"]
+	dev := vars["roku"]
 	var in Inputs
 
 	body, err := ioutil.ReadAll(r.Body)
+	if err != nil{
+		fmt.Println(err)
+	}
 	defer r.Body.Close()
 
 	if err := json.Unmarshal(body, &a); err != nil {
@@ -91,7 +94,6 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	deviceFile, err := ioutil.ReadFile(FILE)
 	if err != nil {
 		fmt.Println(err)
@@ -124,12 +126,10 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	} else{
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
-		return
 	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 	return
 }
 
