@@ -38,7 +38,7 @@ func SetHash(db string, args redis.Args) error {
 	return nil
 }
 
-func CacheSet(db string, key string, value string) error {
+func Set(db string, key string, value string) error {
 	c, err := redis.Dial("tcp", db)
 	if err != nil {
 		fmt.Println("[ERROR] Error writing to redis, catch it next time around")
