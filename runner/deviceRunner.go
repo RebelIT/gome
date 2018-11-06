@@ -33,6 +33,7 @@ func GoGoRunners() error {
 
 			case "roku":
 				go roku.DeviceStatus(db, d.Addr, d.NetPort, d.Name)
+				// Assumption that all roku's use the same account and apps are in sync.
 				go roku.DeviceApps(db, d.Addr, d.NetPort, d.Name)
 
 			default:
