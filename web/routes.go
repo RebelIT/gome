@@ -2,6 +2,7 @@ package listener
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/rebelit/gome/devices/rpi"
 	"net/http"
 )
 
@@ -29,6 +30,9 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	Route{"getDevice", "GET", "/api/device/all", getDevices},
-	Route{"addDevice", "POST", "/api/device", addDevice},
+	Route{"coreDevice", "GET", "/api/device/all", getDevices},
+	Route{"coreDevice", "POST", "/api/device", addDevice},
+	Route{"rpi", "GET", "/api/{device}/details", rpi.HandleDetails},
+	Route{"rpi", "GET", "/api/{device}/status", rpi.HandleStatus},
+	Route{"rpi", "POST", "/api/{device}/action", rpi.DeviceControl},
 }

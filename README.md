@@ -15,4 +15,11 @@ GoLang Home (gome)
    
 
 ### Work in progress as I learn GOLang and have time to play. :)
+
+### Custom RaspberryPi setup
+   
+   each one of my rPI's has an API endpoint to control it
+   
+   Example:  [API ansible Role to setup an API on a raspberry pi](https://github.com/RebelIT/ansible-piDAK)  Just add 
+   more as needed to control your rPI functions and apps
  
