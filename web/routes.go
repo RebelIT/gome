@@ -2,6 +2,7 @@ package listener
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"net/http"
 )
@@ -30,9 +31,15 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
+	//Core
 	Route{"coreDevice", "GET", "/api/device/all", getDevices},
 	Route{"coreDevice", "POST", "/api/device", addDevice},
-	Route{"rpi", "GET", "/api/{device}/details", rpi.HandleDetails},
-	Route{"rpi", "GET", "/api/{device}/status", rpi.HandleStatus},
-	Route{"rpi", "POST", "/api/{device}/action", rpi.DeviceControl},
+	//RaspberryPi
+	Route{"rpi", "GET", "/api/rpi/{device}/details", rpi.HandleDetails},
+	Route{"rpi", "GET", "/api/rpi/{device}/status", rpi.HandleStatus},
+	Route{"rpi", "POST", "/api/rpi/{device}/action", rpi.DeviceControl},
+	//Roku
+	Route{"roku", "GET", "/api/roku/{roku}/details", roku.HandleDetails},
+	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
+	Route{"roku", "POST", "/api/roku/{roku}/action", roku.DeviceControl},
 }

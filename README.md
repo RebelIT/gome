@@ -8,8 +8,6 @@ GoLang Home (gome)
    API only and later adding a web-ui for tablet control. since I have many raspberry Pi's doing many things around my 
    house this can tie it all together for central management and control. 
 
-   
-###
    starts up with a base devices.json in the root dir to load into a redis database from there adding more endpoints
    to add/remove devices fro the database and update the json.
    
@@ -23,3 +21,12 @@ GoLang Home (gome)
    Example:  [API ansible Role to setup an API on a raspberry pi](https://github.com/RebelIT/ansible-piDAK)  Just add 
    more as needed to control your rPI functions and apps
  
+
+### supported Devices
+
+   * Custom RaspberryPi API
+   * Roku
+   * (Coming Soon) Tuya WiFi outlets (with external tuya-cli dependency)
+   * (Coming Soon) Tuya WiFi light switches (with external tuya-cli dependency)
+   * (Coming Soon) Plex API - not sure yet what i can do with it
+   * (Coming Soon) Amazon Alexa integration - voice control this central management beast
