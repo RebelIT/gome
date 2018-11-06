@@ -33,6 +33,7 @@ func GoGoRunners() error {
 
 			case "roku":
 				go roku.DeviceStatus(db, d.Addr, d.NetPort, d.Name)
+				go roku.DeviceApps(db, d.Addr, d.NetPort, d.Name)
 
 			default:
 				fmt.Println("[ERROR] No device type match for "+ d.Name)
