@@ -9,6 +9,17 @@ type Devices struct{
 	Key 		string `json:"key"`
 }
 
+type Inputs struct{
+	Database	string `json:"database"`
+	Devices		[]Devices
+}
+
+type Status struct{
+	Device	string `json:"device"`
+	Alive	bool `json:"alive"`
+	Url		string `json:"url"`
+}
+
 //XML :facepalm
 type App struct {
 	App		string `xml:",chardata"`
