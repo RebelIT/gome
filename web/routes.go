@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
+	"github.com/rebelit/gome/devices/tuya"
 	"net/http"
 )
 
@@ -37,9 +38,13 @@ var routes = Routes{
 	//RaspberryPi
 	Route{"rpi", "GET", "/api/rpi/{device}/details", rpi.HandleDetails},
 	Route{"rpi", "GET", "/api/rpi/{device}/status", rpi.HandleStatus},
-	Route{"rpi", "POST", "/api/rpi/{device}/action", rpi.DeviceControl},
+	Route{"rpi", "POST", "/api/rpi/{device}", rpi.DeviceControl},
 	//Roku
 	Route{"roku", "GET", "/api/roku/{roku}/details", roku.HandleDetails},
 	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
-	Route{"roku", "POST", "/api/roku/{roku}/action", roku.DeviceControl},
+	Route{"roku", "POST", "/api/roku/{roku}", roku.DeviceControl},
+	//Tuya
+	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.HandleDetails},
+	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.HandleStatus},
+	Route{"tuya", "POST", "/api/tuya/{device}", tuya.DeviceControl},
 }
