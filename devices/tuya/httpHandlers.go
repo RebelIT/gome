@@ -18,7 +18,6 @@ func init() {
 	http.DefaultClient.Timeout = time.Second * 5
 }
 
-//http handler request to return specific device details
 func HandleDetails(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] getting details for: " + r.URL.Path)
 	vars := mux.Vars(r)
@@ -49,7 +48,6 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	return
 }
 
-//http handler request to check the status of a device that was found i nthe runner and stored in redis
 func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	fmt.Println("[DEBUG] getting status for: " + r.URL.Path)
 	uri := strings.Split(r.URL.Path, "/")
@@ -81,7 +79,6 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	return
 }
 
-//http handler request to perform actions against the rpi device
 func DeviceControl(w http.ResponseWriter, r *http.Request) {
 	a := DeviceAction{}
 	vars := mux.Vars(r)
@@ -139,4 +136,130 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+}
+
+func GetScheduleStatus(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dev := vars["device"]
+
+	resp, err := scheduleStatusGet(dev)
+	if err != nil{
+		fmt.Printf("unable to get schedule status:  %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+	return
+}
+
+func SetScheduleStatus(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dev := vars["device"]
+	in := ScheduleStatus{}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil{
+		fmt.Printf("bad body %s", r.RequestURI)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &in); err != nil {
+		fmt.Printf("cant unmarshal %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	value := 0
+	if in.Enabled {
+		value = 1
+	}
+	if err := scheduleStatusSet(dev, value); err != nil{
+		fmt.Printf("unable to set schedule status:  %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func GetSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dev := vars["device"]
+
+	resp, err := scheduleGet(dev)
+	if err != nil{
+		fmt.Printf("unable to get schedule:  %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+	return
+}
+
+func SetSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dev := vars["device"]
+	in := Schedule{}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil{
+		fmt.Printf("bad body %s", r.RequestURI)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &in); err != nil {
+		fmt.Printf("cant unmarshal %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := scheduleSet(&in, dev); err != nil{
+		fmt.Printf("unable to set schedule:  %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func DelSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dev := vars["device"]
+	in := Schedule{}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil{
+		fmt.Printf("bad body %s", r.RequestURI)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &in); err != nil {
+		fmt.Printf("cant unmarshal %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := scheduleDel(dev); err != nil{
+		fmt.Printf("unable to delete schedule:  %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }

@@ -38,7 +38,7 @@ func GoGoRunners() error {
 				go roku.DeviceApps(db, d.Addr, d.NetPort, d.Name)
 
 			case "tuya":
-				go tuya.DeviceStatus(db, d.Id, d.Key, d.Name)
+				go tuya.DeviceStatus(db, d.Addr, d.Id, d.Key, d.Name)
 
 			default:
 				fmt.Println("[ERROR] No device typse match for "+ d.Name)
