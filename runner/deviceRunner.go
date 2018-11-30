@@ -7,6 +7,7 @@ import (
 	"github.com/rebelit/gome/cache"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
+	"github.com/rebelit/gome/devices/tuya"
 	"io/ioutil"
 	"time"
 )
@@ -36,11 +37,14 @@ func GoGoRunners() error {
 				// Assumption that all roku's use the same account and apps are in sync.
 				go roku.DeviceApps(db, d.Addr, d.NetPort, d.Name)
 
+			case "tuya":
+				go tuya.DeviceStatus(db, d.Addr, d.Id, d.Key, d.Name)
+
 			default:
-				fmt.Println("[ERROR] No device type match for "+ d.Name)
+				fmt.Println("[ERROR] No device typse match for "+ d.Name)
 			}
 		}
-		time.Sleep(time.Second *60)
+		time.Sleep(time.Second *20)
 	}
 
 	return nil
