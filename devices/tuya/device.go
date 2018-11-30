@@ -36,6 +36,10 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	return
 }
 
+func DatabaseStatus(){
+
+}
+
 func scheduleSet (s* Schedule, device string) (error){
 	key := device+"_schedule"
 	bytes, err := json.Marshal(s)
