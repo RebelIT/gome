@@ -26,7 +26,9 @@ GoLang Home (gome)
 
    * Custom RaspberryPi API
    * Roku
-   * (Coming Soon) Tuya WiFi outlets (with external tuya-cli dependency)
+   * Tuya WiFi outlets (with external tuya-cli dependency)
+   * (In Progress) Scheduler for outlets to auto turn on and off on date/time
    * (Coming Soon) Tuya WiFi light switches (with external tuya-cli dependency)
    * (Coming Soon) Plex API - not sure yet what i can do with it
    * (Coming Soon) Amazon Alexa integration - voice control this central management beast
+   * (Coming Soon) Scheduler for light switches to auto turn on and off on date/time
