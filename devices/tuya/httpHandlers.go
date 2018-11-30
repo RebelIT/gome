@@ -138,63 +138,13 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetScheduleStatus(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dev := vars["device"]
-
-	resp, err := scheduleStatusGet(dev)
-	if err != nil{
-		fmt.Printf("unable to get schedule status:  %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
-	return
-}
-
-func SetScheduleStatus(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	dev := vars["device"]
-	in := ScheduleStatus{}
-
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil{
-		fmt.Printf("bad body %s", r.RequestURI)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(body, &in); err != nil {
-		fmt.Printf("cant unmarshal %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	value := 0
-	if in.Enabled {
-		value = 1
-	}
-	if err := scheduleStatusSet(dev, value); err != nil{
-		fmt.Printf("unable to set schedule status:  %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	return
-}
-
 func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dev := vars["device"]
 
-	resp, err := scheduleGet(dev)
+	resp, err := ScheduleGet(dev)
 	if err != nil{
-		fmt.Printf("unable to get schedule:  %v", err)
+		fmt.Printf("unable to get schedule status:  %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -238,23 +188,23 @@ func SetSchedule(w http.ResponseWriter, r *http.Request) {
 func DelSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dev := vars["device"]
-	in := Schedule{}
 
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil{
-		fmt.Printf("bad body %s", r.RequestURI)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(body, &in); err != nil {
-		fmt.Printf("cant unmarshal %v", err)
+	if err := scheduleDel(dev); err != nil{
+		fmt.Printf("unable to delete schedule:  %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if err := scheduleDel(dev); err != nil{
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func UpdateSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dev := vars["device"]
+	status := vars["status"]
+
+	if err := scheduleUpdate(dev, status); err != nil{
 		fmt.Printf("unable to delete schedule:  %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return

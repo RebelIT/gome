@@ -47,9 +47,8 @@ var routes = Routes{
 	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.HandleDetails},
 	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.HandleStatus},
 	Route{"tuya", "POST", "/api/tuya/{device}", tuya.DeviceControl},
-	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.GetScheduleStatus},
-	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.SetScheduleStatus},
-	Route{"tuya", "GET", "/api/tuya/{device}/schedule/details", tuya.GetSchedule},
-	Route{"tuya", "POST", "/api/tuya/{device}/schedule/details", tuya.SetSchedule},
-	Route{"tuya", "DEL", "/api/tuya/{device}/schedule/details", tuya.DelSchedule},
+	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.GetSchedule},
+	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.SetSchedule},
+	Route{"tuya", "DELETE", "/api/tuya/{device}/schedule", tuya.DelSchedule},
+	Route{"tuya", "PUT", "/api/tuya/{device}/schedule/{status}", tuya.UpdateSchedule},
 }

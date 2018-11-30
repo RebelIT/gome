@@ -25,22 +25,21 @@ type Inputs struct{
 }
 
 type Schedule struct {
-	SundayOn 	string `json:"sunday_on"`
-	SundayOff 	string `json:"sunday_off"`
-	MondayOn	string `json:"monday_on"`
-	MondayOff	string `json:"monday_off"`
-	TuesdayOn	string `json:"tuesday_on"`
-	TuesdayOff	string `json:"tuesday_off"`
-	WednesdayOn string `json:"wednesday_on"`
-	WednesdayOff	string `json:"wednesday_off"`
-	ThursdayOn	string `json:"thursday_on"`
-	ThursdayOff	string `json:"thursday_off"`
-	FridayOn	string `json:"friday_on"`
-	FridayOff	string `json:"friday_off"`
-	SaturdayOn	string `json:"saturday_on"`
-	SaturdayOff	string `json:"saturday_off"`
+	Status		string `json:"status"`
+	Days		ScheduleDay `json:"days"`
 }
 
-type ScheduleStatus struct{
-	Enabled	bool `json:"enabled"`
+type ScheduleDay struct{
+	Sunday 		ScheduleOnOff `json:"sunday"`
+	Monday		ScheduleOnOff `json:"monday"`
+	Tuesday		ScheduleOnOff `json:"tuesday"`
+	Wednesday 	ScheduleOnOff `json:"wednesday"`
+	Thursday	ScheduleOnOff `json:"thursday"`
+	Friday		ScheduleOnOff `json:"friday"`
+	Saturday	ScheduleOnOff `json:"saturday"`
+}
+
+type ScheduleOnOff struct{
+	On	string `json:"on"`
+	Off string `json:"off"`
 }

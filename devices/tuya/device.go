@@ -11,7 +11,6 @@ import (
 	"strings"
 )
 
-//Used for Device runner for running is alive inventory stored in redis
 func DeviceStatus (db string, ip string, id string, key string, name string) {
 	fmt.Println("[DEBUG] Starting Device Status for "+name)
 	data := Status{}
@@ -37,49 +36,45 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	return
 }
 
-func scheduleGet (device string) (Schedule, error){
-	s := Schedule{}
-	key := device+"_schedule_details"
-
-	c, err := dbConn()
-	if err != nil{
-		fmt.Println("Unable to connect to database")
-		return s, err
-	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		fmt.Printf("unable to read %s from database\n", key)
-		return s, err
-	}
-
-	redis.ScanStruct(values, &s)
-
-	return s, nil
-}
-
 func scheduleSet (s* Schedule, device string) (error){
-	key := device+"_schedule_details"
-	dbData := redis.Args{key}.AddFlat(s)
-	fmt.Printf("Data: %+v\n",dbData)
+	key := device+"_schedule"
+	bytes, err := json.Marshal(s)
+	if err != nil{
+		fmt.Println(err)
+	}
+
 	c, err := dbConn()
 	if err != nil{
 		fmt.Println("Unable to connect to database")
 		return err
 	}
 	defer c.Close()
-
-	if _, err := c.Do("HMSET", dbData...); err != nil{
-		fmt.Printf("Unable to set %s schedule\n", device)
-		return err
+	if _, err := c.Do("SET", key, string(bytes)); err != nil{
+			fmt.Printf("Unable to set %s schedule\n", device)
+			return err
 	}
 
 	return nil
 }
 
+func ScheduleGet (device string) (Schedule, error){
+	s := Schedule{}
+	key := device+"_schedule"
+
+	c, err := dbConn()
+	if err != nil{
+		fmt.Println("Unable to connect to database")
+		return s, err
+	}
+	defer c.Close()
+
+	value, err := redis.String(c.Do("GET", key))
+	json.Unmarshal([]byte(value), &s)
+	return s, nil
+}
+
 func scheduleDel (device string) (error){
-	key := device+"_schedule_details"
+	key := device+"_schedule"
 
 	c, err := dbConn()
 	if err != nil{
@@ -95,38 +90,21 @@ func scheduleDel (device string) (error){
 	return nil
 }
 
-func scheduleStatusSet (device string, status int) (error){
-	key := device+"_schedule"
-
-	c, err := dbConn()
+func scheduleUpdate (device string, status string) (error){
+	s, err := ScheduleGet(device)
 	if err != nil{
-		fmt.Println("Unable to connect to database")
+		fmt.Println(err)
 		return err
 	}
-	defer c.Close()
 
-	c.Do("SET", key, status)
+	s.Status = status
+
+	if err := scheduleSet(&s,device); err != nil{
+		fmt.Println(err)
+		return err
+	}
+
 	return nil
-}
-
-func scheduleStatusGet(device string) (ScheduleStatus, error){
-	key := device+"_schedule"
-	s := ScheduleStatus{}
-
-	c, err := dbConn()
-	if err != nil{
-		fmt.Println("Unable to connect to database")
-		return s, err
-	}
-	defer c.Close()
-
-	value, err := redis.Bool(c.Do("GET", key))
-	if err != nil {
-		fmt.Printf("Unable to validate %s schedule\n", key)
-		return s, err
-	}
-	s.Enabled = value
-	return s, nil
 }
 
 func command(cmdName string, args []string) (string, error) {
