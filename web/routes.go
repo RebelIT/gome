@@ -44,8 +44,8 @@ var routes = Routes{
 	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
 	Route{"roku", "POST", "/api/roku/{roku}", roku.DeviceControl},
 	//Tuya
-	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.HandleDetails},
-	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.HandleStatus},
+	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.GetDetails},
+	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.GetStatus},
 	Route{"tuya", "POST", "/api/tuya/{device}", tuya.DeviceControl},
 	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.GetSchedule},
 	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.SetSchedule},

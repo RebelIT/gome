@@ -18,7 +18,7 @@ func init() {
 	http.DefaultClient.Timeout = time.Second * 5
 }
 
-func HandleDetails(w http.ResponseWriter,r *http.Request){
+func GetDetails(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] getting details for: " + r.URL.Path)
 	vars := mux.Vars(r)
 	dev := vars["device"]
@@ -48,7 +48,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	return
 }
 
-func HandleStatus(w http.ResponseWriter,r *http.Request) {
+func GetStatus(w http.ResponseWriter,r *http.Request) {
 	fmt.Println("[DEBUG] getting status for: " + r.URL.Path)
 	uri := strings.Split(r.URL.Path, "/")
 	vars := mux.Vars(r)
@@ -111,29 +111,21 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, err := cache.GetStatus(db, dev+"_status")
-
-	if s.Alive == a.Action {
-		fmt.Println("##########Action match:: fail it")
-		w.WriteHeader(http.StatusBadRequest)
+	fmt.Println("##########Action not match: set it")
+	args := []string{"set","--id", dbRet.Id, "--key", dbRet.Key, "--set", strconv.FormatBool(a.Action)}
+	cmdOut, err := command(string("tuya-cli"), args)
+	if err != nil{
+		fmt.Println("[ERROR] Error in tyua Cli")
+		w.WriteHeader(http.StatusServiceUnavailable)
 		return
-	} else{
-		fmt.Println("##########Action not match: set it")
-		args := []string{"set","--id", dbRet.Id, "--key", dbRet.Key, "--set", strconv.FormatBool(a.Action)}
-		cmdOut, err := command(string("tuya-cli"), args)
-		if err != nil{
-			fmt.Println("[ERROR] Error in tyua Cli")
-			w.WriteHeader(http.StatusServiceUnavailable)
+	} else {
+		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
+		if fmtOut == "Set succeeded."{
+			w.WriteHeader(http.StatusOK)
 			return
-		} else {
-			fmtOut := strings.Replace(cmdOut, "\n", "", -1)
-			if fmtOut == "Set succeeded."{
-				w.WriteHeader(http.StatusOK)
-				return
-			} else{
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+		} else{
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	}
 }
