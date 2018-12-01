@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -34,10 +35,6 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	}
 	fmt.Println("[DEBUG] Done with Device Status for "+name)
 	return
-}
-
-func DatabaseStatus(){
-
 }
 
 func scheduleSet (s* Schedule, device string) (error){
@@ -109,6 +106,67 @@ func scheduleUpdate (device string, status string) (error){
 	}
 
 	return nil
+}
+
+func StatusGet (device string) (Status, error){
+	s := Status{}
+	key := device+"_status"
+
+	c, err := dbConn()
+	if err != nil{
+		fmt.Println("Unable to connect to database")
+		return s, err
+	}
+	defer c.Close()
+
+	values, err := redis.Values(c.Do("HGETALL", key))
+	if err != nil {
+		return s, err
+	}
+
+	redis.ScanStruct(values, &s)
+
+	return s, nil
+}
+
+func detailsGet (device string) (Devices, error){
+	d := Devices{}
+	key := device
+
+	c, err := dbConn()
+	if err != nil{
+		fmt.Println("Unable to connect to database")
+		return Devices{}, err
+	}
+	defer c.Close()
+
+	values, err := redis.Values(c.Do("HGETALL", key))
+	if err != nil {
+		return Devices{}, err
+	}
+
+	redis.ScanStruct(values, &d)
+	return d, nil
+}
+
+func PowerControl(device string, value bool) error {
+	d, err := detailsGet(device)
+	if err != nil{
+		return err
+	}
+	fmt.Printf("[INFO] issuing power control for %s\n", device)
+	args := []string{"set","--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
+	cmdOut, err := command(string("tuya-cli"), args)
+	if err != nil{
+		return err
+	} else {
+		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
+		if fmtOut == "Set succeeded."{
+			return nil
+		} else{
+			return fmt.Errorf("error setting device status")
+		}
+	}
 }
 
 func command(cmdName string, args []string) (string, error) {

@@ -15,7 +15,7 @@ import (
 const FILE  = "./devices.json"
 
 func GoGoRunners() error {
-	fmt.Println("[DEBUG] Starting runners")
+	fmt.Println("[INFO] Starting runners")
 	var in Inputs
 
 	for {
@@ -44,14 +44,14 @@ func GoGoRunners() error {
 				fmt.Println("[ERROR] No device typse match for "+ d.Name)
 			}
 		}
-		time.Sleep(time.Second *20)
+		time.Sleep(time.Second *30)
 	}
 
 	return nil
 }
 
 func GoGODeviceLoader() error {
-	fmt.Println("[DEBUG] Starting Device Loader")
+	fmt.Println("[INFO] Starting Device Loader")
 	var in Inputs
 
 	deviceFile, err := ioutil.ReadFile(FILE)
@@ -59,7 +59,7 @@ func GoGODeviceLoader() error {
 		fmt.Println(err)
 		return err
 	}
-	fmt.Println("[DEBUG] Loaded json")
+	fmt.Println("[INFO] Loaded json")
 	json.Unmarshal(deviceFile, &in)
 	db := in.Database
 
