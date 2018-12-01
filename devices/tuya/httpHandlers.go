@@ -113,7 +113,7 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("##########Action not match: set it")
 	args := []string{"set","--id", dbRet.Id, "--key", dbRet.Key, "--set", strconv.FormatBool(a.Action)}
-	cmdOut, err := command(string("tuya-cli"), args)
+	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	if err != nil{
 		fmt.Println("[ERROR] Error in tyua Cli")
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -136,7 +136,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := ScheduleGet(dev)
 	if err != nil{
-		fmt.Printf("unable to get schedule status:  %v", err)
+		fmt.Printf("unable to get schedule status:  %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -154,20 +154,20 @@ func SetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil{
-		fmt.Printf("bad body %s", r.RequestURI)
+		fmt.Printf("bad body %s\n", r.RequestURI)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
 	if err := json.Unmarshal(body, &in); err != nil {
-		fmt.Printf("cant unmarshal %v", err)
+		fmt.Printf("cant unmarshal %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := scheduleSet(&in, dev); err != nil{
-		fmt.Printf("unable to set schedule:  %v", err)
+		fmt.Printf("unable to set schedule:  %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -182,7 +182,7 @@ func DelSchedule(w http.ResponseWriter, r *http.Request) {
 	dev := vars["device"]
 
 	if err := scheduleDel(dev); err != nil{
-		fmt.Printf("unable to delete schedule:  %v", err)
+		fmt.Printf("unable to delete schedule:  %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -197,7 +197,7 @@ func UpdateSchedule(w http.ResponseWriter, r *http.Request) {
 	status := vars["status"]
 
 	if err := scheduleUpdate(dev, status); err != nil{
-		fmt.Printf("unable to delete schedule:  %v", err)
+		fmt.Printf("unable to delete schedule:  %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

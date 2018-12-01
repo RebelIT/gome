@@ -6,9 +6,10 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
 	"io/ioutil"
-	"log"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func DeviceStatus (db string, ip string, id string, key string, name string) {
@@ -16,7 +17,7 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	data := Status{}
 
 	args := []string{"get","--ip", ip,"--id", id, "--key", key}
-	cmdOut, err := command(string("tuya-cli"), args)
+	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	if err != nil{
 		fmt.Println("[ERROR] Error in tyua Cli, will Retry")
 	}
@@ -107,16 +108,101 @@ func scheduleUpdate (device string, status string) (error){
 	return nil
 }
 
-func command(cmdName string, args []string) (string, error) {
-	out, err := exec.Command(cmdName, args...).Output()
+func StatusGet (device string) (Status, error){
+	s := Status{}
+	key := device+"_status"
+
+	c, err := dbConn()
+	if err != nil{
+		fmt.Println("Unable to connect to database")
+		return s, err
+	}
+	defer c.Close()
+
+	values, err := redis.Values(c.Do("HGETALL", key))
 	if err != nil {
-		log.Fatal(err)
-		return "cmd error", err
+		return s, err
 	}
 
-	return string(out), nil
+	redis.ScanStruct(values, &s)
+
+	return s, nil
 }
 
+func detailsGet (device string) (Devices, error){
+	d := Devices{}
+	key := device
+
+	c, err := dbConn()
+	if err != nil{
+		fmt.Println("Unable to connect to database")
+		return Devices{}, err
+	}
+	defer c.Close()
+
+	values, err := redis.Values(c.Do("HGETALL", key))
+	if err != nil {
+		return Devices{}, err
+	}
+
+	redis.ScanStruct(values, &d)
+	return d, nil
+}
+
+func PowerControl(device string, value bool) error {
+	d, err := detailsGet(device)
+	if err != nil{
+		return err
+	}
+	fmt.Printf("[INFO] issuing power control for %s\n", device)
+	args := []string{"set","--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
+	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
+	if err != nil{
+		return err
+	} else {
+		fmt.Printf("[DEBUG]: cmd return for %s : %s\n", device, cmdOut)
+		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
+		if fmtOut == "Set succeeded."{
+			return nil
+		} else{
+			return fmt.Errorf("error setting device status\n")
+		}
+	}
+}
+
+func tryTuyaCli(cmdName string, args []string) (string, error){
+	maxRetry := 10
+	retrySleep := time.Second * 1
+
+	for i := 0; ;i++ {
+		if i >= maxRetry{
+			break
+		}
+		cmdOut, err := tuyaCli(cmdName, args)
+		if err == nil{
+			return cmdOut, err
+		}
+		fmt.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
+		time.Sleep(retrySleep)
+	}
+
+	return "", fmt.Errorf("max retries %i reached for %s\n", maxRetry, cmdName)
+}
+
+func tuyaCli(cmdName string, args []string) (string, error) {
+	out, err := exec.Command(cmdName, args...).Output()
+	if err != nil{
+		return "",err
+	} else {
+		fmtOut := strings.Replace(string(out), "\n", "", -1)
+		if fmtOut == "Set succeeded." || fmtOut == "false" || fmtOut == "true" {
+			return fmtOut, nil
+		} else{
+			return "", fmt.Errorf("error with tuya-cli\n")
+		}
+	}
+
+}
 func dbConn()(redis.Conn, error){
 	var in Inputs
 
