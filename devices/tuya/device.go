@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
-	"github.com/rebelit/gome/common"
 	"io/ioutil"
+	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func DeviceStatus (db string, ip string, id string, key string, name string) {
@@ -16,7 +17,7 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	data := Status{}
 
 	args := []string{"get","--ip", ip,"--id", id, "--key", key}
-	cmdOut, err := common.TryCommand(string("tuya-cli"), args)
+	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	//cmdOut, err := command(string("tuya-cli"), args)
 	if err != nil{
 		fmt.Println("[ERROR] Error in tyua Cli, will Retry")
@@ -156,11 +157,12 @@ func PowerControl(device string, value bool) error {
 	}
 	fmt.Printf("[INFO] issuing power control for %s\n", device)
 	args := []string{"set","--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
-	cmdOut, err := common.TryCommand(string("tuya-cli"), args)
+	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	//cmdOut, err := command(string("tuya-cli"), args)
 	if err != nil{
 		return err
 	} else {
+		fmt.Printf("[DEBUG]: cmd return for %s : %s\n", device, cmdOut)
 		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
 		if fmtOut == "Set succeeded."{
 			return nil
@@ -170,16 +172,48 @@ func PowerControl(device string, value bool) error {
 	}
 }
 
-//
-//func command(cmdName string, args []string) (string, error) {
-//	out, err := exec.Command(cmdName, args...).Output()
-//	if err != nil {
-//		log.Fatal(err)
-//		return "cmd error", err
-//	}
-//	return string(out), nil
-//}
+func tryTuyaCli(cmdName string, args []string) (string, error){
+	maxRetry := 10
+	retrySleep := time.Second * 1
 
+	for i := 0; ;i++ {
+		if i >= maxRetry{
+			break
+		}
+		cmdOut, err := tuyaCli(cmdName, args)
+		if err == nil{
+			return cmdOut, err
+		}
+		fmt.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
+		time.Sleep(retrySleep)
+	}
+
+	return "", fmt.Errorf("max retries %i reached for %s\n", maxRetry, cmdName)
+}
+
+func tuyaCli(cmdName string, args []string) (string, error) {
+	out, err := exec.Command(cmdName, args...).Output()
+	if err != nil{
+		return "",err
+	} else {
+		//fmt.Printf("[DEBUG]: cmd return: %v", out)
+		fmtOut := strings.Replace(string(out), "\n", "", -1)
+		if fmtOut == "Set succeeded." || fmtOut == "false" || fmtOut == "true" {
+			return fmtOut, nil
+		} else{
+			return "", fmt.Errorf("error with tuya-cli\n")
+		}
+	}
+	//
+	//
+	//
+	//
+	//
+	//if err != nil {
+	//	return string(out), err
+	//}
+	//return string(out), nil
+}
 func dbConn()(redis.Conn, error){
 	var in Inputs
 

@@ -39,7 +39,7 @@ func GoGoScheduler() error {
 }
 
 func doSchedule(device string) error {
-	fmt.Printf("[DEBUG] Schedule for %s\n", device)
+	//fmt.Printf("[DEBUG] Schedule for %s\n", device)
 	_, iTime, day, _ := splitTime()
 
 	s, err := tuya.ScheduleGet(device)
@@ -47,7 +47,7 @@ func doSchedule(device string) error {
 		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
 		fmt.Printf("[WARN] %s\n", err)
 	}
-	fmt.Printf("[DEBUG] Schedule Status for %s %s\n", device, s.Status)
+	//fmt.Printf("[DEBUG] Schedule Status for %s %s\n", device, s.Status)
 	if s.Status == "enable"{
 		status, err := tuya.StatusGet(device)
 		if err != nil{
@@ -83,7 +83,7 @@ func doSchedule(device string) error {
 
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s", err)
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
 				}
 			}
@@ -97,7 +97,7 @@ func doSchedule(device string) error {
 
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s", err)
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
 				}
 			}
@@ -111,7 +111,7 @@ func doSchedule(device string) error {
 
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s", err)
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
 				}
 			}
@@ -125,7 +125,7 @@ func doSchedule(device string) error {
 
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s", err)
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
 				}
 			}
@@ -141,7 +141,7 @@ func doSchedule(device string) error {
 			if doChange {
 				fmt.Printf("[DEBUG] Changing Status %v : change to %v\n",doChange, powerState)
 				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s", err)
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
 				}
 			}
