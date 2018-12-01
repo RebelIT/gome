@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
-	"log"
-	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -17,7 +16,8 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	data := Status{}
 
 	args := []string{"get","--ip", ip,"--id", id, "--key", key}
-	cmdOut, err := command(string("tuya-cli"), args)
+	cmdOut, err := common.TryCommand(string("tuya-cli"), args)
+	//cmdOut, err := command(string("tuya-cli"), args)
 	if err != nil{
 		fmt.Println("[ERROR] Error in tyua Cli, will Retry")
 	}
@@ -156,7 +156,8 @@ func PowerControl(device string, value bool) error {
 	}
 	fmt.Printf("[INFO] issuing power control for %s\n", device)
 	args := []string{"set","--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
-	cmdOut, err := command(string("tuya-cli"), args)
+	cmdOut, err := common.TryCommand(string("tuya-cli"), args)
+	//cmdOut, err := command(string("tuya-cli"), args)
 	if err != nil{
 		return err
 	} else {
@@ -164,20 +165,20 @@ func PowerControl(device string, value bool) error {
 		if fmtOut == "Set succeeded."{
 			return nil
 		} else{
-			return fmt.Errorf("error setting device status")
+			return fmt.Errorf("error setting device status\n")
 		}
 	}
 }
 
-func command(cmdName string, args []string) (string, error) {
-	out, err := exec.Command(cmdName, args...).Output()
-	if err != nil {
-		log.Fatal(err)
-		return "cmd error", err
-	}
-
-	return string(out), nil
-}
+//
+//func command(cmdName string, args []string) (string, error) {
+//	out, err := exec.Command(cmdName, args...).Output()
+//	if err != nil {
+//		log.Fatal(err)
+//		return "cmd error", err
+//	}
+//	return string(out), nil
+//}
 
 func dbConn()(redis.Conn, error){
 	var in Inputs

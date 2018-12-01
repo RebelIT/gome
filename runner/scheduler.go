@@ -69,7 +69,7 @@ func doSchedule(device string) error {
 			if doChange {
 				fmt.Printf("[DEBUG] Changing Status %v : change to %v\n",doChange, powerState)
 				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s", err)
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
 				}
 			}
@@ -180,14 +180,15 @@ func splitTime()(strTime string, intTime int, weekday string, now time.Time){
 	singleMinute := inBetween(NowMinute, 0,9)
 	if singleMinute{
 		sTime = strconv.Itoa(NowHour) + "0"+ strconv.Itoa(NowMinute)
+	} else{
+		sTime = strconv.Itoa(NowHour) + strconv.Itoa(NowMinute)
 	}
 
-	sTime = strconv.Itoa(NowHour) + strconv.Itoa(NowMinute)
 	iTime, _ := strconv.Atoi(sTime)
 	day := strings.ToLower(NowDay.String())
 
 	//fmt.Printf("[DEBUG] sTime: %v\n",sTime)
-	//fmt.Printf("[DEBUG] iTime: %v\n",iTime)
+	fmt.Printf("[DEBUG] iTime: %v\n",iTime)
 	//fmt.Printf("[DEBUG] day: %v\n",day)
 	//fmt.Printf("[DEBUG] Now: %v\n",Now)
 	return sTime, iTime, day, Now
