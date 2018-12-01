@@ -39,7 +39,6 @@ func GoGoScheduler() error {
 }
 
 func doSchedule(device string) error {
-	//fmt.Printf("[DEBUG] Schedule for %s\n", device)
 	_, iTime, day, _ := splitTime()
 
 	s, err := tuya.ScheduleGet(device)
@@ -47,7 +46,6 @@ func doSchedule(device string) error {
 		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
 		fmt.Printf("[WARN] %s\n", err)
 	}
-	//fmt.Printf("[DEBUG] Schedule Status for %s %s\n", device, s.Status)
 	if s.Status == "enable"{
 		status, err := tuya.StatusGet(device)
 		if err != nil{
@@ -56,18 +54,15 @@ func doSchedule(device string) error {
 
 		devState := status.Alive
 		fmt.Printf("[DEBUG] Device Alive Status for %s %v\n", device, devState)
-		//fmt.Printf("[DEBUG] Day %s\n",day)
 
 		switch day {
 		case "sunday":
 			onTime, _:= strconv.Atoi(s.Days.Sunday.On) //time of day device is on
 			offTime, _:= strconv.Atoi(s.Days.Sunday.Off) //time of day device is off
 
-			fmt.Printf("[DEBUG] Device on/off for %s %v %v\n",device, onTime, offTime)
 			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
 
-			if doChange {
-				fmt.Printf("[DEBUG] Changing Status %v : change to %v\n",doChange, powerState)
+			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
@@ -135,11 +130,9 @@ func doSchedule(device string) error {
 			onTime, _:= strconv.Atoi(s.Days.Friday.On)
 			offTime, _:= strconv.Atoi(s.Days.Friday.Off)
 
-			fmt.Printf("[DEBUG] Device on/off for %s %v %v\n",device, onTime, offTime)
 			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
 
-			if doChange {
-				fmt.Printf("[DEBUG] Changing Status %v : change to %v\n",doChange, powerState)
+			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 					return err
@@ -187,10 +180,6 @@ func splitTime()(strTime string, intTime int, weekday string, now time.Time){
 	iTime, _ := strconv.Atoi(sTime)
 	day := strings.ToLower(NowDay.String())
 
-	//fmt.Printf("[DEBUG] sTime: %v\n",sTime)
-	fmt.Printf("[DEBUG] iTime: %v\n",iTime)
-	//fmt.Printf("[DEBUG] day: %v\n",day)
-	//fmt.Printf("[DEBUG] Now: %v\n",Now)
 	return sTime, iTime, day, Now
 }
 
