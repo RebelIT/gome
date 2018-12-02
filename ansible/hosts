@@ -8,6 +8,7 @@
   application=gome
   hardware=pi
   telegraf_db=10.10.10.10
+  redis_host=localhost
 
 [gome:children]
   main

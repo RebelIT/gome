@@ -6,8 +6,5 @@ packages:
   curl:
     pkg: "curl"
     ver: "latest"
-  # rubuy:
-  #   pkg: "ruby"
-  #   ver: "latest"
 
 ansible_become: true

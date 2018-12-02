@@ -1,7 +1,5 @@
 ---
-  ##--I didnt want to vendor this small go project so cleaning ensures
-  #   you recieve the latest project with go get
-  - name: Clean any old versions
+  - name: Clean any old versions for fun
     command: rm -rf {{ gopath }}src/{{ repo }}/
     become: yes
 
@@ -35,6 +33,16 @@
     environment:
       GOPATH: "{{ gopath }}"
     with_dict: "{{ goRepos }}"
+
+  - name: set application secrets
+    template:
+      src: roles/application/templates/secrets.json.j2
+      dest: {{ gopath }}src/{{ repo }}/secrets.json
+
+  - name: set device file
+    template:
+      src: roles/application/templates/devices.json.j2
+      dest: {{ gopath }}src/{{ repo }}/devices.json
 
   - name: Compile it!
     shell: "go build -o main ."

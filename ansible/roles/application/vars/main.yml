@@ -16,5 +16,4 @@ packages:
 goRepos:
   personal:
     url: github.com/RebelIT/gome
-  mux:
-    url: github.com/gorilla/mux
+
