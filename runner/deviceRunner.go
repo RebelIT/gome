@@ -74,7 +74,9 @@ func DeviceLoader(db string, in Inputs) {
 	//Load Devices into database from startup json
 	for _, d := range in.Devices {
 		fmt.Println("[DEBUG] Adding: " + d.Name)
-		cache.SetHash(db, redis.Args{d.Name}.AddFlat(d))
+		if err := cache.SetHash(db, redis.Args{d.Name}.AddFlat(d));err != nil{
+			fmt.Printf("error loading %s\n ",err)
+		}
 	}
 	return
 }
