@@ -1,0 +1,19 @@
+---
+structure:
+  src:
+    dir: "{{ gopath }}src"
+  pkg:
+    dir: "{{ gopath }}pkg"
+  bin:
+    dir: "{{ gopath }}bin"
+
+packages:
+  git:
+    pkg: golang
+  go:
+    pkg: git
+
+goRepos:
+  personal:
+    url: github.com/RebelIT/gome
+

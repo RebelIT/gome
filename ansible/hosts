@@ -1,0 +1,18 @@
+###############################
+## gome deployemnt
+[gome:vars]
+  hostname=piGome
+  ssh_user=pi
+  gopath=/home/pi/go/
+  repo=github.com/RebelIT/gome
+  application=gome
+  hardware=pi
+  telegraf_db=10.10.10.10
+  redis_host=localhost
+
+[gome:children]
+  main
+
+[main]
+  10.10.10.11
+###############################

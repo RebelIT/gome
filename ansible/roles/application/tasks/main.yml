@@ -1,0 +1,69 @@
+---
+  - name: Clean any old versions for fun
+    command: rm -rf {{ gopath }}src/{{ repo }}/
+    become: yes
+
+  - name: Install packages
+    apt:
+      update_cache: yes
+      name: "{{ item.value.pkg }}"
+      state: "latest"
+    with_dict: "{{ packages }}"
+    become: yes
+
+  - name: Create go project structure
+    file:
+      path: "{{ item.value.dir }}"
+      state: directory
+      mode: 0755
+    with_dict: "{{ structure }}"
+
+  - name: Create bash bash_profile
+    file:
+      path: "/home/pi/.bash_profile"
+      state: touch
+
+  - name: Set $GOPATH
+    lineinfile:
+      path: /home/pi/.bash_profile
+      line: 'export GOPATH={{ gopath }}'
+
+  - name: "Go-Lang | Run get commands"
+    shell: "/usr/bin/go get {{ item.value.url }}"
+    environment:
+      GOPATH: "{{ gopath }}"
+    with_dict: "{{ goRepos }}"
+
+  - name: set application secrets
+    template:
+      src: roles/application/templates/secrets.json.j2
+      dest: {{ gopath }}src/{{ repo }}/secrets.json
+
+  - name: set device file
+    template:
+      src: roles/application/templates/devices.json.j2
+      dest: {{ gopath }}src/{{ repo }}/devices.json
+
+  - name: Compile it!
+    shell: "go build -o main ."
+    args:
+      chdir: "{{ gopath }}src/{{ repo }}/"
+    environment:
+      GOPATH: "{{ gopath }}"
+
+  - name: Did it Compile?
+    stat: "path={{ gopath }}src/{{ repo }}/main"
+    register: main
+
+  - name: Copy Service Files
+    template:
+      src: "roles/api/templates/gome-server.service"
+      dest: "/usr/lib/systemd/system/"
+    when: main.stat.exists
+    become: yes
+
+  - name: Unleash the daemon (make new service known)
+    command: systemctl daemon-reload
+    become: yes
+    notify:
+      - restart service

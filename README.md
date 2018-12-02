@@ -9,21 +9,31 @@ GoLang Home (gome)
    house this can tie it all together for central management and control. 
 
    starts up with a base devices.json in the root dir to load into a redis database from there adding more endpoints
-   to add/remove devices fro the database and update the json.
+   to add/remove devices from the database and update the json.
    
+#### Work in progress as I learn GOLang and have time to play. :)
 
-### Work in progress as I learn GOLang and have time to play. :)
-
-### Custom RaspberryPi setup
+## Deploy it
+Ansible
+* update ansible/hosts with your local server info
+* secrets.yml in `ansible/roles/application/vars/secrets.yml` is needed
+  
+   ```
+   slack_secret: 'xxxxxx/xxxxx/xxxxxx' #slack token
+   ```
    
-   each one of my rPI's has an API endpoint to control it
+* run it
+
+   ```
+   --ask-sudo-pass may be required if running reboot role due to your local setup
+   ansible-playbook gome_deploy.yml --ask-vault-pass -i hosts --ask-sudo-pass
+   ```
    
-   Example:  [API ansible Role to setup an API on a raspberry pi](https://github.com/RebelIT/ansible-piDAK)  Just add 
-   more as needed to control your rPI functions and apps
- 
+* manually update the devices.json or start adding devices by using the /api/devices endpoint which will 
+update redis and the static devices.json. 
 
-### supported Devices
 
+### Supported Devices
    * Custom RaspberryPi API
    * Roku
    * Tuya WiFi outlets (with external tuya-cli dependency)
@@ -38,3 +48,10 @@ Need to automate these yet
    * devices.json and secrets.json required in the root gome directory
    * still dependent in redis (working on an easier lightweight key:value runtime DB)
    * refer to examples in example directory for api call examples
+
+## Custom RaspberryPi setup
+   
+   each one of my rPI's has an API endpoint to control it
+   
+   Example:  [API ansible Role to setup an API on a raspberry pi](https://github.com/RebelIT/ansible-piDAK) this rPI api
+   is used in this project to control the individual rPI's

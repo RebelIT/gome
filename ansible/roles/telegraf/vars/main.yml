@@ -1,0 +1,19 @@
+---
+configs:
+  conf:
+    src: 'roles/telegraf/templates/telegraf.conf'
+    dest: /etc/telegraf/telegraf.conf
+  outputs:
+    src: 'roles/telegraf/templates/outputs.conf'
+    dest:  /etc/telegraf/telegraf.d/outputs.conf
+  common:
+    src: 'roles/telegraf/templates/common.inputs.conf'
+    dest:  /etc/telegraf/telegraf.d/common.inputs.conf
+  # printer:
+  #   src: 'roles/telegraf/templates/printer.conf'
+  #   dest: /etc/telegraf/telegraf.d/printer.conf
+  global_tags:
+    src: 'roles/telegraf/templates/global_tags.conf'
+    dest: /etc/telegraf/telegraf.d/global_tags.conf
+
+ansible_become: true
