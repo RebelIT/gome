@@ -25,6 +25,18 @@
         XKBLAYOUT=\"us\"
       create: yes
 
+#ntp sux on the pi, this is what i had to do:
   - name: Set timezone to US/Central
     timezone:
       name: US/Central
+
+  - name: set timezone again
+    template:
+      src: roles/common/templates/timezone.j2
+      dest: /etc/timezone
+
+  - name: force set timezone to save
+    command: bash -c "dpkg-reconfigure -f noninteractive tzdata"
+    become: yes
+    notify:
+    - restart ntp

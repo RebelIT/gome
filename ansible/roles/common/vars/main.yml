@@ -6,5 +6,11 @@ packages:
   curl:
     pkg: "curl"
     ver: "latest"
+  ntp:
+    pkg: "ntp"
+    ver: "latest"
+  ntpdate:
+    pkg: "ntpdate"
+    ver: "latest"
 
 ansible_become: true

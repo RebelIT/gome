@@ -1,0 +1,15 @@
+---
+  - name: Install redis
+    apt:
+      update_cache: yes
+      name: "{{ item.value.pkg }}"
+      state: "latest"
+    with_dict: "{{ packages }}"
+    become: yes
+
+  - name: set redis config
+    template:
+      src: roles/redis/templates/redis.conf.j2
+      dest: /etc/redis/redis.conf
+      notify:
+      - restart redis

@@ -8,11 +8,13 @@
   application=gome
   hardware=pi
   telegraf_db=10.10.10.10
-  redis_host=localhost
+  redis_host=127.0.0.1
+  redis_memory=50M
+  timezone=America/Chicago
 
 [gome:children]
   main
 
 [main]
-  10.10.10.11
+  10.0.0.158
 ###############################

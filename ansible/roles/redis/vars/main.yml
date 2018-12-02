@@ -1,0 +1,4 @@
+---
+packages:
+  git:
+    pkg: redis-server

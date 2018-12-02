@@ -15,6 +15,7 @@ GoLang Home (gome)
 
 ## Deploy it
 Ansible
+* running on latest raspbian stretch (not tested on other releases)
 * update ansible/hosts with your local server info
 * secrets.yml in `ansible/roles/application/vars/secrets.yml` is needed
   
