@@ -5,8 +5,8 @@
   remote_user: "{{ ssh_user }}"
 
   roles:
-#    - common
-#    - reboot
-#    - redis
+    - common
+    - reboot
+    - redis
     - application
-#    - telegraf
+    - telegraf
