@@ -1,0 +1,7 @@
+---
+  - name: restart service
+    service:
+      name: gome-server
+      state: restarted
+      enabled: true
+    become: yes

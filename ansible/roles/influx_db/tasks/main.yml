@@ -1,0 +1,26 @@
+---
+  - name: Gather vars
+    include_vars:
+      dir: 'vars'
+      extensions: ['yml']
+
+  - name: Install project packages
+    apt:
+      name: "{{ item.value.pkg }}"
+      state: "{{ item.value.ver }}"
+      update_cache: yes
+    with_dict: "{{ packages }}"
+
+  - name: Start service
+    service:
+      name: influxdb
+      state: started
+      enabled: true
+
+  - name: Query existing DB users
+    shell: "curl -XPOST http://localhost:8086/query --data-urlencode 'q=SHOW USERS'"
+    register: db_users
+
+  - name: Create new Admin User
+    shell: "curl -XPOST http://localhost:8086/query --data-urlencode \"q=CREATE USER {{ db_admin }} WITH PASSWORD '{{ db_admin_pass }}' WITH ALL PRIVILEGES\""
+    when: 'db_admin not in db_users.stdout'

@@ -1,0 +1,13 @@
+---
+packages:
+  git:
+    pkg: "git"
+    ver: "latest"
+  curl:
+    pkg: "curl"
+    ver: "latest"
+  # rubuy:
+  #   pkg: "ruby"
+  #   ver: "latest"
+
+ansible_become: true
