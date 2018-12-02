@@ -43,17 +43,20 @@
     file:
       path: "/etc/gome/"
       state: directory
+      mode: 0755
     become: yes
 
   - name: set application secrets
     template:
       src: roles/application/templates/secrets.json.j2
       dest: "/etc/gome/secrets.json"
+    become: yes
 
   - name: set device file
     template:
       src: roles/application/templates/devices.json.j2
       dest: "/etc/gome/devices.json"
+    become: yes
 
   - name: Compile it!
     shell: "go build -o main ."
