@@ -4,3 +4,4 @@
 */dev/*
 *.idea
 devices.json
+*secrets.json
