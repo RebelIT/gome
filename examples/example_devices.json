@@ -1,0 +1,8 @@
+{
+  "database":"10.10.10.100:6379",
+  "devices":[
+    {"device":"tuya","name":"livingroom", "address":"10.10.10.10", "port":"6888", "id":"123456abcdefg", "key":"123456abcdefg"},
+    {"device":"roku","name":"bedroom", "address":"10.10.10.11", "port":"8060", "id":"", "key":""},
+    {"device":"pi","name":"webServer", "address":"10.10.10.12", "port":"8080", "id":"", "key":""}
+  ]
+}

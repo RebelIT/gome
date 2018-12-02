@@ -1,0 +1,33 @@
+{
+  "status": "enable",
+  "days":{
+    "sunday":{
+      "on": "630",
+      "off": "2200"
+    },
+    "monday":{
+      "on": "700",
+      "off": "2200"
+    },
+    "tuesday":{
+      "on": "630",
+      "off": "2200"
+    },
+    "wednesday":{
+      "on": "630",
+      "off": "2200"
+    },
+    "thursday":{
+      "on": "630",
+      "off": "2200"
+    },
+    "friday":{
+      "on": "630",
+      "off": "2200"
+    },
+    "saturday":{
+      "on": "630",
+      "off": "2200"
+    }
+  }
+}
