@@ -1,0 +1,8 @@
+{
+  "device":"tuya",
+  "name":"bedroom",
+  "address":"10.10.10.150",
+  "port":"6888",
+  "id":"789101112abcdefg",
+  "key":"23456abcdefg"
+}
