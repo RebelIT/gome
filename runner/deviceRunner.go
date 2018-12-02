@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const FILE  = "./devices.json"
+const FILE  = "/etc/gome/devices.json"
 
 func GoGoRunners() error {
 	fmt.Println("[INFO] Starting runners")

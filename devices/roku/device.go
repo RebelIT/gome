@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const FILE  = "./devices.json"
+const FILE  = "/etc/gome/devices.json"
 
 //http handler request to return specific device details
 func HandleDetails(w http.ResponseWriter,r *http.Request){

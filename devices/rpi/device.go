@@ -15,7 +15,7 @@ import (
 //TODO: function to read devices.json and only return the datbase.  probably in core handlers for all devices to use.
 //TODO: a lot of this is junk code.. but it works. a lot to reactor later.
 
-const FILE  = "./devices.json"
+const FILE  = "/etc/gome/devices.json"
 
 func init() {
 	http.DefaultClient.Timeout = time.Second * 5

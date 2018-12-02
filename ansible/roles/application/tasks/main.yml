@@ -39,15 +39,21 @@
       GOPATH: "{{ gopath }}"
     with_dict: "{{ goRepos }}"
 
+  - name: Make sure config directory exists
+    file:
+      path: "/etc/gome/"
+      state: directory
+    become: yes
+
   - name: set application secrets
     template:
       src: roles/application/templates/secrets.json.j2
-      dest: "{{ gopath }}src/{{ repo }}/secrets.json"
+      dest: "/etc/gome/secrets.json"
 
   - name: set device file
     template:
       src: roles/application/templates/devices.json.j2
-      dest: "{{ gopath }}src/{{ repo }}/devices.json"
+      dest: "/etc/gome/devices.json"
 
   - name: Compile it!
     shell: "go build -o main ."
@@ -59,6 +65,12 @@
   - name: Did it Compile?
     stat: "path={{ gopath }}src/{{ repo }}/main"
     register: main
+
+  - name: Make sure service directory exits
+    file:
+      path: "/usr/lib/systemd/system/"
+      state: directory
+    become: yes
 
   - name: Copy Service Files
     template:

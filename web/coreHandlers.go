@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const FILE  = "./devices.json"
+const FILE  = "/etc/gome/devices.json"
 
 //core handlers to update the device inventory.  devices.json used on gome startup to load last state into redis
 //

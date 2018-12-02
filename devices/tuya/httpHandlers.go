@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 )
-const FILE  = "./devices.json"
+const FILE  = "/etc/gome/devices.json"
 
 func init() {
 	http.DefaultClient.Timeout = time.Second * 5
