@@ -1,5 +1,5 @@
 ---
-  - name: restart service
+  - name: restart gome
     service:
       name: gome-server
       state: restarted

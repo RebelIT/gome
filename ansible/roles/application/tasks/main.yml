@@ -62,7 +62,7 @@
 
   - name: Copy Service Files
     template:
-      src: "roles/api/templates/gome-server.service"
+      src: "roles/application/templates/gome-server.service"
       dest: "/usr/lib/systemd/system/"
     when: main.stat.exists
     become: yes
@@ -71,4 +71,4 @@
     command: systemctl daemon-reload
     become: yes
     notify:
-      - restart service
+      - restart gome
