@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rebelit/gome/devices/tuya"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ func GoGoScheduler() error {
 		time.Sleep(time.Second *30)
 	}
 
+	notify.SendSlackAlert("Scheduler broke out of loop")
 	return nil
 }
 
@@ -65,6 +67,7 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
 					return err
 				}
 			}
@@ -79,6 +82,8 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
+
 					return err
 				}
 			}
@@ -93,6 +98,8 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
+
 					return err
 				}
 			}
@@ -107,6 +114,8 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
+
 					return err
 				}
 			}
@@ -121,6 +130,8 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
+
 					return err
 				}
 			}
@@ -135,6 +146,8 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
+
 					return err
 				}
 			}
@@ -149,6 +162,8 @@ func doSchedule(device string) error {
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
 					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
+
 					return err
 				}
 			}

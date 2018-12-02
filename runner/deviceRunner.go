@@ -8,6 +8,7 @@ import (
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"github.com/rebelit/gome/devices/tuya"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"time"
 )
@@ -47,6 +48,7 @@ func GoGoRunners() error {
 		time.Sleep(time.Second *30)
 	}
 
+	notify.SendSlackAlert("Device runner broke out of loop")
 	return nil
 }
 
