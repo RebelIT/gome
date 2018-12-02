@@ -11,5 +11,11 @@
     template:
       src: roles/redis/templates/redis.conf.j2
       dest: /etc/redis/redis.conf
-      notify:
-      - restart redis
+    become: yes
+
+  - name: restart redis
+    service:
+      name: redis-server
+      state: restarted
+      enabled: true
+    become: yes

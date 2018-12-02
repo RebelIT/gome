@@ -1,4 +1,9 @@
 ---
+  - name: Gather vars
+    include_vars:
+      dir: 'vars'
+      extensions: ['yml']
+
   - name: Clean any old versions for fun
     command: rm -rf {{ gopath }}src/{{ repo }}/
     become: yes
@@ -37,12 +42,12 @@
   - name: set application secrets
     template:
       src: roles/application/templates/secrets.json.j2
-      dest: {{ gopath }}src/{{ repo }}/secrets.json
+      dest: "{{ gopath }}src/{{ repo }}/secrets.json"
 
   - name: set device file
     template:
       src: roles/application/templates/devices.json.j2
-      dest: {{ gopath }}src/{{ repo }}/devices.json
+      dest: "{{ gopath }}src/{{ repo }}/devices.json"
 
   - name: Compile it!
     shell: "go build -o main ."
