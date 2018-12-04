@@ -14,7 +14,12 @@ GoLang Home (gome)
 #### Work in progress as I learn GOLang and have time to play. :)
 
 ## Deploy it
-Ansible
+### Note:
+~*tuya device control is dependent on tuya-api, had issues with performance and blocking on rPI's due to cpu saturation. 
+see issue #17 for fixes*~
+
+
+Ansible deployment
 * running on latest raspbian stretch (not tested on other releases)
 * update ansible/hosts with your local server info
 * secrets.yml in `ansible/roles/application/vars/secrets.yml` is needed
