@@ -15,8 +15,8 @@ GoLang Home (gome)
 
 ## Deploy it
 ### Note:
-~*tuya device control is dependent on tuya-api, had issues with performance and blocking on rPI's due to cpu saturation. 
-see issue #17 for fixes*~
+*tuya device control is dependent on tuya-api, had issues with performance and blocking on rPI's due to cpu saturation. 
+see issue #17 for fixes*
 
 
 Ansible deployment
