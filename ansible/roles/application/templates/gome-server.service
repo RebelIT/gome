@@ -1,5 +1,7 @@
 [Unit]
 Description=gome-server
+After=redis-server.service
+Requires=redis-server.service
 
 [Service]
 Type=simple
@@ -10,3 +12,4 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
+

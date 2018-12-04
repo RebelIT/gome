@@ -45,7 +45,7 @@ func GoGoRunners() error {
 				fmt.Println("[ERROR] No device typse match for "+ d.Name)
 			}
 		}
-		time.Sleep(time.Second *30)
+		time.Sleep(time.Second *60)
 	}
 
 	notify.SendSlackAlert("Device runner broke out of loop")

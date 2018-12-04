@@ -33,7 +33,7 @@ func GoGoScheduler() error {
 				fmt.Printf("[WARN] No device type match for %s, dont schedule anything\n", d.Name)
 			}
 		}
-		time.Sleep(time.Second *30)
+		time.Sleep(time.Second *60)
 	}
 
 	notify.SendSlackAlert("Scheduler broke out of loop")
