@@ -150,7 +150,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 func SetSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dev := vars["device"]
-	in := Schedule{}
+	in := Schedules{}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil{
