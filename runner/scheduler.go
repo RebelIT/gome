@@ -69,6 +69,7 @@ func doSchedule(device string) error {
 				doChange, powerState := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
 
 				if doChange {
+					fmt.Printf("[DEBUG] Scheduler %s, evaluating doChange\n", device)
 					if err := tuya.PowerControl(device, powerState); err != nil {
 						fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 						notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
@@ -76,7 +77,6 @@ func doSchedule(device string) error {
 					}
 					notify.SendSlackAlert("Scheduler " + device + " changed from " + strconv.FormatBool(devStatus.Alive) + " to " + strconv.FormatBool(powerState))
 				}
-				return nil
 			}
 		}
 	}
