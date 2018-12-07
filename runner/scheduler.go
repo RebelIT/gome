@@ -42,11 +42,11 @@ func GoGoScheduler() error {
 }
 
 func doSchedule(device string) error {
-	fmt.Printf("[DEBUG] Scheduler %s", device)
+	fmt.Printf("[DEBUG] Scheduler %s\n", device)
 	_, iTime, day, _ := splitTime()
-	fmt.Printf("[DEBUG] Scheduler %s, %i, %s", device, iTime, day)
+	fmt.Printf("[DEBUG] Scheduler %s, %i, %s\n", device, iTime, day)
 	schedule, err := tuya.ScheduleGet(device)
-	fmt.Printf("[DEBUG] Scheduler %s, %+v", device, schedule)
+	fmt.Printf("[DEBUG] Scheduler %s, %+v\n", device, schedule)
 	if err != nil{
 		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
 		fmt.Printf("[WARN] %s\n", err)
@@ -58,11 +58,11 @@ func doSchedule(device string) error {
 	}
 
 	for _, s := range schedule.Schedules{
-		fmt.Printf("[DEBUG] Scheduler %s, working day: %s", device, strings.ToLower(s.Day))
+		fmt.Printf("[DEBUG] Scheduler %s, working day: %s\n", device, strings.ToLower(s.Day))
 		if day == strings.ToLower(s.Day) {
-			fmt.Printf("[DEBUG] Scheduler %s, day match, doing work", device)
+			fmt.Printf("[DEBUG] Scheduler %s, day match, doing work\n", device)
 			if  s.Status == "enable" {
-				fmt.Printf("[DEBUG] Scheduler %s, status is enabled, doing work", device)
+				fmt.Printf("[DEBUG] Scheduler %s, status is enabled, doing work\n", device)
 				onTime, _ := strconv.Atoi(s.On)   //time of day device is on
 				offTime, _ := strconv.Atoi(s.Off) //time of day device is off
 
