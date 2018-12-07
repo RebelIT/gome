@@ -42,8 +42,11 @@ func GoGoScheduler() error {
 }
 
 func doSchedule(device string) error {
+	fmt.Printf("[DEBUG] Scheduler %s", device)
 	_, iTime, day, _ := splitTime()
+	fmt.Printf("[DEBUG] Scheduler %s, %i, %s", device, iTime, day)
 	schedule, err := tuya.ScheduleGet(device)
+	fmt.Printf("[DEBUG] Scheduler %s, %+v", device, schedule)
 	if err != nil{
 		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
 		fmt.Printf("[WARN] %s\n", err)
@@ -55,22 +58,26 @@ func doSchedule(device string) error {
 	}
 
 	for _, s := range schedule.Schedules{
-		if day == strings.ToLower(s.Day) && s.Status == "enable"{
-			onTime, _:= strconv.Atoi(s.On)   //time of day device is on
-			offTime, _:= strconv.Atoi(s.Off) //time of day device is off
+		fmt.Printf("[DEBUG] Scheduler %s, working day: %s", device, strings.ToLower(s.Day))
+		if day == strings.ToLower(s.Day) {
+			fmt.Printf("[DEBUG] Scheduler %s, day match, doing work", device)
+			if  s.Status == "enable" {
+				fmt.Printf("[DEBUG] Scheduler %s, status is enabled, doing work", device)
+				onTime, _ := strconv.Atoi(s.On)   //time of day device is on
+				offTime, _ := strconv.Atoi(s.Off) //time of day device is off
 
-			doChange, powerState := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
+				doChange, powerState := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
 
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-					return err
+				if doChange {
+					if err := tuya.PowerControl(device, powerState); err != nil {
+						fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+						notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
+						return err
+					}
+					notify.SendSlackAlert("Scheduler " + device + " changed from " + strconv.FormatBool(devStatus.Alive) + " to " + strconv.FormatBool(powerState))
 				}
-				notify.SendSlackAlert("Scheduler "+device+" changed from "+strconv.FormatBool(devStatus.Alive)+" to "+strconv.FormatBool(powerState))
+				return nil
 			}
-			return nil
-
 		}
 	}
 
