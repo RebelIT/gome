@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"github.com/rebelit/gome/devices/tuya"
@@ -13,14 +14,12 @@ import (
 	"time"
 )
 
-const FILE  = "/etc/gome/devices.json"
-
 func GoGoRunners() error {
 	fmt.Println("[INFO] Starting runners")
 	var in Inputs
 
 	for {
-		deviceFile, err := ioutil.ReadFile(FILE)
+		deviceFile, err := ioutil.ReadFile(common.FILE)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -56,7 +55,7 @@ func GoGODeviceLoader() error {
 	fmt.Println("[INFO] Starting Device Loader")
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		return err

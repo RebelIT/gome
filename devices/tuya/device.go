@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"os/exec"
 	"strconv"
@@ -37,7 +38,7 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	return
 }
 
-func scheduleSet (s* Schedule, device string) (error){
+func scheduleSet (s* Schedules, device string) (error){
 	key := device+"_schedule"
 	bytes, err := json.Marshal(s)
 	if err != nil{
@@ -58,8 +59,8 @@ func scheduleSet (s* Schedule, device string) (error){
 	return nil
 }
 
-func ScheduleGet (device string) (Schedule, error){
-	s := Schedule{}
+func ScheduleGet (device string) (Schedules, error){
+	s := Schedules{}
 	key := device+"_schedule"
 
 	c, err := dbConn()
@@ -206,7 +207,7 @@ func tuyaCli(cmdName string, args []string) (string, error) {
 func dbConn()(redis.Conn, error){
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
 	"io/ioutil"
@@ -16,7 +17,7 @@ func GoGoScheduler() error {
 	var in Inputs
 
 	for {
-		deviceFile, err := ioutil.ReadFile(FILE)
+		deviceFile, err := ioutil.ReadFile(common.FILE)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -42,27 +43,23 @@ func GoGoScheduler() error {
 
 func doSchedule(device string) error {
 	_, iTime, day, _ := splitTime()
-
-	s, err := tuya.ScheduleGet(device)
+	schedule, err := tuya.ScheduleGet(device)
 	if err != nil{
 		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
 		fmt.Printf("[WARN] %s\n", err)
 	}
-	if s.Status == "enable"{
-		status, err := tuya.StatusGet(device)
-		if err != nil{
-			fmt.Printf("[ERROR] getting device status from database: %s\n", err)
-		}
 
-		devState := status.Alive
-		fmt.Printf("[DEBUG] Device Alive Status for %s %v\n", device, devState)
+	devStatus, err := tuya.StatusGet(device)
+	if err != nil{
+		fmt.Printf("[ERROR] getting device status from database: %s\n", err)
+	}
 
-		switch day {
-		case "sunday":
-			onTime, _:= strconv.Atoi(s.Days.Sunday.On) //time of day device is on
-			offTime, _:= strconv.Atoi(s.Days.Sunday.Off) //time of day device is off
+	for _, s := range schedule.Schedules{
+		if day == strings.ToLower(s.Day) && s.Status == "enable"{
+			onTime, _:= strconv.Atoi(s.On)   //time of day device is on
+			offTime, _:= strconv.Atoi(s.Off) //time of day device is off
 
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
+			doChange, powerState := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
 
 			if doChange{
 				if err := tuya.PowerControl(device, powerState);err != nil{
@@ -70,108 +67,10 @@ func doSchedule(device string) error {
 					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
 					return err
 				}
+				notify.SendSlackAlert("Scheduler "+device+" changed from "+strconv.FormatBool(devStatus.Alive)+" to "+strconv.FormatBool(powerState))
 			}
 			return nil
 
-		case "monday":
-			onTime, _:= strconv.Atoi(s.Days.Monday.On)
-			offTime, _:= strconv.Atoi(s.Days.Monday.Off)
-
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
-
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-
-					return err
-				}
-			}
-			return nil
-
-		case "tuesday":
-			onTime, _:= strconv.Atoi(s.Days.Tuesday.On)
-			offTime, _:= strconv.Atoi(s.Days.Tuesday.Off)
-
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
-
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-
-					return err
-				}
-			}
-			return nil
-
-		case "wednesday":
-			onTime, _:= strconv.Atoi(s.Days.Wednesday.On)
-			offTime, _:= strconv.Atoi(s.Days.Wednesday.Off)
-
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
-
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-
-					return err
-				}
-			}
-			return nil
-
-		case "thursday":
-			onTime, _:= strconv.Atoi(s.Days.Thursday.On)
-			offTime, _:= strconv.Atoi(s.Days.Thursday.Off)
-
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
-
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-
-					return err
-				}
-			}
-			return nil
-
-		case "friday":
-			onTime, _:= strconv.Atoi(s.Days.Friday.On)
-			offTime, _:= strconv.Atoi(s.Days.Friday.Off)
-
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
-
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-
-					return err
-				}
-			}
-			return nil
-
-		case "saturday":
-			onTime, _:= strconv.Atoi(s.Days.Saturday.On)
-			offTime, _:= strconv.Atoi(s.Days.Saturday.Off)
-
-			doChange, powerState := whatDoIDo(devState, iTime, onTime, offTime)
-
-			if doChange{
-				if err := tuya.PowerControl(device, powerState);err != nil{
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for "+ device)
-
-					return err
-				}
-			}
-			return nil
-
-		default:
-			fmt.Println("[ERROR] we've entered the matrix where days of the week no longer exist")
-			panic("This can't be right...")
 		}
 	}
 

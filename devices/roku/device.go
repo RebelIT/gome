@@ -7,12 +7,11 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
-
-const FILE  = "/etc/gome/devices.json"
 
 //http handler request to return specific device details
 func HandleDetails(w http.ResponseWriter,r *http.Request){
@@ -22,7 +21,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -54,7 +53,7 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	action := uri[len(uri)-1]
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -94,7 +93,7 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

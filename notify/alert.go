@@ -5,7 +5,6 @@ import (
 	"github.com/rebelit/gome/common"
 )
 
-const FILE  = "/etc/gome/devices.json"
 
 func SendSlackAlert (message string){
 	s, err := getSecrets()

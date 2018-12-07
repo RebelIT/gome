@@ -6,13 +6,13 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
-const FILE  = "/etc/gome/devices.json"
 
 func init() {
 	http.DefaultClient.Timeout = time.Second * 5
@@ -25,7 +25,7 @@ func GetDetails(w http.ResponseWriter,r *http.Request){
 
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func GetStatus(w http.ResponseWriter,r *http.Request) {
 	action := uri[len(uri)-1]
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -94,7 +94,7 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -150,7 +150,7 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 func SetSchedule(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	dev := vars["device"]
-	in := Schedule{}
+	in := Schedules{}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil{

@@ -24,22 +24,16 @@ type Inputs struct{
 	Devices		[]Devices
 }
 
-type Schedule struct {
-	Status		string `json:"status"`
-	Days		ScheduleDay `json:"days"`
+type Schedules struct {
+	Status 		string `json:"status"`
+	Schedules		[]Schedule `json:"schedules"`
 }
 
-type ScheduleDay struct{
-	Sunday 		ScheduleOnOff `json:"sunday"`
-	Monday		ScheduleOnOff `json:"monday"`
-	Tuesday		ScheduleOnOff `json:"tuesday"`
-	Wednesday 	ScheduleOnOff `json:"wednesday"`
-	Thursday	ScheduleOnOff `json:"thursday"`
-	Friday		ScheduleOnOff `json:"friday"`
-	Saturday	ScheduleOnOff `json:"saturday"`
+type Schedule struct{
+	Day		string `json:"day"`
+	Status 	string `json:"status"`
+	Desc	string `json:"desc"`
+	On		string `json:"on"`
+	Off 	string `json:"off"`
 }
 
-type ScheduleOnOff struct{
-	On	string `json:"on"`
-	Off string `json:"off"`
-}

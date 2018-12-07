@@ -9,4 +9,4 @@
     - reboot
     - redis
     - application
-    - telegraf
+#    - telegraf
