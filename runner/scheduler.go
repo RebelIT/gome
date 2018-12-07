@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
 	"io/ioutil"
@@ -16,7 +17,7 @@ func GoGoScheduler() error {
 	var in Inputs
 
 	for {
-		deviceFile, err := ioutil.ReadFile(FILE)
+		deviceFile, err := ioutil.ReadFile(common.FILE)
 		if err != nil {
 			fmt.Println(err)
 			return err

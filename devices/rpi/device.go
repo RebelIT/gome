@@ -6,6 +6,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -14,8 +15,6 @@ import (
 //TODO:
 //TODO: function to read devices.json and only return the datbase.  probably in core handlers for all devices to use.
 //TODO: a lot of this is junk code.. but it works. a lot to reactor later.
-
-const FILE  = "/etc/gome/devices.json"
 
 func init() {
 	http.DefaultClient.Timeout = time.Second * 5
@@ -28,7 +27,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	dev := uri[len(uri)-1]
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,7 +59,7 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	action := uri[len(uri)-1]
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -99,7 +98,7 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

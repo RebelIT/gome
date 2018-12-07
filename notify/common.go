@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 )
 
 func getSecrets() (Secrets, error){
 	s := Secrets{}
-	secretsFile, err := ioutil.ReadFile(FILE)
+	secretsFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		return Secrets{}, err

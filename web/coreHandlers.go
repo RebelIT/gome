@@ -3,13 +3,12 @@ package listener
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/runner"
 	"io/ioutil"
 	"net/http"
 	"os"
 )
-
-const FILE  = "/etc/gome/devices.json"
 
 //core handlers to update the device inventory.  devices.json used on gome startup to load last state into redis
 //
@@ -17,7 +16,7 @@ func getDevices(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
 	var i Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -56,7 +55,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] unmarshal input")
 
 	//Read devices.json and unmarshal into struct
-	deviceFile, err := os.OpenFile(FILE, os.O_RDWR, 0644)
+	deviceFile, err := os.OpenFile(common.FILE, os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

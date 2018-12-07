@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"os/exec"
 	"strconv"
@@ -206,7 +207,7 @@ func tuyaCli(cmdName string, args []string) (string, error) {
 func dbConn()(redis.Conn, error){
 	var in Inputs
 
-	deviceFile, err := ioutil.ReadFile(FILE)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
