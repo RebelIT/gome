@@ -1,7 +1,7 @@
 package common
 
 // flip this to use in production
-//const FILE  = "/etc/gome/devices.json"
+const FILE  = "/etc/gome/devices.json"
 
 // flip this on for local testing
-const FILE  = "./devices.json"
+//const FILE  = "./devices.json"
