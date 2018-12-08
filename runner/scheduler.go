@@ -73,26 +73,27 @@ func doSchedule(device string) {
 				scheduleOutCol = append(scheduleOutCol, scheduleOut)
 			}
 		}
-		fmt.Printf("[VERBOSE] %s full validate array:  %+v\n", device, scheduleOutCol)
-		//if device is in any enabled schedule it must be on
-		for _, s := range scheduleOutCol {
-			fmt.Printf("[VERBOSE] %s inSchedule %v\n", device, s.InSchedule)
-			if s.InSchedule {
-				fmt.Printf("[VERBOSE] %s inSchedule %v validated changing it\n", device, s.InSchedule)
-				if err := tuya.PowerControl(device, true); err != nil { //change it to true
-					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
-				}
-			}
-		}
+	}
 
-		//if device is not in  any enabled schedule it must be off
-		if !isInAllSchedules(scheduleOutCol) {
-			fmt.Printf("[VERBOSE] %s evaluates not in any schedule\n", device)
-			if err := tuya.PowerControl(device, false); err != nil { //change it to true
+	fmt.Printf("[VERBOSE] %s full validate array:  %+v\n", device, scheduleOutCol)
+	//if device is in any enabled schedule it must be on
+	for _, s := range scheduleOutCol {
+		fmt.Printf("[VERBOSE] %s inSchedule %v\n", device, s.InSchedule)
+		if s.InSchedule {
+			fmt.Printf("[VERBOSE] %s inSchedule %v validated changing it\n", device, s.InSchedule)
+			if err := tuya.PowerControl(device, true); err != nil { //change it to true
 				fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 				notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
 			}
+		}
+	}
+
+	//if device is not in  any enabled schedule it must be off
+	if !isInAllSchedules(scheduleOutCol) {
+		fmt.Printf("[VERBOSE] %s evaluates not in any schedule\n", device)
+		if err := tuya.PowerControl(device, false); err != nil { //change it to true
+			fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+			notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
 		}
 	}
 }
