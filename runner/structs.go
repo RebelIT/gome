@@ -13,3 +13,13 @@ type Inputs struct{
 	Database	string `json:"database"`
 	Devices		[]Devices
 }
+
+//type Validator struct{
+//	States []State
+//}
+
+type Validator struct{
+	DoChange 	bool
+	ChangeTo	bool
+	InSchedule 	bool
+}

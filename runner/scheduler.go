@@ -41,54 +41,64 @@ func GoGoScheduler() error {
 	return nil
 }
 
-func doSchedule(device string) error {
-	fmt.Printf("[DEBUG] Scheduler %s\n", device)
+func doSchedule(device string) {
 	_, iTime, day, _ := splitTime()
-	fmt.Printf("[DEBUG] Scheduler %s, %i, %s\n", device, iTime, day)
 	schedule, err := tuya.ScheduleGet(device)
-	fmt.Printf("[DEBUG] Scheduler %s, %+v\n", device, schedule)
-	if err != nil{
+	if err != nil {
 		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
 		fmt.Printf("[WARN] %s\n", err)
 	}
 
 	devStatus, err := tuya.StatusGet(device)
-	if err != nil{
+	if err != nil {
 		fmt.Printf("[ERROR] getting device status from database: %s\n", err)
 	}
 
-	for _, s := range schedule.Schedules{
-		fmt.Printf("[DEBUG] Scheduler %s, working day: %s\n", device, strings.ToLower(s.Day))
+	scheduleOutCol := []Validator{}
+	for _, s := range schedule.Schedules {
 		if day == strings.ToLower(s.Day) {
-			fmt.Printf("[DEBUG] Scheduler %s, day match, doing work\n", device)
-			if  s.Status == "enable" {
-				fmt.Printf("[DEBUG] Scheduler %s, status is enabled, doing work\n", device)
+			if s.Status == "enable" {
+				scheduleOut := Validator{}
+
 				onTime, _ := strconv.Atoi(s.On)   //time of day device is on
 				offTime, _ := strconv.Atoi(s.Off) //time of day device is off
 
-				doChange, powerState := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
+				//technically don't need `doChange` and `changeTo` anymore but I left it to debug later for mismatch issues.
+				doChange, changeTo, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
 
-				if doChange {
-					fmt.Printf("[DEBUG] Scheduler %s, evaluating doChange\n", device)
-					if err := tuya.PowerControl(device, powerState); err != nil {
+				scheduleOut.ChangeTo = changeTo
+				scheduleOut.DoChange = doChange
+				scheduleOut.InSchedule = isInScheduleBlock
+
+				scheduleOutCol = append(scheduleOutCol, scheduleOut)
+			}
+
+			//if device is in any enabled schedule it must be on
+			for _, s := range scheduleOutCol {
+				if s.InSchedule {
+					if err := tuya.PowerControl(device, true); err != nil { //change it to true
 						fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 						notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
-						return err
 					}
-					notify.SendSlackAlert("Scheduler " + device + " changed from " + strconv.FormatBool(devStatus.Alive) + " to " + strconv.FormatBool(powerState))
+				}
+			}
+
+			//if device is not in  any enabled schedule it must be off
+			if !isInAllSchedules(scheduleOutCol) {
+				if err := tuya.PowerControl(device, false); err != nil { //change it to true
+					fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+					notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
 				}
 			}
 		}
 	}
-
-	return nil
 }
 
 func splitTime()(strTime string, intTime int, weekday string, now time.Time){
 	Now := time.Now()
 	NowMinute := Now.Minute()
 	NowHour := Now.Hour()
-	NowDay := now.Weekday()
+	NowDay := Now.Weekday()
 
 	sTime := ""
 	singleMinute := inBetween(NowMinute, 0,9)
@@ -120,11 +130,23 @@ func inBetweenReverse(i, min, max int) bool {
 	}
 }
 
-func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (changeState bool, changeTo bool){
+func isInAllSchedules(v []Validator) bool {
+	if len(v) > 1 {
+		a := v[0].InSchedule
+		for _, s := range v {
+			if a != s.InSchedule {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (changeState bool, changeTo bool, inScheduleBlock bool){
 	reverseCheck := false
-	ok := false
 	changeState = false
 	changeTo = false
+	inScheduleBlock = false
 
 	if devOffTime <= devOnTime {
 		//spans a day PM to AM on schedule
@@ -133,33 +155,33 @@ func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (chan
 
 	if !reverseCheck{
 		//does not span PM to AM
-		ok = inBetween(currentHour, devOnTime, devOffTime)
+		inScheduleBlock = inBetween(currentHour, devOnTime, devOffTime)
 	} else {
 		//spans a day PM to AM reverse check the schedule
-		ok = inBetweenReverse(currentHour, devOffTime, devOnTime)
+		inScheduleBlock = inBetweenReverse(currentHour, devOffTime, devOnTime)
 	}
 
 	if devOn{
-		if ok{
+		if inScheduleBlock{
 			//leave it be change state:false
 			changeState = false
-			return changeState, changeTo
+			return changeState, changeTo, inScheduleBlock
 		} else {
 			//change state:true. change the power control to false
 			changeState = true
 			changeTo = false
-			return changeState, changeTo
+			return changeState, changeTo, inScheduleBlock
 		}
 	} else {
-		if ok{
+		if inScheduleBlock{
 			//change state:true. change the power control to true
 			changeState = true
 			changeTo = true
-			return changeState, changeTo
+			return changeState, changeTo, inScheduleBlock
 		}else {
 			//leave it be change state:false
 			changeState = false
-			return changeState, changeTo
+			return changeState, changeTo, inScheduleBlock
 		}
 	}
 }
