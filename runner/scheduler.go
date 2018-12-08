@@ -79,7 +79,7 @@ func doSchedule(device string) {
 	//if device is in any enabled schedule it must be on
 	for _, s := range scheduleOutCol {
 		fmt.Printf("[VERBOSE] %s inSchedule %v\n", device, s.InSchedule)
-		if s.InSchedule {
+		if s.InSchedule && s.DoChange {
 			fmt.Printf("[VERBOSE] %s inSchedule %v validated changing it\n", device, s.InSchedule)
 			if err := tuya.PowerControl(device, true); err != nil { //change it to true
 				fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
