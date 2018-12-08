@@ -6,6 +6,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/cache"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"os/exec"
 	"strconv"
@@ -164,6 +165,7 @@ func PowerControl(device string, value bool) error {
 		fmt.Printf("[DEBUG]: cmd return for %s : %s\n", device, cmdOut)
 		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
 		if fmtOut == "Set succeeded."{
+			notify.SendSlackAlert("Tuya PowerControl initiated for "+device+" to "+strconv.FormatBool(value)+"")
 			return nil
 		} else{
 			return fmt.Errorf("error setting device status\n")
