@@ -91,9 +91,12 @@ func doSchedule(device string) {
 	//if device is not in  any enabled schedule it must be off
 	if noSchedules(scheduleOutCol) {
 		fmt.Printf("[VERBOSE] %s evaluated not in any schedule\n", device)
-		if err := tuya.PowerControl(device, false); err != nil { //change it to true
-			fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-			notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
+		if devStatus.Alive {
+			fmt.Printf("[VERBOSE] %s evaluated not in any schedule but deviceStatus is alive:true\n", device)
+			if err := tuya.PowerControl(device, false); err != nil { //change it to true
+				fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
+				notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
+			}
 		}
 	}
 }
