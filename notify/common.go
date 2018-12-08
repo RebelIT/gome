@@ -10,7 +10,7 @@ import (
 
 func getSecrets() (Secrets, error){
 	s := Secrets{}
-	secretsFile, err := ioutil.ReadFile(common.FILE)
+	secretsFile, err := ioutil.ReadFile(common.SECRETS)
 	if err != nil {
 		fmt.Println(err)
 		return Secrets{}, err

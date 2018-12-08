@@ -22,5 +22,7 @@ func SendSlackAlert (message string){
 	}
 	if respCode != 200 {
 		fmt.Printf("[ERROR] slack alert: %s\n", fmt.Errorf("slack returned a non 200 response"))
+	} else{
+		fmt.Printf("[INFO] slack alert sent: %s\n", message)
 	}
 }
