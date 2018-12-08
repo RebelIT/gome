@@ -89,8 +89,8 @@ func doSchedule(device string) {
 	}
 
 	//if device is not in  any enabled schedule it must be off
-	if !isInAllSchedules(scheduleOutCol) {
-		fmt.Printf("[VERBOSE] %s evaluates not in any schedule\n", device)
+	if noSchedules(scheduleOutCol) {
+		fmt.Printf("[VERBOSE] %s evaluated not in any schedule\n", device)
 		if err := tuya.PowerControl(device, false); err != nil { //change it to true
 			fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
 			notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
@@ -134,20 +134,17 @@ func inBetweenReverse(i, min, max int) bool {
 	}
 }
 
-func isInAllSchedules(v []Validator) bool {
-	fmt.Printf("[VERBOSE] parsing isInAllSchedules\n")
-	if len(v) > 1 {
-		a := v[0].InSchedule
-		fmt.Printf("[VERBOSE] parsing isInAllSchedules 1st item %v\n", v[0].InSchedule)
-		for _, s := range v {
-			fmt.Printf("[VERBOSE] parsing isInAllSchedules each item %v\n", s.InSchedule)
-			if a != s.InSchedule {
-				fmt.Printf("[VERBOSE] parsing isInAllSchedules each item evaluated false match\n")
-				return false
-			}
+func noSchedules(v []Validator) bool {
+	fmt.Printf("[VERBOSE] parsing noSchedules\n")
+	for _, s := range v {
+		fmt.Printf("[VERBOSE] parsing noSchedules item %v\n", s.InSchedule)
+		if s.InSchedule {
+
+			fmt.Printf("[VERBOSE] parsing noSchedules item evaluated to be in a schedule, return false\n")
+			return false
 		}
 	}
-	fmt.Printf("[VERBOSE] parsing isInAllSchedules each item evaluated true match\n")
+	fmt.Printf("[VERBOSE] parsing noSchedules each item evaluated to not be in a schedule, returning true to issue power off\n")
 	return true
 }
 
