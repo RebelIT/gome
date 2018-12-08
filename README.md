@@ -15,28 +15,11 @@ GoLang Home (gome)
 
 ## Deploy it
 ### Note:
-*tuya device control is dependent on tuya-api, had issues with performance and blocking on rPI's due to cpu saturation. 
+* tuya device control is dependent on tuya-api, had issues with performance and blocking on rPI's due to cpu saturation. 
 see issue #17 for fixes*
-
-
-Ansible deployment
 * running on latest raspbian stretch (not tested on other releases)
-* update ansible/hosts with your local server info
-* secrets.yml in `ansible/roles/application/vars/secrets.yml` is needed
-  
-   ```
-   slack_secret: 'xxxxxx/xxxxx/xxxxxx' #slack token
-   ```
-   
-* run it
 
-   ```
-   --ask-sudo-pass may be required if running reboot role due to your local setup
-   ansible-playbook gome_deploy.yml --ask-vault-pass -i hosts --ask-sudo-pass
-   ```
-   
-* manually update the devices.json or start adding devices by using the /api/devices endpoint which will 
-update redis and the static devices.json. 
+Ansible deployment: see doco in ansible dir
 
 
 ### Supported Devices
