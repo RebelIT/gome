@@ -25,5 +25,5 @@ func SendSlackAlert (message string){
 	} else{
 		fmt.Printf("[INFO] slack alert sent: %s\n", message)
 	}
-	MetricHttpOut("https://hooks.slack.com/services/_redacted_", respCode, "POST")
+	MetricHttpOut("slack", respCode, "POST")
 }

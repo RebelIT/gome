@@ -163,7 +163,7 @@ func DeviceStatus(db string, addr string, port string, name string) {
 		return
 	}
 	defer resp.Body.Close()
-	notify.MetricHttpOut(url, resp.StatusCode, "GET")
+	notify.MetricHttpOut(name, resp.StatusCode, "GET")
 
 	if resp.StatusCode != 200 {
 		data.Alive = false

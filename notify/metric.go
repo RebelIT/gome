@@ -30,9 +30,9 @@ func MetricHttpIn(uri string, reponseCode int, method string){
 	sendCounter(measurement, tags)
 }
 
-func MetricHttpOut(uri string, reponseCode int, method string){
+func MetricHttpOut(destination string, reponseCode int, method string){
 	//emits a new counter for every external web request
-	tags := statsd.Tags("uri", uri, "response_code", strconv.Itoa(reponseCode))
+	tags := statsd.Tags("destination", destination, "response_code", strconv.Itoa(reponseCode), "method", method)
 	measurement := "gome_http_out"
 
 	sendCounter(measurement, tags)
