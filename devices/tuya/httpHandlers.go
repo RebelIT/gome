@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/cache"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -137,12 +138,14 @@ func GetSchedule(w http.ResponseWriter, r *http.Request) {
 	resp, err := ScheduleGet(dev)
 	if err != nil{
 		fmt.Printf("unable to get schedule status:  %v\n", err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	json.NewEncoder(w).Encode(resp)
 	return
 }
@@ -155,6 +158,7 @@ func SetSchedule(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil{
 		fmt.Printf("bad body %s\n", r.RequestURI)
+		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -162,17 +166,20 @@ func SetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.Unmarshal(body, &in); err != nil {
 		fmt.Printf("cant unmarshal %v\n", err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := scheduleSet(&in, dev); err != nil{
 		fmt.Printf("unable to set schedule:  %v\n", err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	w.WriteHeader(http.StatusOK)
 	return
 }
@@ -183,10 +190,12 @@ func DelSchedule(w http.ResponseWriter, r *http.Request) {
 
 	if err := scheduleDel(dev); err != nil{
 		fmt.Printf("unable to delete schedule:  %v\n", err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	w.WriteHeader(http.StatusOK)
 	return
 }
@@ -198,10 +207,12 @@ func UpdateSchedule(w http.ResponseWriter, r *http.Request) {
 
 	if err := scheduleUpdate(dev, status); err != nil{
 		fmt.Printf("unable to delete schedule:  %v\n", err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	w.WriteHeader(http.StatusOK)
 	return
 }

@@ -22,7 +22,9 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	if err != nil{
 		fmt.Println("[ERROR] Error in tyua Cli, will Retry")
+		notify.MetricCmd("tuya-cli", "failed")
 	}
+	notify.MetricCmd("tuya-cli", "success")
 
 	data.Device = name
 	if strings.Replace(cmdOut, "\n", "", -1) == "true"{
@@ -187,6 +189,7 @@ func tryTuyaCli(cmdName string, args []string) (string, error){
 		if err == nil{
 			return cmdOut, err
 		}
+		notify.MetricCmd("tuya-cli", "retry")
 		fmt.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
 		time.Sleep(retrySleep)
 	}
@@ -198,16 +201,20 @@ func tuyaCli(cmdName string, args []string) (string, error) {
 	out, err := exec.Command(cmdName, args...).Output()
 	if err != nil{
 		return "",err
+		notify.MetricCmd("tuya-cli", "failed")
 	} else {
 		fmtOut := strings.Replace(string(out), "\n", "", -1)
 		if fmtOut == "Set succeeded." || fmtOut == "false" || fmtOut == "true" {
+			notify.MetricCmd("tuya-cli", "success")
 			return fmtOut, nil
 		} else{
+			notify.MetricCmd("tuya-cli", "failed")
 			return "", fmt.Errorf("error with tuya-cli\n")
 		}
 	}
 
 }
+
 func dbConn()(redis.Conn, error){
 	var in Inputs
 

@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/cache"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -24,6 +25,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -34,11 +36,13 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	devDetail, err := cache.CacheGetHash(db, dev)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(devDetail)
 	return
@@ -56,6 +60,7 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -66,11 +71,13 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	s, err := cache.GetStatus(db, dev+"_"+action)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(s)
 	return
@@ -90,12 +97,14 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.Unmarshal(body, &a); err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -106,6 +115,7 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 	dbRet, err := cache.GetHashKey(db, redis.Args{dev})
 	if err != nil{
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -116,6 +126,7 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Post(url, "", strings.NewReader(""))
 	if err != nil{
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -123,10 +134,12 @@ func DeviceControl(w http.ResponseWriter, r *http.Request) {
 
 	if resp.StatusCode != 200 {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 	return
@@ -143,6 +156,7 @@ func DeviceStatus(db string, addr string, port string, name string){
 		return
 	}
 	defer resp.Body.Close()
+	notify.MetricHttpOut(url, resp.StatusCode, "GET")
 
 	if resp.StatusCode != 200 {
 		data.Alive = false
@@ -171,6 +185,7 @@ func DeviceApps(db string, addr string, port string, name string){
 		return
 	}
 	defer resp.Body.Close()
+	notify.MetricHttpOut(url, resp.StatusCode, "GET")
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	xml.Unmarshal(body, &apps)

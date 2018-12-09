@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/notify"
 	"github.com/rebelit/gome/runner"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +20,7 @@ func getDevices(w http.ResponseWriter,r *http.Request){
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -28,6 +30,7 @@ func getDevices(w http.ResponseWriter,r *http.Request){
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	json.NewEncoder(w).Encode(i)
 
 	return
@@ -41,6 +44,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -49,6 +53,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 
 	if err := json.Unmarshal(body, &i); err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -58,6 +63,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	deviceFile, err := os.OpenFile(common.FILE, os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -66,6 +72,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	bytes, err := ioutil.ReadAll(deviceFile)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -73,6 +80,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 
 	if err := json.Unmarshal(bytes, &fullDevs); err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -83,6 +91,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	newBytes, err := json.MarshalIndent(fullDevs, "", "    ")
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -91,6 +100,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	_, err = deviceFile.WriteAt(newBytes, 0)
 	if err != nil {
 		fmt.Println(err)
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -100,6 +110,7 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
 	json.NewEncoder(w).Encode(i)
 
 }
