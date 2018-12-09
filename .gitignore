@@ -5,3 +5,4 @@
 *.idea
 devices.json
 *secrets.json
+main

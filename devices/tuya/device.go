@@ -35,6 +35,8 @@ func DeviceStatus (db string, ip string, id string, key string, name string) {
 		fmt.Println("[ERROR] Error in adding "+name+" to cache will retry")
 		return
 	}
+
+	notify.MetricDeviceStatus(name, "tuya", data.Alive)
 	fmt.Println("[DEBUG] Done with Device Status for "+name)
 	return
 }
