@@ -9,9 +9,12 @@ configs:
   common:
     src: 'roles/telegraf/templates/common.inputs.conf'
     dest:  /etc/telegraf/telegraf.d/common.inputs.conf
-  # printer:
-  #   src: 'roles/telegraf/templates/printer.conf'
-  #   dest: /etc/telegraf/telegraf.d/printer.conf
+   printer:
+     src: 'roles/telegraf/templates/printer.conf'
+     dest: /etc/telegraf/telegraf.d/printer.conf
+  statsd:
+    src: 'roles/telegraf/templates/statsd.conf'
+    dest: /etc/telegraf/telegraf.d/statsd.conf
   global_tags:
     src: 'roles/telegraf/templates/global_tags.conf'
     dest: /etc/telegraf/telegraf.d/global_tags.conf
