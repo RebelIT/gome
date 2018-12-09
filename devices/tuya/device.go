@@ -200,8 +200,8 @@ func tryTuyaCli(cmdName string, args []string) (string, error){
 func tuyaCli(cmdName string, args []string) (string, error) {
 	out, err := exec.Command(cmdName, args...).Output()
 	if err != nil{
-		return "",err
 		notify.MetricCmd("tuya-cli", "failed")
+		return "",err
 	} else {
 		fmtOut := strings.Replace(string(out), "\n", "", -1)
 		if fmtOut == "Set succeeded." || fmtOut == "false" || fmtOut == "true" {
