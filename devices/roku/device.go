@@ -185,7 +185,7 @@ func DeviceApps(db string, addr string, port string, name string){
 		return
 	}
 	defer resp.Body.Close()
-	notify.MetricHttpOut(name+"Apps", resp.StatusCode, "GET")
+	notify.MetricHttpOut(name, resp.StatusCode, "GET")
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	xml.Unmarshal(body, &apps)

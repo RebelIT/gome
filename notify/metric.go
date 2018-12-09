@@ -74,6 +74,5 @@ func sendUnique(measurement string, tags statsd.Option, value string){
 		//log.Print(err)
 	}
 	defer c.Close()
-
 	c.Unique(measurement, value)
 }
