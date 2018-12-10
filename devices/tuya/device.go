@@ -1,12 +1,10 @@
 package tuya
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
-	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
-	"io/ioutil"
 	"log"
 	"os/exec"
 	"strconv"
@@ -15,7 +13,7 @@ import (
 )
 
 func DeviceStatus (addr string, id string, key string, deviceName string) {
-	data := Status{}
+	data := devices.Status{}
 
 	args := []string{"get","--ip", addr,"--id", id, "--key", key}
 	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
@@ -32,7 +30,7 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 	}
 	data.Device = deviceName
 
-	c, err := dbConn()
+	c, err := devices.DbConnect()
 	if err != nil{
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
@@ -48,113 +46,8 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 	return
 }
 
-func scheduleSet (s* Schedules, device string) (error){
-	key := device+"_schedule"
-	bytes, err := json.Marshal(s)
-	if err != nil{
-		log.Println(err)
-	}
-
-	c, err := dbConn()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-	if _, err := c.Do("SET", key, string(bytes)); err != nil{
-			return err
-	}
-
-	return nil
-}
-
-func ScheduleGet (device string) (Schedules, error){
-	s := Schedules{}
-	key := device+"_schedule"
-
-	c, err := dbConn()
-	if err != nil{
-		return s, err
-	}
-	defer c.Close()
-
-	value, err := redis.String(c.Do("GET", key))
-	json.Unmarshal([]byte(value), &s)
-	return s, nil
-}
-
-func scheduleDel (device string) (error){
-	key := device+"_schedule"
-
-	c, err := dbConn()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-
-	if _, err := c.Do("DEL", key, "*"); err != nil{
-		return err
-	}
-	return nil
-}
-
-func scheduleUpdate (device string, status string) (error){
-	s, err := ScheduleGet(device)
-	if err != nil{
-		fmt.Println(err)
-		return err
-	}
-
-	s.Status = status
-
-	if err := scheduleSet(&s,device); err != nil{
-		fmt.Println(err)
-		return err
-	}
-
-	return nil
-}
-
-func StatusGet (device string) (Status, error){
-	s := Status{}
-	key := device+"_status"
-
-	c, err := dbConn()
-	if err != nil{
-		return s, err
-	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return s, err
-	}
-
-	redis.ScanStruct(values, &s)
-
-	return s, nil
-}
-
-func detailsGet (device string) (Devices, error){
-	d := Devices{}
-	key := device
-
-	c, err := dbConn()
-	if err != nil{
-		return Devices{}, err
-	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return Devices{}, err
-	}
-
-	redis.ScanStruct(values, &d)
-	return d, nil
-}
-
 func PowerControl(device string, value bool) error {
-	d, err := detailsGet(device)
+	d, err := devices.DetailsGet(device)
 	if err != nil{
 		return err
 	}
@@ -211,22 +104,4 @@ func tuyaCli(cmdName string, args []string) (string, error) {
 		}
 	}
 
-}
-
-func dbConn()(redis.Conn, error){
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		return nil, err
-	}
-
-	json.Unmarshal(deviceFile, &in)
-
-	db := in.Database
-	conn, err := redis.Dial("tcp", db)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
 }

@@ -1,13 +1,8 @@
-package tuya
+package devices
 
-type Status struct{
-	Device	string `json:"device"`
-	Alive	bool `json:"alive"`
-	Url		string `json:"url"`
-}
-
-type DeviceAction struct{
-	Action		bool `json:"action"`
+type Inputs struct{
+	Database	string `json:"database"`
+	Devices		[]Devices
 }
 
 type Devices struct{
@@ -19,9 +14,14 @@ type Devices struct{
 	Key 		string `json:"key"`
 }
 
-type Inputs struct{
-	Database	string `json:"database"`
-	Devices		[]Devices
+type Status struct{
+	Device	string `json:"device"`
+	Alive	bool `json:"alive"`
+	Url		string `json:"url"`
+}
+
+type DeviceAction struct{
+	Action		bool `json:"action"`
 }
 
 type Schedules struct {
@@ -36,4 +36,3 @@ type Schedule struct{
 	On		string `json:"on"`
 	Off 	string `json:"off"`
 }
-

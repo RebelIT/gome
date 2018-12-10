@@ -2,6 +2,7 @@ package listener
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"github.com/rebelit/gome/devices/tuya"
@@ -32,9 +33,23 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	//Core
-	Route{"coreDevice", "GET", "/api/device/all", getDevices},
-	Route{"coreDevice", "POST", "/api/device", addDevice},
+	//Devices Endpoints
+	Route{"device", "GET", "/api/device", getDevices},
+	Route{"device", "POST", "/api/device", addDevice},
+	Route{"device", "POST", "/api/device/tuya/{name}/{state}", tuya.HandleControl},
+	//Schedule Endpoints
+	Route{"schedule", "GET", "/api/schedule/{device}", devices.HandleScheduleGet},
+	Route{"schedule", "POST", "/api/schedule/{device}", devices.HandleScheduleSet},
+	Route{"schedule", "DELETE", "/api/schedule/{device}", devices.HandleScheduleDel},
+	Route{"schedule", "PUT", "/api/schedule/{device}", devices.HandleScheduleUpdate},
+	//Details Endpoints
+	Route{"details", "GET", "/api/details/{device}", devices.HandleDetails},
+	Route{"status", "GET", "/api/status/{device}", devices.HandleStatus},
+
+
+
+
+
 	//RaspberryPi
 	Route{"rpi", "GET", "/api/rpi/{device}/details", rpi.HandleDetails},
 	Route{"rpi", "GET", "/api/rpi/{device}/status", rpi.HandleStatus},
@@ -43,12 +58,4 @@ var routes = Routes{
 	Route{"roku", "GET", "/api/roku/{roku}/details", roku.HandleDetails},
 	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
 	Route{"roku", "POST", "/api/roku/{roku}/launch/{app}", roku.HandleControl},
-	//Tuya
-	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.HandleDetails},
-	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.HandleStatus},
-	Route{"tuya", "POST", "/api/tuya/{device}/status/{state}", tuya.HandleControl},
-	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.HandleScheduleGet},
-	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.HandleScheduleSet},
-	Route{"tuya", "DELETE", "/api/tuya/{device}/schedule", tuya.HandleScheduleDel},
-	Route{"tuya", "PUT", "/api/tuya/{device}/schedule/{status}", tuya.HandleScheduleUpdate},
 }
