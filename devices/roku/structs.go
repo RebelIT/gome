@@ -1,5 +1,12 @@
 package roku
 
+import "net/http"
+
+type Roku struct {
+	address string
+	client  *http.Client
+}
+
 type Devices struct{
 	Device		string `json:"device"`
 	Name		string `json:"name"`

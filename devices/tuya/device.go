@@ -4,41 +4,47 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
-	"github.com/rebelit/gome/cache"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/notify"
 	"io/ioutil"
+	"log"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func DeviceStatus (db string, ip string, id string, key string, name string) {
-	fmt.Println("[DEBUG] Starting Device Status for "+name)
+func DeviceStatus (addr string, id string, key string, deviceName string) {
 	data := Status{}
 
-	args := []string{"get","--ip", ip,"--id", id, "--key", key}
+	args := []string{"get","--ip", addr,"--id", id, "--key", key}
 	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	if err != nil{
-		fmt.Println("[ERROR] Error in tyua Cli, will Retry")
+		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		notify.MetricCmd("tuya-cli", "failed")
 	}
 	notify.MetricCmd("tuya-cli", "success")
 
-	data.Device = name
 	if strings.Replace(cmdOut, "\n", "", -1) == "true"{
 		data.Alive = true
 	} else {
 		data.Alive = false
 	}
+	data.Device = deviceName
 
-	if err := cache.SetHash(db, redis.Args{name+"_"+"status"}.AddFlat(data)); err != nil {
-		fmt.Println("[ERROR] Error in adding "+name+" to cache will retry")
+	c, err := dbConn()
+	if err != nil{
+		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+		return
+	}
+	defer c.Close()
+
+	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)); err != nil{
+		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
 	}
 
-	fmt.Println("[DEBUG] Done with Device Status for "+name)
+	log.Printf("[DEBUG] %s : status done\n", deviceName)
 	return
 }
 
@@ -46,17 +52,15 @@ func scheduleSet (s* Schedules, device string) (error){
 	key := device+"_schedule"
 	bytes, err := json.Marshal(s)
 	if err != nil{
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	c, err := dbConn()
 	if err != nil{
-		fmt.Println("Unable to connect to database")
 		return err
 	}
 	defer c.Close()
 	if _, err := c.Do("SET", key, string(bytes)); err != nil{
-			fmt.Printf("Unable to set %s schedule\n", device)
 			return err
 	}
 
@@ -69,7 +73,6 @@ func ScheduleGet (device string) (Schedules, error){
 
 	c, err := dbConn()
 	if err != nil{
-		fmt.Println("Unable to connect to database")
 		return s, err
 	}
 	defer c.Close()
@@ -84,13 +87,11 @@ func scheduleDel (device string) (error){
 
 	c, err := dbConn()
 	if err != nil{
-		fmt.Println("Unable to connect to database")
 		return err
 	}
 	defer c.Close()
 
 	if _, err := c.Do("DEL", key, "*"); err != nil{
-		fmt.Printf("Unable to delete %s schedule\n", device)
 		return err
 	}
 	return nil
@@ -119,7 +120,6 @@ func StatusGet (device string) (Status, error){
 
 	c, err := dbConn()
 	if err != nil{
-		fmt.Println("Unable to connect to database")
 		return s, err
 	}
 	defer c.Close()
@@ -140,7 +140,6 @@ func detailsGet (device string) (Devices, error){
 
 	c, err := dbConn()
 	if err != nil{
-		fmt.Println("Unable to connect to database")
 		return Devices{}, err
 	}
 	defer c.Close()
@@ -219,7 +218,6 @@ func dbConn()(redis.Conn, error){
 
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 

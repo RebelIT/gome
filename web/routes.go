@@ -42,13 +42,13 @@ var routes = Routes{
 	//Roku
 	Route{"roku", "GET", "/api/roku/{roku}/details", roku.HandleDetails},
 	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
-	Route{"roku", "POST", "/api/roku/{roku}", roku.DeviceControl},
+	Route{"roku", "POST", "/api/roku/{roku}/launch/{app}", roku.HandleControl},
 	//Tuya
-	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.GetDetails},
-	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.GetStatus},
-	Route{"tuya", "POST", "/api/tuya/{device}", tuya.DeviceControl},
-	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.GetSchedule},
-	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.SetSchedule},
-	Route{"tuya", "DELETE", "/api/tuya/{device}/schedule", tuya.DelSchedule},
-	Route{"tuya", "PUT", "/api/tuya/{device}/schedule/{status}", tuya.UpdateSchedule},
+	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.HandleDetails},
+	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.HandleStatus},
+	Route{"tuya", "POST", "/api/tuya/{device}/status/{state}", tuya.HandleControl},
+	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.HandleScheduleGet},
+	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.HandleScheduleSet},
+	Route{"tuya", "DELETE", "/api/tuya/{device}/schedule", tuya.HandleScheduleDel},
+	Route{"tuya", "PUT", "/api/tuya/{device}/schedule/{status}", tuya.HandleScheduleUpdate},
 }
