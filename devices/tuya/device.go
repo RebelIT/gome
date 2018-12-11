@@ -37,7 +37,7 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 	}
 	defer c.Close()
 
-	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)); err != nil{
+	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)...); err != nil{
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
 	}
@@ -52,8 +52,8 @@ func PowerControl(device string, value bool) error {
 		return err
 	}
 	fmt.Printf("[INFO] issuing power control for %s\n", device)
-	args := []string{"set","--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
-	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
+	args := []string{"set","--ip", d.Addr, "--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
+	cmdOut, err := tryTuyaCli("tuya-cli", args)
 	if err != nil{
 		return err
 	} else {

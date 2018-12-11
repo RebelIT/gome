@@ -43,7 +43,7 @@ var routes = Routes{
 	Route{"schedule", "GET", "/api/schedule/{device}", devices.HandleScheduleGet},
 	Route{"schedule", "POST", "/api/schedule/{device}", devices.HandleScheduleSet},
 	Route{"schedule", "DELETE", "/api/schedule/{device}", devices.HandleScheduleDel},
-	Route{"schedule", "PUT", "/api/schedule/{device}", devices.HandleScheduleUpdate},
+	Route{"schedule", "POST", "/api/schedule/{device}/{status}", devices.HandleScheduleUpdate},
 	//Details Endpoints
 	Route{"details", "GET", "/api/details/{device}", devices.HandleDetails},
 	Route{"status", "GET", "/api/status/{device}", devices.HandleStatus},

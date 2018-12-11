@@ -1,6 +1,7 @@
 package roku
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/notify"
 	"log"
@@ -17,6 +18,7 @@ func HandleLaunchApp(w http.ResponseWriter, r *http.Request) {
 	deviceName := vars["device"]
 	appName := vars["app"]
 
+	fmt.Printf("roku app load %s %s\n", deviceName, appName)
 	if err := launchApp(deviceName,appName); err != nil{
 		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
 		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)

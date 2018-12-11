@@ -1,6 +1,7 @@
 package roku
 
 import (
+	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
@@ -50,6 +51,7 @@ func (r Roku) goHomeScreen() error{
 
 func launchApp(deviceName string, app string) error {
 	d, err := devices.DetailsGet(deviceName)
+	fmt.Printf("roku details %+v\n", d)
 	if err != nil{
 		return err
 	}
@@ -58,10 +60,13 @@ func launchApp(deviceName string, app string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("roku details connected to %s\n", r.address)
 
 	id, err := getAppId(app)
 	if err != nil{
+		return err
 	}
+	fmt.Printf("roku details app %s\n", id)
 
 	uri := "/launch/"+id
 	resp, err := r.Do(uri)
@@ -109,7 +114,7 @@ func DeviceStatus(addr string, deviceName string){
 	}
 	defer c.Close()
 
-	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)); err != nil{
+	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)...); err != nil{
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
 	}
