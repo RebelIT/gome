@@ -35,7 +35,7 @@ func getAppId(app string)(string, error){
 	case "youtube":
 		id = YOUTUBE
 	default:
-		return "", errors.New("no pp with name: "+app+" found")
+		return "", errors.New("no app "+app+" found")
 	}
 
 	return strconv.Itoa(id), nil

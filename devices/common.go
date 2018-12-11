@@ -114,7 +114,6 @@ func ScheduleUpdate (device string, status string) (error){
 	return nil
 }
 
-
 func DbConnect()(redis.Conn, error){
 	var in Inputs
 
@@ -131,4 +130,16 @@ func DbConnect()(redis.Conn, error){
 		return nil, err
 	}
 	return conn, nil
+}
+
+func LoadDevices()(Inputs, error){
+	var in Inputs
+	deviceFile, err := ioutil.ReadFile(common.FILE)
+	if err != nil {
+		fmt.Println(err)
+		return in, err
+	}
+	json.Unmarshal(deviceFile, &in)
+
+	return in, nil
 }

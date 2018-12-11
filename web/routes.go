@@ -37,6 +37,8 @@ var routes = Routes{
 	Route{"device", "GET", "/api/device", getDevices},
 	Route{"device", "POST", "/api/device", addDevice},
 	Route{"device", "POST", "/api/device/tuya/{name}/{state}", tuya.HandleControl},
+	Route{"device", "POST", "/api/device/roku/{name}/app/{app}", roku.HandleLaunchApp},
+	Route{"device", "POST", "/api/device/pi/{name}/action", rpi.HandleControl},
 	//Schedule Endpoints
 	Route{"schedule", "GET", "/api/schedule/{device}", devices.HandleScheduleGet},
 	Route{"schedule", "POST", "/api/schedule/{device}", devices.HandleScheduleSet},
@@ -45,17 +47,4 @@ var routes = Routes{
 	//Details Endpoints
 	Route{"details", "GET", "/api/details/{device}", devices.HandleDetails},
 	Route{"status", "GET", "/api/status/{device}", devices.HandleStatus},
-
-
-
-
-
-	//RaspberryPi
-	Route{"rpi", "GET", "/api/rpi/{device}/details", rpi.HandleDetails},
-	Route{"rpi", "GET", "/api/rpi/{device}/status", rpi.HandleStatus},
-	Route{"rpi", "POST", "/api/rpi/{device}", rpi.DeviceControl},
-	//Roku
-	Route{"roku", "GET", "/api/roku/{roku}/details", roku.HandleDetails},
-	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
-	Route{"roku", "POST", "/api/roku/{roku}/launch/{app}", roku.HandleControl},
 }

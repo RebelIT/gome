@@ -1,11 +1,9 @@
 package roku
 
 import (
-	"encoding/json"
 	"github.com/gomodule/redigo/redis"
-	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -51,7 +49,7 @@ func (r Roku) goHomeScreen() error{
 }
 
 func launchApp(deviceName string, app string) error {
-	d, err := detailsGet(deviceName)
+	d, err := devices.DetailsGet(deviceName)
 	if err != nil{
 		return err
 	}
@@ -78,7 +76,7 @@ func launchApp(deviceName string, app string) error {
 }
 
 func DeviceStatus(addr string, deviceName string){
-	data := Status{}
+	data := devices.Status{}
 	uriPart := "/"
 
 	r, err := Connect(addr)
@@ -90,6 +88,7 @@ func DeviceStatus(addr string, deviceName string){
 	resp, err := r.Query(uriPart)
 	if err != nil {
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return
 	}
 	defer resp.Body.Close()
@@ -103,7 +102,7 @@ func DeviceStatus(addr string, deviceName string){
 	}
 	data.Device = deviceName
 
-	c, err := dbConn()
+	c, err := devices.DbConnect()
 	if err != nil{
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
@@ -117,61 +116,4 @@ func DeviceStatus(addr string, deviceName string){
 
 	log.Printf("[DEBUG] %s : status done\n", deviceName)
 	return
-}
-
-func detailsGet (device string) (Devices, error){
-	d := Devices{}
-	key := device
-
-	c, err := dbConn()
-	if err != nil{
-		return Devices{}, err
-	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return Devices{}, err
-	}
-
-	redis.ScanStruct(values, &d)
-	return d, nil
-}
-
-func StatusGet (device string) (Status, error){
-	s := Status{}
-	key := device+"_status"
-
-	c, err := dbConn()
-	if err != nil{
-		return s, err
-	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return s, err
-	}
-
-	redis.ScanStruct(values, &s)
-
-	return s, nil
-}
-
-func dbConn()(redis.Conn, error){
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		return nil, err
-	}
-
-	json.Unmarshal(deviceFile, &in)
-
-	db := in.Database
-	conn, err := redis.Dial("tcp", db)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
 }
