@@ -1,0 +1,12 @@
+{
+  "intents": [
+    {"intent": "TvPower"},
+    {"intent": "CalendarOn"},
+    {"intent": "CalendarOff"},
+    {"intent": "ForceOff"},
+    {"intent": "ForceCycle"},
+    {"intent": "AMAZON.HelpIntent"},
+    {"intent": "AMAZON.StopIntent"},
+    {"intent": "AMAZON.CancelIntent"}
+  ]
+}
