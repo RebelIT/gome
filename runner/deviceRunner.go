@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/roku"
@@ -13,7 +12,7 @@ import (
 )
 
 func GoGoRunners() error {
-	fmt.Println("[INFO] runner, starting")
+	log.Println("[INFO] runner, starting")
 	for {
 		devs, err := devices.LoadDevices()
 		if err != nil{
@@ -43,7 +42,7 @@ func GoGoRunners() error {
 }
 
 func GoGODeviceLoader() error {
-	fmt.Println("[INFO] loader, starting")
+	log.Println("[INFO] loader, starting")
 	devs, err := devices.LoadDevices()
 	if err != nil{
 		log.Printf("[WARN] runner, unable to load devices from file. skipping this round")
@@ -58,7 +57,7 @@ func DeviceLoader(in devices.Inputs) {
 	db := in.Database
 	c, err := redis.Dial("tcp", db)
 	if err != nil {
-		fmt.Println("[ERROR] Error writing to redis, catch it next time around")
+		log.Println("[ERROR] Error writing to redis, catch it next time around")
 	}
 
 	defer c.Close()
@@ -66,9 +65,9 @@ func DeviceLoader(in devices.Inputs) {
 		log.Printf("[INFO] loader, %s working", d.Name)
 
 		if _, err := c.Do("HMSET", redis.Args{d.Name}.AddFlat(d)...);err != nil {
-			fmt.Printf("[ERROR] loader, %s : %s\n ", d.Name, err)
+			log.Printf("[ERROR] loader, %s : %s\n ", d.Name, err)
 		}
 	}
-	fmt.Println("[INFO] loader, all done")
+	log.Println("[INFO] loader, all done")
 	return
 }

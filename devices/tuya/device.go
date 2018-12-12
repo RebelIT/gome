@@ -51,13 +51,13 @@ func PowerControl(device string, value bool) error {
 	if err != nil{
 		return err
 	}
-	fmt.Printf("[INFO] issuing power control for %s\n", device)
+	log.Printf("[INFO] issuing power control for %s\n", device)
 	args := []string{"set","--ip", d.Addr, "--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
 	cmdOut, err := tryTuyaCli("tuya-cli", args)
 	if err != nil{
 		return err
 	} else {
-		fmt.Printf("[DEBUG]: cmd return for %s : %s\n", device, cmdOut)
+		log.Printf("[DEBUG]: cmd return for %s : %s\n", device, cmdOut)
 		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
 		if fmtOut == "Set succeeded."{
 			notify.SendSlackAlert("Tuya PowerControl initiated for "+device+" to "+strconv.FormatBool(value)+"")
@@ -81,7 +81,7 @@ func tryTuyaCli(cmdName string, args []string) (string, error){
 			return cmdOut, err
 		}
 		notify.MetricCmd("tuya-cli", "retry")
-		fmt.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
+		log.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
 		time.Sleep(retrySleep)
 	}
 

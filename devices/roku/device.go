@@ -1,7 +1,6 @@
 package roku
 
 import (
-	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
@@ -15,16 +14,15 @@ func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 	if err != nil{
 		return http.Response{}, err
 	}
-	fmt.Printf("dbData:  %+v\n", d)
+	log.Printf("dbData:  %+v\n", d)
 	url := "http://"+d.Addr+":"+d.NetPort+uriPart
-	fmt.Printf("roku doing post %s\n")
+	log.Printf("roku doing post %s\n")
 	resp, err := http.Post(url, "", strings.NewReader(""))
 	if err != nil{
-		fmt.Println(err)
+		log.Println(err)
 		return *resp, err
 	}
-	fmt.Printf("roku post done app %s\n")
-
+	log.Printf("roku post done app %s\n")
 	return *resp, nil
 }
 
@@ -37,11 +35,9 @@ func rokuGet(uriPart string, deviceName string) (http.Response, error) {
 
 	resp, err := http.Get(url)
 	if err != nil{
-		fmt.Println(err)
-
+		log.Println(err)
 		return *resp, err
 	}
-
 	return *resp, nil
 }
 
@@ -50,18 +46,17 @@ func launchApp(deviceName string, app string) error {
 	if err != nil{
 		return err
 	}
-	fmt.Printf("roku details app %s device %s\n", id, deviceName)
+	log.Printf("roku details app %s device %s\n", id, deviceName)
 
 	uri := "/launch/"+id
 	resp, err := rokuPost(uri, deviceName)
-	fmt.Printf("roku launched app %s\n", id)
+	log.Printf("roku launched app %s\n", id)
 	if err != nil{
 		return err
 	}
 	if resp.StatusCode != 200{
 		return err
 	}
-
 	return nil
 }
 

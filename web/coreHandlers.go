@@ -7,6 +7,7 @@ import (
 	"github.com/rebelit/gome/notify"
 	"github.com/rebelit/gome/runner"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 )
@@ -14,17 +15,17 @@ import (
 //core handlers to update the device inventory.  devices.json used on gome startup to load last state into redis
 //
 func getDevices(w http.ResponseWriter,r *http.Request){
-	fmt.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
+	log.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
 	var i Inputs
 
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("[DEBUG] Loaded json")
+	log.Println("[DEBUG] Loaded json")
 
 	json.Unmarshal(deviceFile, &i)
 

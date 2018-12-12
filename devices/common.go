@@ -2,7 +2,6 @@ package devices
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
 	"io/ioutil"
@@ -44,7 +43,7 @@ func DetailsGet (device string) (Devices, error){
 		return Devices{}, err
 	}
 	redis.ScanStruct(values, &d)
-	fmt.Printf("detailsGet db data %+v\n", d)
+	log.Printf("detailsGet db data %+v\n", d)
 	return d, nil
 }
 
@@ -100,14 +99,12 @@ func ScheduleDel (device string) (error){
 func ScheduleUpdate (device string, status string) (error){
 	s, err := ScheduleGet(device)
 	if err != nil{
-		fmt.Println(err)
 		return err
 	}
 
 	s.Status = status
 
 	if err := ScheduleSet(&s,device); err != nil{
-		fmt.Println(err)
 		return err
 	}
 
@@ -136,7 +133,6 @@ func LoadDevices()(Inputs, error){
 	var in Inputs
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
-		fmt.Println(err)
 		return in, err
 	}
 	json.Unmarshal(deviceFile, &in)

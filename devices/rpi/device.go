@@ -1,7 +1,6 @@
 package rpi
 
 import (
-	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
@@ -23,8 +22,6 @@ func piGet(uriPart string, deviceName string) (http.Response, error) {
 
 	resp, err := http.Get(url)
 	if err != nil{
-		fmt.Println(err)
-
 		return *resp, err
 	}
 

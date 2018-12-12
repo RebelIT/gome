@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
@@ -12,7 +11,7 @@ import (
 )
 
 func GoGoScheduler() error {
-	fmt.Println("[INFO] scheduler, starting")
+	log.Println("[INFO] scheduler, starting")
 	//var in Inputs
 
 	for{

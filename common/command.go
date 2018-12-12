@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 	"time"
 )
@@ -18,7 +19,7 @@ func TryCommand(cmdName string, args []string) (string, error){
 		if err == nil{
 			return cmdOut, err
 		}
-		fmt.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
+		log.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
 		time.Sleep(retrySleep)
 	}
 
