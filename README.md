@@ -4,43 +4,40 @@ GoLang Home (gome)
 
 ## About it
    I wanted to automate my home and all my IoT devices, I buy cheap and build from scratch.  There are many home
-   automation systems out there but I didn't want any vendor or protocol lock. So im building my own starting with an 
-   API only and later adding a web-ui for tablet control. since I have many raspberry Pi's doing many things around my 
+   automation systems out there but I didn't want any vendor or protocol lock. So I'm building my own starting with an 
+   API only and later adding a web-ui for tablet control. Since I have many raspberry Pi's doing many things around my 
    house this can tie it all together for central management and control. 
 
-   starts up with a base devices.json in the root dir to load into a redis database from there adding more endpoints
-   to add/remove devices from the database and update the json.
+   Starts up with a base devices.json loaded into redis from there endpoints to add/remove devices from the database 
+   and update the json.
    
-#### Work in progress as I learn GOLang and have time to play. :)
+#### Still a work in progress as I contintue to learn GOLang.  but it works! :)
 
 ## Deploy it
 ### Note:
-* tuya device control is dependent on tuya-api, had issues with performance and blocking on rPI's due to cpu saturation. 
+* tuya wall outlets and light switches control is dependent on tuya-api, had issues with performance and blocking on 
+rPI's due to cpu saturation. 
 see issue #17 for fixes*
-* running on latest raspbian stretch (not tested on other releases)
+* tested on latest raspbian stretch
 
 Ansible deployment: see doco in ansible dir
 
 
 ### Supported Devices
-   * Custom RaspberryPi API
-   * Roku
-   * Tuya WiFi outlets (with external tuya-cli dependency)
-   * Scheduler for outlets to auto turn on and off on date/time
-   * (Coming Soon) Tuya WiFi light switches (with external tuya-cli dependency)
-   * (Coming Soon) Plex API - not sure yet what i can do with it
-   * (Coming Soon) Amazon Alexa integration - voice control this central management beast
-   * (Coming Soon) Scheduler for light switches to auto turn on and off on date/time
+   -[x] Custom RaspberryPi API
+   -[x] Roku
+   -[x] Tuya WiFi outlets (with external tuya-cli dependency)
+   -[x] Scheduler for outlets to auto turn on and off on date/time
+   -[ ] Tuya WiFi light switches (with external tuya-cli dependency
+   -[ ] Plex API - not sure yet what i can do with it
+   -[ ] Amazon Alexa integration - voice control this central management beast
+   -[ ] Scheduler for light switches to auto turn on and off on date/time
+   -[ ] web-ui - feature issue added
    
-## Usage notes
-Need to automate these yet
-   * devices.json and secrets.json required in the root gome directory
-   * still dependent in redis (working on an easier lightweight key:value runtime DB)
-   * refer to examples in example directory for api call examples
-
-## Custom RaspberryPi setup
+   
+## RaspberryPi IoT devices
    
    each one of my rPI's has an API endpoint to control it
    
    Example:  [API ansible Role to setup an API on a raspberry pi](https://github.com/RebelIT/ansible-piDAK) this rPI api
-   is used in this project to control the individual rPI's
+   is used in this project to control the individual rPI's.
