@@ -1,81 +1,73 @@
 package runner
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/gomodule/redigo/redis"
-	"github.com/rebelit/gome/cache"
-	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
-	"io/ioutil"
+	"log"
 	"time"
 )
 
 func GoGoRunners() error {
-	fmt.Println("[INFO] Starting runners")
-	var in Inputs
-
+	log.Println("[INFO] runner, starting")
 	for {
-		deviceFile, err := ioutil.ReadFile(common.FILE)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-		json.Unmarshal(deviceFile, &in)
-		db := in.Database
+		devs, err := devices.LoadDevices()
+		if err != nil{
+			log.Printf("[WARN] runner, unable to load devices from file. skipping this round")
+		}else{
+			for _, d := range (devs.Devices) {
+				switch d.Device {
+				case "pi":
+					go rpi.DeviceStatus(d.Name)
 
-		for _, d := range (in.Devices) {
-			switch d.Device {
-			case "pi":
-				go rpi.DeviceStatus(db, d.Addr, d.NetPort, d.Name)
+				case "roku":
+					go roku.DeviceStatus(d.Name)
 
-			case "roku":
-				go roku.DeviceStatus(db, d.Addr, d.NetPort, d.Name)
-				// Assumption that all roku's use the same account and apps are in sync.
-				go roku.DeviceApps(db, d.Addr, d.NetPort, d.Name)
+				case "tuya":
+					go tuya.DeviceStatus(d.Addr, d.Id, d.Key, d.Name)
 
-			case "tuya":
-				go tuya.DeviceStatus(db, d.Addr, d.Id, d.Key, d.Name)
-
-			default:
-				fmt.Println("[ERROR] No device typse match for "+ d.Name)
+				default:
+					log.Printf("[WARN] runner, %s no device types match", d.Name)
+				}
 			}
 		}
 		time.Sleep(time.Second *30)
 	}
 
-	notify.SendSlackAlert("Device runner broke out of loop")
+	notify.SendSlackAlert("[ERROR] runner, routine broke out of loop")
 	return nil
 }
 
 func GoGODeviceLoader() error {
-	fmt.Println("[INFO] Starting Device Loader")
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		fmt.Println(err)
-		return err
+	log.Println("[INFO] loader, starting")
+	devs, err := devices.LoadDevices()
+	if err != nil{
+		log.Printf("[WARN] runner, unable to load devices from file. skipping this round")
 	}
-	fmt.Println("[INFO] Loaded json")
-	json.Unmarshal(deviceFile, &in)
-	db := in.Database
-
-	go DeviceLoader(db, in)
+	go DeviceLoader(devs)
 
 	return nil
 }
 
-func DeviceLoader(db string, in Inputs) {
+func DeviceLoader(in devices.Inputs) {
 	//Load Devices into database from startup json
+	db := in.Database
+	c, err := redis.Dial("tcp", db)
+	if err != nil {
+		log.Println("[ERROR] Error writing to redis, catch it next time around")
+	}
+
+	defer c.Close()
 	for _, d := range in.Devices {
-		fmt.Println("[DEBUG] Adding: " + d.Name)
-		if err := cache.SetHash(db, redis.Args{d.Name}.AddFlat(d));err != nil{
-			fmt.Printf("error loading %s\n ",err)
+		log.Printf("[INFO] loader, %s working", d.Name)
+
+		if _, err := c.Do("HMSET", redis.Args{d.Name}.AddFlat(d)...);err != nil {
+			log.Printf("[ERROR] loader, %s : %s\n ", d.Name, err)
 		}
 	}
+	log.Println("[INFO] loader, all done")
 	return
 }

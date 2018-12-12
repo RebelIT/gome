@@ -1,57 +1,51 @@
 package runner
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
-	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
 func GoGoScheduler() error {
-	fmt.Println("[INFO] Starting scheduler")
-	var in Inputs
+	log.Println("[INFO] scheduler, starting")
+	//var in Inputs
 
-	for {
-		deviceFile, err := ioutil.ReadFile(common.FILE)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-		json.Unmarshal(deviceFile, &in)
+	for{
+		devs, err := devices.LoadDevices()
+		if err != nil{
+			log.Printf("[WARN] scheduler, unable to load devices from file. skipping this round")
+		}else {
+			for _, d := range (devs.Devices) {
+				switch d.Device {
+				case "tuya":
+					go doSchedule(d.Name)
 
-		for _, d := range (in.Devices) {
-			switch d.Device {
-			case "tuya":
-
-				go doSchedule(d.Name)
-
-			default:
-				fmt.Printf("[WARN] No device type match for %s, dont schedule anything\n", d.Name)
+				default:
+					log.Printf("[WARN] scheduler, %s no device types match", d.Name)
+				}
 			}
 		}
 		time.Sleep(time.Second *60)
 	}
 
-	notify.SendSlackAlert("Scheduler broke out of loop")
+	notify.SendSlackAlert("[ERROR] scheduler, routine broke out of loop")
 	return nil
 }
 
 func doSchedule(device string) {
 	_, iTime, day, _ := splitTime()
-	schedule, err := tuya.ScheduleGet(device)
+	schedule, err := devices.ScheduleGet(device)
 	if err != nil {
-		fmt.Printf("[WARN] could not get schedule or schedule does not exist yet\n")
-		fmt.Printf("[WARN] %s\n", err)
+		log.Printf("[WARN] scheduler, %s : %s\n", device, err)
 	}
 
-	devStatus, err := tuya.StatusGet(device)
+	devStatus, err := devices.StatusGet(device)
 	if err != nil {
-		fmt.Printf("[ERROR] getting device status from database: %s\n", err)
+		log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
 	}
 
 	scheduleOutCol := []Validator{}
@@ -63,7 +57,7 @@ func doSchedule(device string) {
 				onTime, _ := strconv.Atoi(s.On)   //time of day device is on
 				offTime, _ := strconv.Atoi(s.Off) //time of day device is off
 
-				//technically don't need `doChange` and `changeTo` anymore but I left it to debug later for mismatch issues.
+				//technically don't need `changeTo` anymore but I left it for now.
 				doChange, changeTo, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
 
 				scheduleOut.ChangeTo = changeTo
@@ -75,27 +69,22 @@ func doSchedule(device string) {
 		}
 	}
 
-	fmt.Printf("[VERBOSE] %s full validate array:  %+v\n", device, scheduleOutCol)
 	//if device is in any enabled schedule it must be on
 	for _, s := range scheduleOutCol {
-		fmt.Printf("[VERBOSE] %s inSchedule %v\n", device, s.InSchedule)
 		if s.InSchedule && s.DoChange {
-			fmt.Printf("[VERBOSE] %s inSchedule %v validated changing it\n", device, s.InSchedule)
 			if err := tuya.PowerControl(device, true); err != nil { //change it to true
-				fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-				notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
+				log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
+				notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
 			}
 		}
 	}
 
 	//if device is not in  any enabled schedule it must be off
 	if noSchedules(scheduleOutCol) {
-		fmt.Printf("[VERBOSE] %s evaluated not in any schedule\n", device)
 		if devStatus.Alive {
-			fmt.Printf("[VERBOSE] %s evaluated not in any schedule but deviceStatus is alive:true\n", device)
 			if err := tuya.PowerControl(device, false); err != nil { //change it to true
-				fmt.Printf("[ERROR] failed to change powerstate: %s\n", err)
-				notify.SendSlackAlert("Scheduler [ERROR] failed to change powerstate for " + device)
+				log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
+				notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
 			}
 		}
 	}
@@ -138,16 +127,11 @@ func inBetweenReverse(i, min, max int) bool {
 }
 
 func noSchedules(v []Validator) bool {
-	fmt.Printf("[VERBOSE] parsing noSchedules\n")
 	for _, s := range v {
-		fmt.Printf("[VERBOSE] parsing noSchedules item %v\n", s.InSchedule)
 		if s.InSchedule {
-
-			fmt.Printf("[VERBOSE] parsing noSchedules item evaluated to be in a schedule, return false\n")
 			return false
 		}
 	}
-	fmt.Printf("[VERBOSE] parsing noSchedules each item evaluated to not be in a schedule, returning true to issue power off\n")
 	return true
 }
 

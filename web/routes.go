@@ -2,21 +2,11 @@ package listener
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
 	"github.com/rebelit/gome/devices/tuya"
-	"net/http"
 )
-
-type Route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
-}
-
-type Routes []Route
-
 func NewRouter() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
@@ -32,23 +22,18 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	//Core
-	Route{"coreDevice", "GET", "/api/device/all", getDevices},
-	Route{"coreDevice", "POST", "/api/device", addDevice},
-	//RaspberryPi
-	Route{"rpi", "GET", "/api/rpi/{device}/details", rpi.HandleDetails},
-	Route{"rpi", "GET", "/api/rpi/{device}/status", rpi.HandleStatus},
-	Route{"rpi", "POST", "/api/rpi/{device}", rpi.DeviceControl},
-	//Roku
-	Route{"roku", "GET", "/api/roku/{roku}/details", roku.HandleDetails},
-	Route{"roku", "GET", "/api/roku/{roku}/status", roku.HandleStatus},
-	Route{"roku", "POST", "/api/roku/{roku}", roku.DeviceControl},
-	//Tuya
-	Route{"tuya", "GET", "/api/tuya/{device}/details", tuya.GetDetails},
-	Route{"tuya", "GET", "/api/tuya/{device}/status", tuya.GetStatus},
-	Route{"tuya", "POST", "/api/tuya/{device}", tuya.DeviceControl},
-	Route{"tuya", "GET", "/api/tuya/{device}/schedule", tuya.GetSchedule},
-	Route{"tuya", "POST", "/api/tuya/{device}/schedule", tuya.SetSchedule},
-	Route{"tuya", "DELETE", "/api/tuya/{device}/schedule", tuya.DelSchedule},
-	Route{"tuya", "PUT", "/api/tuya/{device}/schedule/{status}", tuya.UpdateSchedule},
+	//Devices Endpoints
+	Route{"device", "GET", "/api/devices", getDevices},
+	Route{"device", "POST", "/api/devices/new", addDevice},
+	Route{"device", "POST", "/api/tuya/{device}/{state}", tuya.HandleControl},
+	Route{"device", "POST", "/api/roku/{device}/app/{app}", roku.HandleLaunchApp},
+	Route{"device", "POST", "/api/pi/{device}/action", rpi.HandleControl},
+	//Schedule Endpoints
+	Route{"schedule", "GET", "/api/schedule/{device}", devices.HandleScheduleGet},
+	Route{"schedule", "POST", "/api/schedule/{device}", devices.HandleScheduleSet},
+	Route{"schedule", "DELETE", "/api/schedule/{device}", devices.HandleScheduleDel},
+	Route{"schedule", "POST", "/api/schedule/{device}/{status}", devices.HandleScheduleUpdate},
+	//Details Endpoints
+	Route{"details", "GET", "/api/details/{device}", devices.HandleDetails},
+	Route{"status", "GET", "/api/status/{device}", devices.HandleStatus},
 }

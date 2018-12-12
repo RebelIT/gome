@@ -29,6 +29,14 @@
   version = "v1.6.2"
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   digest = "1:38b469493eb173db9c03321d64adcad4c7991ea0a19b5edc5bdc094f0e8c7384"
   name = "gopkg.in/alexcesaro/statsd.v2"
   packages = ["."]
@@ -42,6 +50,7 @@
   input-imports = [
     "github.com/gomodule/redigo/redis",
     "github.com/gorilla/mux",
+    "github.com/pkg/errors",
     "gopkg.in/alexcesaro/statsd.v2",
   ]
   solver-name = "gps-cdcl"

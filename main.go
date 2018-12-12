@@ -12,10 +12,10 @@ func main(){
 
 	listenOn := "6661"
 	runner.GoGODeviceLoader()
-	time.Sleep(time.Second *3)
+	time.Sleep(time.Second *2)
 
 	go runner.GoGoRunners()
-	time.Sleep(time.Second *5)
+	time.Sleep(time.Second *10)
 
 	go runner.GoGoScheduler()
 

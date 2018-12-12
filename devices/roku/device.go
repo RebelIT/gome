@@ -1,198 +1,98 @@
 package roku
 
 import (
-	"encoding/json"
-	"encoding/xml"
-	"fmt"
 	"github.com/gomodule/redigo/redis"
-	"github.com/gorilla/mux"
-	"github.com/rebelit/gome/cache"
-	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
 
-//http handler request to return specific device details
-func HandleDetails(w http.ResponseWriter,r *http.Request){
-	fmt.Println("[DEBUG] getting details for: " + r.URL.Path)
-	vars := mux.Vars(r)
-	dev := vars["roku"]
-
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	json.Unmarshal(deviceFile, &in)
-	db := in.Database
-
-	devDetail, err := cache.CacheGetHash(db, dev)
-	if err != nil {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(devDetail)
-	return
-}
-
-//http handler request to check the status of a device that was found in the runner and stored in redis
-func HandleStatus(w http.ResponseWriter,r *http.Request) {
-	fmt.Println("[DEBUG] getting status for: " + r.URL.Path)
-	uri := strings.Split(r.URL.Path, "/")
-	vars := mux.Vars(r)
-	dev := vars["roku"]
-	action := uri[len(uri)-1]
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	json.Unmarshal(deviceFile, &in)
-	db := in.Database
-
-	s, err := cache.GetStatus(db, dev+"_"+action)
-	if err != nil {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(s)
-	return
-}
-
-func DeviceControl(w http.ResponseWriter, r *http.Request) {
-	a := DeviceAction{}
-	vars := mux.Vars(r)
-	dev := vars["roku"]
-	var in Inputs
-
-	body, err := ioutil.ReadAll(r.Body)
+func rokuPost(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName)
 	if err != nil{
-		fmt.Println(err)
+		return http.Response{}, err
 	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(body, &a); err != nil {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	json.Unmarshal(deviceFile, &in)
-	db := in.Database
-
-	dbRet, err := cache.GetHashKey(db, redis.Args{dev})
-	if err != nil{
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	//roku:port/launch/appid
-	//roku:port/keypress/button
-	url := "http://"+dbRet.Addr+":"+dbRet.NetPort+"/"+a.Action+"/"+a.ActionItem
-
+	log.Printf("dbData:  %+v\n", d)
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+	log.Printf("roku doing post %s\n")
 	resp, err := http.Post(url, "", strings.NewReader(""))
 	if err != nil{
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		log.Println(err)
+		return *resp, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		fmt.Println(err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(resp)
-	return
+	log.Printf("roku post done app %s\n")
+	return *resp, nil
 }
 
-//Used for Device runner for running is alive inventory stored in redis
-func DeviceStatus(db string, addr string, port string, name string){
-	data := Status{}
-	url := "http://"+addr+":"+port+"/"
+func rokuGet(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName)
+	if err != nil{
+		return http.Response{}, err
+	}
+	url := "http://"+d.Addr+":8060"+uriPart
 
 	resp, err := http.Get(url)
+	if err != nil{
+		log.Println(err)
+		return *resp, err
+	}
+	return *resp, nil
+}
+
+func launchApp(deviceName string, app string) error {
+	id, err := getAppId(app)
+	if err != nil{
+		return err
+	}
+	log.Printf("roku details app %s device %s\n", id, deviceName)
+
+	uri := "/launch/"+id
+	resp, err := rokuPost(uri, deviceName)
+	log.Printf("roku launched app %s\n", id)
+	if err != nil{
+		return err
+	}
+	if resp.StatusCode != 200{
+		return err
+	}
+	return nil
+}
+
+func DeviceStatus(deviceName string){
+	data := devices.Status{}
+	uriPart := "/"
+
+	resp, err := rokuGet(uriPart, deviceName)
 	if err != nil {
-		fmt.Println("[ERROR] Error in Request to "+ url +" will Retry")
+		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return
 	}
 	defer resp.Body.Close()
-	notify.MetricHttpOut(name, resp.StatusCode, "GET")
+
+	notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 
 	if resp.StatusCode != 200 {
 		data.Alive = false
 	} else {
 		data.Alive = true
 	}
-	data.Url = url
-	data.Device = name
+	data.Device = deviceName
 
-	if err := cache.SetHash(db, redis.Args{name+"_"+"status"}.AddFlat(data)); err != nil {
-		fmt.Println("[ERROR] Error in adding "+name+" to cache will retry")
+	c, err := devices.DbConnect()
+	if err != nil{
+		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
 	}
-	fmt.Println("[DEBUG] Done with Device Status for "+name)
-	return
-}
+	defer c.Close()
 
-//Used for Device runner for roku app inventory stored in redis for launching apps
-func DeviceApps(db string, addr string, port string, name string){
-	apps := Apps{}
-	url := "http://"+addr+":"+port+"/query/apps"
-
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println("[ERROR] Error in Request to "+ url +" will Retry")
+	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)...); err != nil{
+		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		return
 	}
-	defer resp.Body.Close()
-	notify.MetricHttpOut(name, resp.StatusCode, "GET")
 
-	body, _ := ioutil.ReadAll(resp.Body)
-	xml.Unmarshal(body, &apps)
-
-	for _,i := range(apps.Apps){
-		a := strings.Replace(i.App, " ", "", -1)
-		cache.Set(db,a, i.Id)
-	}
+	log.Printf("[DEBUG] %s : status done\n", deviceName)
 	return
 }
