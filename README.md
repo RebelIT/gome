@@ -25,13 +25,21 @@ Ansible deployment: see doco in ansible dir
 
 ### Supported Devices
    -[x] Custom RaspberryPi API
+   
    -[x] Roku
+   
    -[x] Tuya WiFi outlets (with external tuya-cli dependency)
+   
    -[x] Scheduler for outlets to auto turn on and off on date/time
+   
    -[ ] Tuya WiFi light switches (with external tuya-cli dependency
+   
    -[ ] Plex API - not sure yet what i can do with it
+   
    -[ ] Amazon Alexa integration - voice control this central management beast
+   
    -[ ] Scheduler for light switches to auto turn on and off on date/time
+   
    -[ ] web-ui - feature issue added
    
    
