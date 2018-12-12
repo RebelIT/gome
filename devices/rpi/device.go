@@ -1,6 +1,7 @@
 package rpi
 
 import (
+	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
@@ -13,34 +14,26 @@ func init() {
 	http.DefaultClient.Timeout = time.Second * 5
 }
 
-func Connect(address string) (Pi, error) {
-	return Pi{address: address, client: &http.Client{}}, nil
-}
-
-func (p Pi) Do(uriPart string) (http.Response, error) {
-	url := "http://"+p.address+":6660"+uriPart
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
+func piGet(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName)
+	if err != nil{
 		return http.Response{}, err
 	}
-	resp, err := p.client.Do(req)
-	return *resp, err
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+
+	resp, err := http.Get(url)
+	if err != nil{
+		fmt.Println(err)
+
+		return *resp, err
+	}
+
+	return *resp, nil
 }
 
 func doAction(deviceName string, action string) error {
-	d, err := devices.DetailsGet(deviceName)
-	if err != nil{
-		return err
-	}
-
-	p, err := Connect(d.Addr)
-	if err != nil {
-		return err
-	}
-
-	uri := "/action/"+action
-	resp, err := p.Do(uri)
+	uriPart := "/action/"+action
+	resp, err := piGet(uriPart, deviceName)
 	if err != nil{
 		return err
 	}
@@ -51,17 +44,11 @@ func doAction(deviceName string, action string) error {
 	return nil
 }
 
-func DeviceStatus(addr string, deviceName string) {
+func DeviceStatus(deviceName string) {
 	data := devices.Status{}
 	uriPart := "/"
 
-	p, err := Connect(addr)
-	if err != nil {
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
-		return
-	}
-
-	resp, err := p.Do(uriPart)
+	resp, err := piGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")

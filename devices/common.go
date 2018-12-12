@@ -43,8 +43,8 @@ func DetailsGet (device string) (Devices, error){
 	if err != nil {
 		return Devices{}, err
 	}
-
 	redis.ScanStruct(values, &d)
+	fmt.Printf("detailsGet db data %+v\n", d)
 	return d, nil
 }
 

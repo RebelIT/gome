@@ -7,69 +7,54 @@ import (
 	"github.com/rebelit/gome/notify"
 	"log"
 	"net/http"
+	"strings"
 )
 
-func Connect(address string) (Roku, error) {
-	return Roku{address: address, client: &http.Client{}}, nil
-}
-
-func (r Roku) Do(uriPart string) (http.Response, error) {
-	url := "http://"+r.address+":8060"+uriPart
-
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
+func rokuPost(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName)
+	if err != nil{
 		return http.Response{}, err
 	}
-	resp, err := r.client.Do(req)
-	return *resp, err
-}
-
-func (r Roku) Query(uriPart string) (http.Response, error) {
-	url := "http://"+r.address+":8060"+uriPart
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return http.Response{},err
-	}
-	resp, err := r.client.Do(req)
-
-	return *resp, err
-}
-
-func (r Roku) goHomeScreen() error{
-	uri := "/keypress/home"
-	resp, err := r.Do(uri)
+	fmt.Printf("dbData:  %+v\n", d)
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+	fmt.Printf("roku doing post %s\n")
+	resp, err := http.Post(url, "", strings.NewReader(""))
 	if err != nil{
-		return err
+		fmt.Println(err)
+		return *resp, err
 	}
-	if resp.StatusCode != 200{
-		return err
+	fmt.Printf("roku post done app %s\n")
+
+	return *resp, nil
+}
+
+func rokuGet(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName)
+	if err != nil{
+		return http.Response{}, err
+	}
+	url := "http://"+d.Addr+":8060"+uriPart
+
+	resp, err := http.Get(url)
+	if err != nil{
+		fmt.Println(err)
+
+		return *resp, err
 	}
 
-	return nil
+	return *resp, nil
 }
 
 func launchApp(deviceName string, app string) error {
-	d, err := devices.DetailsGet(deviceName)
-	fmt.Printf("roku details %+v\n", d)
-	if err != nil{
-		return err
-	}
-
-	r, err := Connect(d.Addr)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("roku details connected to %s\n", r.address)
-
 	id, err := getAppId(app)
 	if err != nil{
 		return err
 	}
-	fmt.Printf("roku details app %s\n", id)
+	fmt.Printf("roku details app %s device %s\n", id, deviceName)
 
 	uri := "/launch/"+id
-	resp, err := r.Do(uri)
+	resp, err := rokuPost(uri, deviceName)
+	fmt.Printf("roku launched app %s\n", id)
 	if err != nil{
 		return err
 	}
@@ -80,17 +65,11 @@ func launchApp(deviceName string, app string) error {
 	return nil
 }
 
-func DeviceStatus(addr string, deviceName string){
+func DeviceStatus(deviceName string){
 	data := devices.Status{}
 	uriPart := "/"
 
-	r, err := Connect(addr)
-	if err != nil {
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
-		return
-	}
-
-	resp, err := r.Query(uriPart)
+	resp, err := rokuGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
 		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")

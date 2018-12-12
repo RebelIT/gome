@@ -7,13 +7,13 @@ import (
 
 //Roku App ID's
 const NETFLIX = 12
-const PLEX = 12
-const SLING = 12
-const PANDORA = 12
-const PRIME_VIDEO = 12
-const GOOGLE_PLAY = 12
-const HBOGO = 12
-const YOUTUBE = 12
+const PLEX = 13535
+const SLING = 46041
+const PANDORA = 28
+const PRIME_VIDEO = 13
+const GOOGLE_PLAY = 50025
+const HBOGO = 8378
+const YOUTUBE = 837
 
 func getAppId(app string)(string, error){
 	id := 0

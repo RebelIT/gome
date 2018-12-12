@@ -22,10 +22,10 @@ func GoGoRunners() error {
 			for _, d := range (devs.Devices) {
 				switch d.Device {
 				case "pi":
-					go rpi.DeviceStatus(d.Addr, d.Name)
+					go rpi.DeviceStatus(d.Name)
 
 				case "roku":
-					go roku.DeviceStatus(d.Addr, d.Name)
+					go roku.DeviceStatus(d.Name)
 
 				case "tuya":
 					go tuya.DeviceStatus(d.Addr, d.Id, d.Key, d.Name)
