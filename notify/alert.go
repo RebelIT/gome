@@ -8,7 +8,7 @@ import (
 
 
 func SendSlackAlert (message string){
-	s, err := getSecrets()
+	s, err := common.GetSecrets()
 	if err != nil{
 		log.Printf("[ERROR] slack alert: %s\n", err)
 		return
