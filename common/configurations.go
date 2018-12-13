@@ -9,7 +9,3 @@ package common
 const FILE  = "./devices.json"
 const SECRETS = "/.secrets.json"
 const STATSD = ""
-
-
-
-
