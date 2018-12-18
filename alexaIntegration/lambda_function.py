@@ -59,16 +59,26 @@ def post_message(client, message_body, url):
 def lambda_handler(event, context):
     client = boto3.client('sqs', aws_access_key_id = access_key, aws_secret_access_key = access_secret, region_name = region)
     intent_name = event['request']['intent']['name']
-    slot_id = event['request']['intent']['slots']['NAME']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['id']
     slot_action = event['request']['intent']['slots']['ACTION']['value']
-    m = intent_name+","+slot_id+","+slot_action
 
     # validation of intent
-    if intent_name == "TuyaOutlet" or intent_name == "TuyaSwitch":
+    if intent_name == "TuyaOutlet":
+        slot_id = event['request']['intent']['slots']['OUTLET_NAME']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['id']
+        m = intent_name+","+slot_id+","+slot_action
+
         post_message(client, m, queue_url)
         message = (random.choice(responsesOk))
+
+    elif intent_name == "TuyaSwitch":
+        slot_id = event['request']['intent']['slots']['SWITCH_NAME']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['id']
+        m = intent_name+","+slot_id+","+slot_action
+
+        post_message(client, m, queue_url)
+        message = (random.choice(responsesOk))
+
     else:
         message = (random.choice(responsesIdk))
+
 
     speechlet = build_speechlet_response("message", message, "status", "true")
     return build_response({}, speechlet)

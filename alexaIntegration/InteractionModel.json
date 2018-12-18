@@ -7,21 +7,21 @@
           "name": "TuyaOutlet",
           "slots": [
             {
-              "name": "NAME",
+              "name": "OUTLET_NAME",
               "type": "TUYA_OUTLET_NAME"
             },
             {
               "name": "ACTION",
-              "type": "TUYA_ACTION"
+              "type": "TUYA_OUTLET_ACTION"
             }
           ],
           "samples": [
-            "to turn {NAME} {ACTION}",
-            "to power {NAME} {ACTION}",
-            "to set {NAME} {ACTION}",
-            "to set {ACTION} {NAME}",
-            "to power {ACTION} {NAME}",
-            "to turn {ACTION} {NAME}"
+            "to turn {OUTLET_NAME} {ACTION}",
+            "to power {OUTLET_NAME} {ACTION}",
+            "to set {OUTLET_NAME} {ACTION}",
+            "to set {ACTION} {OUTLET_NAME}",
+            "to power {ACTION} {OUTLET_NAME}",
+            "to turn {ACTION} {OUTLET_NAME}"
           ]
         },
         {
@@ -44,24 +44,24 @@
           "name": "TuyaSwitch",
           "slots": [
             {
-              "name": "NAME",
+              "name": "SWITCH_NAME",
               "type": "TUYA_SWITCH_NAME"
             },
             {
               "name": "ACTION",
-              "type": "TUYA_ACTION"
+              "type": "TUYA_OUTLET_ACTION"
             }
           ],
           "samples": [
-            "to set {NAME} light {ACTION}",
-            "to set {NAME} lights {ACTION}",
-            "to set {NAME} {ACTION}",
-            "to turn {NAME} lights {ACTION}",
-            "to turn {NAME} light {ACTION}",
-            "to turn {NAME} {ACTION}",
-            "to turn {ACTION} {NAME} light",
-            "to turn {ACTION} {NAME} ",
-            "to turn {ACTION} {NAME} lights"
+            "to set {SWITCH_NAME} light {ACTION}",
+            "to set {SWITCH_NAME} lights {ACTION}",
+            "to set {SWITCH_NAME} {ACTION}",
+            "to turn {SWITCH_NAME} lights {ACTION}",
+            "to turn {SWITCH_NAME} light {ACTION}",
+            "to turn {SWITCH_NAME} {ACTION}",
+            "to turn {ACTION} {SWITCH_NAME} light",
+            "to turn {ACTION} {SWITCH_NAME} ",
+            "to turn {ACTION} {SWITCH_NAME} lights"
           ]
         }
       ],
@@ -108,7 +108,7 @@
           ]
         },
         {
-          "name": "TUYA_ACTION",
+          "name": "TUYA_OUTLET_ACTION",
           "values": [
             {
               "id": "off",
@@ -161,6 +161,33 @@
                   "driveway",
                   "outside garage",
                   "garage outside"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TUYA_SWITCH_ACTION",
+          "values": [
+            {
+              "id": "off",
+              "name": {
+                "value": "off",
+                "synonyms": [
+                  "down",
+                  "false",
+                  "off"
+                ]
+              }
+            },
+            {
+              "id": "on",
+              "name": {
+                "value": "on",
+                "synonyms": [
+                  "up",
+                  "true",
+                  "on"
                 ]
               }
             }
