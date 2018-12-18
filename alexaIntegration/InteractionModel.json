@@ -4,11 +4,11 @@
       "invocationName": "house",
       "intents": [
         {
-          "name": "TuyaControl",
+          "name": "TuyaOutlet",
           "slots": [
             {
               "name": "NAME",
-              "type": "TUYA_NAME"
+              "type": "TUYA_OUTLET_NAME"
             },
             {
               "name": "ACTION",
@@ -39,11 +39,35 @@
         {
           "name": "AMAZON.NavigateHomeIntent",
           "samples": []
+        },
+        {
+          "name": "TuyaSwitch",
+          "slots": [
+            {
+              "name": "NAME",
+              "type": "TUYA_SWITCH_NAME"
+            },
+            {
+              "name": "ACTION",
+              "type": "TUYA_ACTION"
+            }
+          ],
+          "samples": [
+            "to set {NAME} light {ACTION}",
+            "to set {NAME} lights {ACTION}",
+            "to set {NAME} {ACTION}",
+            "to turn {NAME} lights {ACTION}",
+            "to turn {NAME} light {ACTION}",
+            "to turn {NAME} {ACTION}",
+            "to turn {ACTION} {NAME} light",
+            "to turn {ACTION} {NAME} ",
+            "to turn {ACTION} {NAME} lights"
+          ]
         }
       ],
       "types": [
         {
-          "name": "TUYA_NAME",
+          "name": "TUYA_OUTLET_NAME",
           "values": [
             {
               "id": "tuya_003",
@@ -105,6 +129,38 @@
                   "true",
                   "up",
                   "on"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TUYA_SWITCH_NAME",
+          "values": [
+            {
+              "id": "outside_002",
+              "name": {
+                "value": "outside_porch",
+                "synonyms": [
+                  "outdoor porch",
+                  "outside porch",
+                  "porch outdoor",
+                  "porch",
+                  "porch outside"
+                ]
+              }
+            },
+            {
+              "id": "outside_001",
+              "name": {
+                "value": "outside_garage",
+                "synonyms": [
+                  "outside garage door",
+                  "outdoor garage",
+                  "garage outdoor",
+                  "driveway",
+                  "outside garage",
+                  "garage outside"
                 ]
               }
             }

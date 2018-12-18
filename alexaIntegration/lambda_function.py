@@ -64,7 +64,7 @@ def lambda_handler(event, context):
     m = intent_name+","+slot_id+","+slot_action
 
     # validation of intent
-    if intent_name == "TuyaControl":
+    if intent_name == "TuyaOutlet" or intent_name == "TuyaSwitch":
         post_message(client, m, queue_url)
         message = (random.choice(responsesOk))
     else:
