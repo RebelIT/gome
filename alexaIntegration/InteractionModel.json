@@ -1,0 +1,116 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "house",
+      "intents": [
+        {
+          "name": "TuyaControl",
+          "slots": [
+            {
+              "name": "NAME",
+              "type": "TUYA_NAME"
+            },
+            {
+              "name": "ACTION",
+              "type": "TUYA_ACTION"
+            }
+          ],
+          "samples": [
+            "to turn {NAME} {ACTION}",
+            "to power {NAME} {ACTION}",
+            "to set {NAME} {ACTION}",
+            "to set {ACTION} {NAME}",
+            "to power {ACTION} {NAME}",
+            "to turn {ACTION} {NAME}"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "TUYA_NAME",
+          "values": [
+            {
+              "id": "tuya_003",
+              "name": {
+                "value": "office",
+                "synonyms": [
+                  "andys tree",
+                  "andy tree",
+                  "office tree",
+                  "office"
+                ]
+              }
+            },
+            {
+              "id": "tuya_001",
+              "name": {
+                "value": "diningRoom",
+                "synonyms": [
+                  "dining room ",
+                  "dining room tree",
+                  "kid tree",
+                  "kids tree"
+                ]
+              }
+            },
+            {
+              "id": "tuya_002",
+              "name": {
+                "value": "livingRoom",
+                "synonyms": [
+                  "ashleys",
+                  "ashley tree",
+                  "living room",
+                  "famiily tree"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TUYA_ACTION",
+          "values": [
+            {
+              "id": "off",
+              "name": {
+                "value": "off",
+                "synonyms": [
+                  "false",
+                  "down",
+                  "off"
+                ]
+              }
+            },
+            {
+              "id": "on",
+              "name": {
+                "value": "on",
+                "synonyms": [
+                  "true",
+                  "up",
+                  "on"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
