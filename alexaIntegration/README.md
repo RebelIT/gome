@@ -1,5 +1,11 @@
-# Controlling rPi with Alexa
-Credit where credit is due, I used this blog post as well as his code framework to set this up, re-documenting for my own purposes and automating in my playbooks to incorporate it into my piProjects. http://www.cyber-omelette.com/2017/01/alexa-run-script.html
+# AWS Integration / Custom Alexa Skill 
+
+This method uses an AWS SQS messaging queue, Alexa sends an intent response to lambda function, lambda parses the intent.json
+then writes a message to a messaging queue. a local consumer watches the queue and parses the messages to see if there is 
+anything to do.   I did it this way so i do not have to poke ingress ports into my firewall and setting up an external 
+endpoint for AWS to talk to has some big restrictions for seurity and compliance that I did not want to set up. 
+
+The examples in this repo are specific to gome integration. 
 
 * Create an AWS account
   ```
@@ -59,4 +65,4 @@ Credit where credit is due, I used this blog post as well as his code framework 
 8. Publishing, pick a category that fits your skill
 9. Privacy and compliance, be honest to the questions...
 10. Save it, if you log into your Alexa account it should now appear in your list of installed skills with a [dev] tag.
-11. Follow the Alexa ansible role (ansible/roles/alexa_consumer) to configure the consumer.
+11. Consume this by checking the messaging queue and performing local functions against the messages
