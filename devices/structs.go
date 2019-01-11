@@ -6,12 +6,13 @@ type Inputs struct{
 }
 
 type Devices struct{
-	Device		string `json:"device"`
-	Name		string `json:"name"`
-	Addr 		string `json:"address"`
-	NetPort		string `json:"port"`
-	Id			string `json:"id"`
-	Key 		string `json:"key"`
+	Device			string `json:"device"`
+	Name			string `json:"name"`
+	Addr 			string `json:"address"`
+	NameFriendly	string `json:"name_friendly"`
+	NetPort			string `json:"port"`
+	Id				string `json:"id"`
+	Key 			string `json:"key"`
 }
 
 type Status struct{

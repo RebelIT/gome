@@ -7,8 +7,8 @@ type Configs struct {
 
 type Secrets struct{
 	SlackSecret		string `json:"slack_secret"`
-	AwsAkid 		string `json:"aws_akid"`
-	AwsKey 			string `json:"aws_key"`
+	AwsId 			string `json:"aws_id"`
+	AwsSecret 		string `json:"aws_secret"`
 	AwsToken		string `json:"aws_token"`
 	AwsRegion 		string `json:"aws_region"`
 	AWSQueueUrl 	string `json:"aws_queue_url"`
