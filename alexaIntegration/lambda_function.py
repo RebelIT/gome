@@ -62,15 +62,8 @@ def lambda_handler(event, context):
     slot_action = event['request']['intent']['slots']['ACTION']['value']
 
     # validation of intent
-    if intent_name == "TuyaOutlet":
-        slot_id = event['request']['intent']['slots']['OUTLET_NAME']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['id']
-        m = intent_name+","+slot_id+","+slot_action
-
-        post_message(client, m, queue_url)
-        message = (random.choice(responsesOk))
-
-    elif intent_name == "TuyaSwitch":
-        slot_id = event['request']['intent']['slots']['SWITCH_NAME']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['id']
+    if intent_name == "tuya":
+        slot_id = event['request']['intent']['slots']['NAME']['resolutions']['resolutionsPerAuthority'][0]['values'][0]['value']['id']
         m = intent_name+","+slot_id+","+slot_action
 
         post_message(client, m, queue_url)
@@ -78,7 +71,6 @@ def lambda_handler(event, context):
 
     else:
         message = (random.choice(responsesIdk))
-
 
     speechlet = build_speechlet_response("message", message, "status", "true")
     return build_response({}, speechlet)

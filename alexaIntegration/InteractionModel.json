@@ -1,199 +1,114 @@
 {
-  "interactionModel": {
-    "languageModel": {
-      "invocationName": "house",
-      "intents": [
-        {
-          "name": "TuyaOutlet",
-          "slots": [
-            {
-              "name": "OUTLET_NAME",
-              "type": "TUYA_OUTLET_NAME"
-            },
-            {
-              "name": "ACTION",
-              "type": "TUYA_OUTLET_ACTION"
-            }
-          ],
-          "samples": [
-            "to turn {OUTLET_NAME} {ACTION}",
-            "to power {OUTLET_NAME} {ACTION}",
-            "to set {OUTLET_NAME} {ACTION}",
-            "to set {ACTION} {OUTLET_NAME}",
-            "to power {ACTION} {OUTLET_NAME}",
-            "to turn {ACTION} {OUTLET_NAME}"
-          ]
-        },
-        {
-          "name": "AMAZON.HelpIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.StopIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.CancelIntent",
-          "samples": []
-        },
-        {
-          "name": "AMAZON.NavigateHomeIntent",
-          "samples": []
-        },
-        {
-          "name": "TuyaSwitch",
-          "slots": [
-            {
-              "name": "SWITCH_NAME",
-              "type": "TUYA_SWITCH_NAME"
-            },
-            {
-              "name": "ACTION",
-              "type": "TUYA_OUTLET_ACTION"
-            }
-          ],
-          "samples": [
-            "to set {SWITCH_NAME} light {ACTION}",
-            "to set {SWITCH_NAME} lights {ACTION}",
-            "to set {SWITCH_NAME} {ACTION}",
-            "to turn {SWITCH_NAME} lights {ACTION}",
-            "to turn {SWITCH_NAME} light {ACTION}",
-            "to turn {SWITCH_NAME} {ACTION}",
-            "to turn {ACTION} {SWITCH_NAME} light",
-            "to turn {ACTION} {SWITCH_NAME} ",
-            "to turn {ACTION} {SWITCH_NAME} lights"
-          ]
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "my house",
+            "intents": [
+                {
+                    "name": "tuya",
+                    "slots": [
+                        {
+                            "name": "NAME",
+                            "type": "TUYA_NAME"
+                        },
+                        {
+                            "name": "ACTION",
+                            "type": "TUYA_ACTION"
+                        }
+                    ],
+                    "samples": [
+                        "to turn {NAME} {ACTION}",
+                        "to power {NAME} {ACTION}",
+                        "to set {NAME} {ACTION}",
+                        "to set {ACTION} {NAME}",
+                        "to power {ACTION} {NAME}",
+                        "to turn {ACTION} {NAME}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                }
+            ],
+            "types": [
+                {
+                    "name": "TUYA_NAME",
+                    "values": [
+                        {
+                            "id": "tuya003",
+                            "name": {
+                                "value": "mahlonLamp",
+                                "synonyms": [
+                                    "son lamp",
+                                    "sons lamp",
+                                    "mahlon lamp",
+                                    "mahlons lamp"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "tuya001",
+                            "name": {
+                                "value": "unusedOutlet",
+                                "synonyms": [
+                                    "spare",
+                                    "spare outlet"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "tuya002",
+                            "name": {
+                                "value": "aliceLamp",
+                                "synonyms": [
+                                    "alices lamp",
+                                    "alice lamp",
+                                    "daughters lamp",
+                                    "daughter lamp"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "TUYA_ACTION",
+                    "values": [
+                        {
+                            "id": "off",
+                            "name": {
+                                "value": "off",
+                                "synonyms": [
+                                    "false",
+                                    "down",
+                                    "off"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "on",
+                            "name": {
+                                "value": "on",
+                                "synonyms": [
+                                    "true",
+                                    "up",
+                                    "on"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         }
-      ],
-      "types": [
-        {
-          "name": "TUYA_OUTLET_NAME",
-          "values": [
-            {
-              "id": "tuya_003",
-              "name": {
-                "value": "office",
-                "synonyms": [
-                  "andys tree",
-                  "andy tree",
-                  "office tree",
-                  "office"
-                ]
-              }
-            },
-            {
-              "id": "tuya_001",
-              "name": {
-                "value": "diningRoom",
-                "synonyms": [
-                  "dining room ",
-                  "dining room tree",
-                  "kid tree",
-                  "kids tree"
-                ]
-              }
-            },
-            {
-              "id": "tuya_002",
-              "name": {
-                "value": "livingRoom",
-                "synonyms": [
-                  "ashleys",
-                  "ashley tree",
-                  "living room",
-                  "famiily tree"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "TUYA_OUTLET_ACTION",
-          "values": [
-            {
-              "id": "off",
-              "name": {
-                "value": "off",
-                "synonyms": [
-                  "false",
-                  "down",
-                  "off"
-                ]
-              }
-            },
-            {
-              "id": "on",
-              "name": {
-                "value": "on",
-                "synonyms": [
-                  "true",
-                  "up",
-                  "on"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "TUYA_SWITCH_NAME",
-          "values": [
-            {
-              "id": "outside_002",
-              "name": {
-                "value": "outside_porch",
-                "synonyms": [
-                  "outdoor porch",
-                  "outside porch",
-                  "porch outdoor",
-                  "porch",
-                  "porch outside"
-                ]
-              }
-            },
-            {
-              "id": "outside_001",
-              "name": {
-                "value": "outside_garage",
-                "synonyms": [
-                  "outside garage door",
-                  "outdoor garage",
-                  "garage outdoor",
-                  "driveway",
-                  "outside garage",
-                  "garage outside"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "TUYA_SWITCH_ACTION",
-          "values": [
-            {
-              "id": "off",
-              "name": {
-                "value": "off",
-                "synonyms": [
-                  "down",
-                  "false",
-                  "off"
-                ]
-              }
-            },
-            {
-              "id": "on",
-              "name": {
-                "value": "on",
-                "synonyms": [
-                  "up",
-                  "true",
-                  "on"
-                ]
-              }
-            }
-          ]
-        }
-      ]
     }
-  }
 }
