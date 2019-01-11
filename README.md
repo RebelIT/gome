@@ -24,23 +24,24 @@ Ansible deployment: see doco in ansible dir
 
 
 ### Supported Devices
-   -[x] Custom RaspberryPi API
+   [x] Custom RaspberryPi API
    
-   -[x] Roku
+   [x] Roku
    
-   -[x] Tuya WiFi outlets (with external tuya-cli dependency)
+   [x] Tuya WiFi outlets (with external tuya-cli dependency)
    
-   -[x] Scheduler for outlets to auto turn on and off on date/time
+   [x] Scheduler for outlets to auto turn on and off on date/time
    
-   -[ ] Tuya WiFi light switches (with external tuya-cli dependency
+   [ ] Tuya WiFi light switches (with external tuya-cli dependency
    
-   -[ ] Plex API - not sure yet what i can do with it
+   [ ] Plex API - not sure yet what i can do with it
    
-   -[ ] Amazon Alexa integration - voice control this central management beast
+   [x] Amazon Alexa integration - voice control this central management beast
+      
+   [ ] web-ui - feature issue added
    
-   -[ ] Scheduler for light switches to auto turn on and off on date/time
+   [ ] DEEBOT (ECOVACS Robotics) vaccum api integration, control & metrics
    
-   -[ ] web-ui - feature issue added
    
    
 ## RaspberryPi IoT devices

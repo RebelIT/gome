@@ -3,7 +3,10 @@
 This method uses an AWS SQS messaging queue, Alexa sends an intent response to lambda function, lambda parses the intent.json
 then writes a message to a messaging queue. a local consumer watches the queue and parses the messages to see if there is 
 anything to do.   I did it this way so i do not have to poke ingress ports into my firewall and setting up an external 
-endpoint for AWS to talk to has some big restrictions for seurity and compliance that I did not want to set up. 
+endpoint for AWS to talk to has some big restrictions for security and compliance that I did not want to set up. 
+
+AWS pricing for sqs is 1mil messages a month free then you pay. if my match is right checking every 2 seconds
+will cost ~$1.60 USD per month (not incliding lambda usage, that pricing is different).
 
 The examples in this repo are specific to gome integration. 
 
