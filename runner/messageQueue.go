@@ -1,21 +1,23 @@
 package runner
 
 import (
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices/tuya"
+	"github.com/rebelit/gome/notify"
 	"log"
+	"strings"
 	"time"
 )
 
 func GoGoSQS() error {
 	log.Println("[INFO] aws sqs, starting")
-	log.Println("[DEBUG] aws sqs, loading new session")
+	notify.SendSlackAlert("AWS SQS runner is starting")
 
 	s, err := common.GetSecrets()
 	if err != nil {
@@ -24,7 +26,7 @@ func GoGoSQS() error {
 
 	config, err := session.NewSession(&aws.Config{
 		Region:      aws.String(s.AwsRegion),
-		Credentials: credentials.NewStaticCredentials(s.AwsAkid, s.AwsKey, s.AwsToken),
+		Credentials: credentials.NewStaticCredentials(s.AwsId, s.AwsSecret, s.AwsToken),
 	})
 	if err != nil {
 		return err
@@ -33,55 +35,45 @@ func GoGoSQS() error {
 	c := sqs.New(config)
 
 	for {
-		result, err := c.ReceiveMessage(&sqs.ReceiveMessageInput{
-			AttributeNames: []*string{
-				aws.String(sqs.MessageSystemAttributeNameSentTimestamp),
-			},
-			MessageAttributeNames: []*string{
-				aws.String(sqs.QueueAttributeNameAll),
-			},
-			QueueUrl:            &s.AWSQueueUrl,
-			MaxNumberOfMessages: aws.Int64(1),
-			VisibilityTimeout:   aws.Int64(20), // 20 seconds
-			WaitTimeSeconds:     aws.Int64(0),
-		})
+		message, receipt, err := getMessage(c, s.AWSQueueUrl)
 		if err != nil {
-			log.Printf("[ERROR] aws sqs, message : %s\n", err)
-			return err
-		}
-
-		if len(result.Messages) == 0 {
-			fmt.Println("Received no messages")
-			return err
+			log.Printf("[WARN] aws sqs, %s", err)
+			if receipt != nil{
+				if err := deleteMessage(c,s.AWSQueueUrl,receipt); err != nil{
+					log.Printf("[WARN] aws sqs, %s", err)
+				}
+			}
 		} else {
-			for _, m := range result.Messages{
-				if err := parseMessage(*m); err != nil{
-					break
-				}
+			m := strings.Split(message, ",")
+			deviceType := m[0]
+			deviceName := m[1]
+			deviceAction := m[2]
 
-				resultDelete, err := c.DeleteMessage(&sqs.DeleteMessageInput{
-					QueueUrl:      &s.AWSQueueUrl,
-					ReceiptHandle: m.ReceiptHandle,
-				})
-				if err != nil {
-					fmt.Println("Delete Error", err)
-					return err
-				}
-				log.Printf("[INFO] aws msg delete, %s\n", resultDelete.String())
+			if err := deleteMessage(c,s.AWSQueueUrl,receipt); err != nil{
+				log.Printf("[WARN] aws sqs, %s", err)
 			}
 
+			if err := doAction(deviceType,deviceName,deviceAction); err != nil{
+				log.Printf("[ERROR], aws sqs, %s", err)
+			}
 		}
+		time.Sleep(time.Second *2)
 	}
-	time.Sleep(time.Second * 2)
-
+	notify.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
 	return nil
 }
 
-func parseMessage(message sqs.Message) error{
-	body := message.String()
-	switch body{
-	case "gome_test":
-		if err := tuya.PowerControl("treeFamily", false); err != nil{
+func doAction(deviceType string, deviceName string, deviceAction string) error{
+	action := false
+
+	notify.MetricAws("sqs", "doAction", "nil",deviceName, deviceAction)
+
+	switch deviceType{
+	case "tuya":
+		if deviceAction == "on"{
+			action = true
+		}
+		if err := tuya.PowerControl(deviceName, action); err != nil{
 			return err
 		}
 		return nil
@@ -91,5 +83,55 @@ func parseMessage(message sqs.Message) error{
 		return errors.New("no message in queue to parse")
 	}
 
+	return nil
+}
+
+func getMessage(c *sqs.SQS, queueUrl string)(string, *string, error){
+	message := ""
+
+	param := &sqs.ReceiveMessageInput{
+		QueueUrl: aws.String(queueUrl), // Required
+		AttributeNames: []*string{
+			aws.String("QueueAttributeName"), // Required
+			// More values...
+		},
+		MaxNumberOfMessages: aws.Int64(5),
+		MessageAttributeNames: []*string{
+			aws.String("MessageAttributeName"), // Required
+			// More values...
+		},
+		VisibilityTimeout: aws.Int64(10),
+		WaitTimeSeconds:   aws.Int64(0),
+	}
+
+	result, err := c.ReceiveMessage(param)
+	if err != nil{
+		notify.MetricAws("sqs", "get", "failure","nil", "nil")
+		return "", nil, err
+	}
+	notify.MetricAws("sqs", "get", "success","nil", "nil")
+
+	if len(result.Messages) == 0 {
+		return "", nil, errors.New("no messages in queue")
+	} else {
+		message = awsutil.StringValue(result.Messages[0].Body)
+		if message == ""{
+			return "", result.Messages[0].ReceiptHandle, errors.New("message was blank when it should have not been...")
+		}
+	}
+	return message, result.Messages[0].ReceiptHandle, nil
+}
+
+func deleteMessage(c *sqs.SQS,queueUrl string, receipt *string) error{
+	param := &sqs.DeleteMessageInput{
+		QueueUrl:      &queueUrl,
+		ReceiptHandle: receipt,
+	}
+	_, err := c.DeleteMessage(param)
+	if err != nil {
+		notify.MetricAws("sqs", "delete", "failure","nil", "nil")
+		return err
+	}
+	notify.MetricAws("sqs", "delete", "success","nil", "nil")
 	return nil
 }

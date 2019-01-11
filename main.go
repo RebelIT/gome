@@ -18,6 +18,9 @@ func main(){
 	time.Sleep(time.Second *10)
 
 	go runner.GoGoScheduler()
+	time.Sleep(time.Second *5)
+
+	go runner.GoGoSQS()
 
 	start(listenOn)
 
