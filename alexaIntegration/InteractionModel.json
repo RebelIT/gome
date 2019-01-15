@@ -1,0 +1,114 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "my house",
+            "intents": [
+                {
+                    "name": "tuya",
+                    "slots": [
+                        {
+                            "name": "NAME",
+                            "type": "TUYA_NAME"
+                        },
+                        {
+                            "name": "ACTION",
+                            "type": "TUYA_ACTION"
+                        }
+                    ],
+                    "samples": [
+                        "to turn {NAME} {ACTION}",
+                        "to power {NAME} {ACTION}",
+                        "to set {NAME} {ACTION}",
+                        "to set {ACTION} {NAME}",
+                        "to power {ACTION} {NAME}",
+                        "to turn {ACTION} {NAME}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                }
+            ],
+            "types": [
+                {
+                    "name": "TUYA_NAME",
+                    "values": [
+                        {
+                            "id": "tuya003",
+                            "name": {
+                                "value": "mahlonLamp",
+                                "synonyms": [
+                                    "son lamp",
+                                    "sons lamp",
+                                    "mahlon lamp",
+                                    "mahlons lamp"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "tuya001",
+                            "name": {
+                                "value": "unusedOutlet",
+                                "synonyms": [
+                                    "spare",
+                                    "spare outlet"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "tuya002",
+                            "name": {
+                                "value": "aliceLamp",
+                                "synonyms": [
+                                    "alices lamp",
+                                    "alice lamp",
+                                    "daughters lamp",
+                                    "daughter lamp"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "TUYA_ACTION",
+                    "values": [
+                        {
+                            "id": "off",
+                            "name": {
+                                "value": "off",
+                                "synonyms": [
+                                    "false",
+                                    "down",
+                                    "off"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "on",
+                            "name": {
+                                "value": "on",
+                                "synonyms": [
+                                    "true",
+                                    "up",
+                                    "on"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

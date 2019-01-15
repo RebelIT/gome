@@ -26,7 +26,6 @@ func MetricHttpIn(uri string, reponseCode int, method string){
 	//emits a new counter for every incoming http web request
 	tags := statsd.Tags("uri", uri, "status_code", strconv.Itoa(reponseCode),"method", method)
 	measurement := "gome_http"
-
 	sendCounter(measurement, tags)
 }
 
@@ -34,7 +33,6 @@ func MetricHttpOut(destination string, reponseCode int, method string){
 	//emits a new counter for every external web request
 	tags := statsd.Tags("destination", destination, "response_code", strconv.Itoa(reponseCode), "method", method)
 	measurement := "gome_http_out"
-
 	sendCounter(measurement, tags)
 }
 
@@ -42,7 +40,17 @@ func MetricCmd(cmd string, response string){
 	//emits a new counter for every shell out function
 	tags := statsd.Tags("cmd", cmd, "cmd_status", response)
 	measurement := "gome_cmd"
+	sendCounter(measurement, tags)
+}
 
+func MetricAws(awsService string, requestMethod string, status string, device string, action string){
+	//emits a new counter for every AWS action
+	//awsService == sqs, lambda
+	//requestMethod == get, delete, post
+	//status == ok, failure
+	tags := statsd.Tags("aws_service", awsService, "request_method", requestMethod, "request_status", status,
+		"requested_device", device, "requested_device_action", action)
+	measurement := "gome_aws"
 	sendCounter(measurement, tags)
 }
 

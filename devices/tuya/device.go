@@ -42,7 +42,7 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 		return
 	}
 
-	log.Printf("[DEBUG] %s : status done\n", deviceName)
+	log.Printf("[DEBUG] device status %s : done\n", deviceName)
 	return
 }
 

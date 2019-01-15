@@ -12,7 +12,7 @@ import (
 )
 
 func GoGoRunners() error {
-	log.Println("[INFO] runner, starting")
+	log.Println("[INFO] device status runner, starting")
 	for {
 		devs, err := devices.LoadDevices()
 		if err != nil{
@@ -34,7 +34,7 @@ func GoGoRunners() error {
 				}
 			}
 		}
-		time.Sleep(time.Second *30)
+		time.Sleep(time.Second *10)
 	}
 
 	notify.SendSlackAlert("[ERROR] runner, routine broke out of loop")

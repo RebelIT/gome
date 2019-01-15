@@ -11,8 +11,7 @@ import (
 )
 
 func GoGoScheduler() error {
-	log.Println("[INFO] scheduler, starting")
-	//var in Inputs
+	log.Println("[INFO] scheduler runner, starting")
 
 	for{
 		devs, err := devices.LoadDevices()
@@ -37,54 +36,65 @@ func GoGoScheduler() error {
 }
 
 func doSchedule(device string) {
-	_, iTime, day, _ := splitTime()
-	schedule, err := devices.ScheduleGet(device)
+	scheduleEnabled := false  //initialize top level device schedule enabled and default to do nothing
+	dontDoAnything := true  //initialize complete disable on error default to do nothing
+	_, iTime, day, _ := splitTime()  //custom parse date/time
+	schedule, err := devices.ScheduleGet(device)  //get any schedules
 	if err != nil {
-		log.Printf("[WARN] scheduler, %s : %s\n", device, err)
+		dontDoAnything = false //error in getting schedule disable it all for device
+		log.Printf("[WARN] scheduler, skipping all %s : %s\n", device, err)
+		log.Printf("[WARN] trace: %+v\n", schedule)
 	}
-
-	devStatus, err := devices.StatusGet(device)
-	if err != nil {
-		log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
+	//validate schedule is enabled
+	if schedule.Status == "enable"{
+		scheduleEnabled = true
 	}
-
-	scheduleOutCol := []Validator{}
-	for _, s := range schedule.Schedules {
-		if day == strings.ToLower(s.Day) {
-			if s.Status == "enable" {
-				scheduleOut := Validator{}
-
-				onTime, _ := strconv.Atoi(s.On)   //time of day device is on
-				offTime, _ := strconv.Atoi(s.Off) //time of day device is off
-
-				//technically don't need `changeTo` anymore but I left it for now.
-				doChange, changeTo, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
-
-				scheduleOut.ChangeTo = changeTo
-				scheduleOut.DoChange = doChange
-				scheduleOut.InSchedule = isInScheduleBlock
-
-				scheduleOutCol = append(scheduleOutCol, scheduleOut)
-			}
+	if dontDoAnything {
+		devStatus, err := devices.StatusGet(device)
+		if err != nil {
+			log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
 		}
-	}
 
-	//if device is in any enabled schedule it must be on
-	for _, s := range scheduleOutCol {
-		if s.InSchedule && s.DoChange {
-			if err := tuya.PowerControl(device, true); err != nil { //change it to true
-				log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
-				notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
+		if scheduleEnabled { //top level device schedule enabled
+			scheduleOutCol := []Validator{}
+			for _, s := range schedule.Schedules {
+				if day == strings.ToLower(s.Day) {
+					if s.Status == "enable" {
+						scheduleOut := Validator{}
+
+						onTime, _ := strconv.Atoi(s.On)   //time of day device is on
+						offTime, _ := strconv.Atoi(s.Off) //time of day device is off
+
+						//technically don't need `changeTo` anymore but I left it for now.
+						doChange, changeTo, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
+
+						scheduleOut.ChangeTo = changeTo
+						scheduleOut.DoChange = doChange
+						scheduleOut.InSchedule = isInScheduleBlock
+
+						scheduleOutCol = append(scheduleOutCol, scheduleOut)
+					}
+				}
 			}
-		}
-	}
 
-	//if device is not in  any enabled schedule it must be off
-	if noSchedules(scheduleOutCol) {
-		if devStatus.Alive {
-			if err := tuya.PowerControl(device, false); err != nil { //change it to true
-				log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
-				notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
+			//if device is in any enabled schedule it must be on
+			for _, s := range scheduleOutCol {
+				if s.InSchedule && s.DoChange {
+					if err := tuya.PowerControl(device, true); err != nil { //change it to true
+						log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
+						notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
+					}
+				}
+			}
+
+			//if device is not in  any enabled schedule it must be off
+			if noSchedules(scheduleOutCol) {
+				if devStatus.Alive {
+					if err := tuya.PowerControl(device, false); err != nil { //change it to true
+						log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
+						notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
+					}
+				}
 			}
 		}
 	}

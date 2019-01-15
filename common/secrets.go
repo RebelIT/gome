@@ -1,15 +1,14 @@
-package notify
+package common
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/rebelit/gome/common"
+	"github.com/pkg/errors"
 	"io/ioutil"
 )
 
-func getSecrets() (Secrets, error){
+func GetSecrets() (Secrets, error){
 	s := Secrets{}
-	secretsFile, err := ioutil.ReadFile(common.SECRETS)
+	secretsFile, err := ioutil.ReadFile(SECRETS)
 	if err != nil {
 		return Secrets{}, err
 	}
