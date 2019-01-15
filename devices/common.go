@@ -3,6 +3,7 @@ package devices
 import (
 	"encoding/json"
 	"github.com/gomodule/redigo/redis"
+	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"log"
@@ -43,7 +44,6 @@ func DetailsGet (device string) (Devices, error){
 		return Devices{}, err
 	}
 	redis.ScanStruct(values, &d)
-	log.Printf("detailsGet db data %+v\n", d)
 	return d, nil
 }
 
@@ -78,6 +78,11 @@ func ScheduleGet (device string) (Schedules, error){
 
 	value, err := redis.String(c.Do("GET", key))
 	json.Unmarshal([]byte(value), &s)
+
+	if len(s.Schedules) <= 1 {
+		return s, errors.New("invalid schedule struct")
+	}
+
 	return s, nil
 }
 
