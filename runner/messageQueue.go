@@ -15,13 +15,14 @@ import (
 	"time"
 )
 
-func GoGoSQS() error {
-	log.Println("[INFO] aws sqs, starting")
-	notify.SendSlackAlert("AWS SQS runner is starting")
+func GoGoSQS() {
+	log.Println("[INFO] aws sqs runner, starting")
+	//notify.SendSlackAlert("AWS SQS runner is starting")
 
 	s, err := common.GetSecrets()
 	if err != nil {
-		return err
+		log.Printf("[ERROR] aws sqs, %s", err)
+		//return err
 	}
 
 	config, err := session.NewSession(&aws.Config{
@@ -29,7 +30,7 @@ func GoGoSQS() error {
 		Credentials: credentials.NewStaticCredentials(s.AwsId, s.AwsSecret, s.AwsToken),
 	})
 	if err != nil {
-		return err
+		log.Printf("[ERROR] aws sqs, %s", err)
 	}
 
 	c := sqs.New(config)
@@ -37,10 +38,9 @@ func GoGoSQS() error {
 	for {
 		message, receipt, err := getMessage(c, s.AWSQueueUrl)
 		if err != nil {
-			log.Printf("[WARN] aws sqs, %s", err)
 			if receipt != nil{
 				if err := deleteMessage(c,s.AWSQueueUrl,receipt); err != nil{
-					log.Printf("[WARN] aws sqs, %s", err)
+					log.Printf("[ERROR] aws sqs, %s", err)
 				}
 			}
 		} else {
@@ -48,9 +48,9 @@ func GoGoSQS() error {
 			deviceType := m[0]
 			deviceName := m[1]
 			deviceAction := m[2]
-
+			log.Printf("[INFO] aws sqs, Type: %s, Name: %s, Action: %s", deviceType, deviceName, deviceAction)
 			if err := deleteMessage(c,s.AWSQueueUrl,receipt); err != nil{
-				log.Printf("[WARN] aws sqs, %s", err)
+				log.Printf("[ERROR] aws sqs, %s", err)
 			}
 
 			if err := doAction(deviceType,deviceName,deviceAction); err != nil{
@@ -60,7 +60,6 @@ func GoGoSQS() error {
 		time.Sleep(time.Second *2)
 	}
 	notify.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
-	return nil
 }
 
 func doAction(deviceType string, deviceName string, deviceAction string) error{
@@ -119,6 +118,7 @@ func getMessage(c *sqs.SQS, queueUrl string)(string, *string, error){
 			return "", result.Messages[0].ReceiptHandle, errors.New("message was blank when it should have not been...")
 		}
 	}
+	message = strings.Replace(message, "\"", "", -1)
 	return message, result.Messages[0].ReceiptHandle, nil
 }
 
