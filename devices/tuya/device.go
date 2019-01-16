@@ -2,7 +2,6 @@ package tuya
 
 import (
 	"fmt"
-	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
@@ -18,7 +17,7 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 	args := []string{"get","--ip", addr,"--id", id, "--key", key}
 	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	if err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+		log.Printf("[ERROR] %s :  device status, %s\n", deviceName, err)
 		notify.MetricCmd("tuya-cli", "failed")
 	}
 	notify.MetricCmd("tuya-cli", "success")
@@ -30,15 +29,8 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 	}
 	data.Device = deviceName
 
-	c, err := devices.DbConnect()
-	if err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
-		return
-	}
-	defer c.Close()
-
-	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)...); err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+	if err := devices.DbHashSet(deviceName+"_"+"status", data); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}
 

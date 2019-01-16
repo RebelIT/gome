@@ -2,81 +2,71 @@ package devices
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gomodule/redigo/redis"
-	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"log"
 )
 
+
+// *****************************************************************
+// General device functions
 func StatusGet (device string) (Status, error){
 	s := Status{}
-	key := device+"_status"
 
-	c, err := DbConnect()
+	values, err := DbHashGet(device+"_status")
 	if err != nil{
 		return s, err
 	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return s, err
-	}
-
 	redis.ScanStruct(values, &s)
-
 	return s, nil
 }
 
 func DetailsGet (device string) (Devices, error){
 	d := Devices{}
-	key := device
 
-	c, err := DbConnect()
+	values, err := DbHashGet(device)
 	if err != nil{
-		return Devices{}, err
-	}
-	defer c.Close()
-
-	values, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return Devices{}, err
+		return d, err
 	}
 	redis.ScanStruct(values, &d)
 	return d, nil
 }
 
+func LoadDevices()(Inputs, error){
+	var in Inputs
+	deviceFile, err := ioutil.ReadFile(common.FILE)
+	if err != nil {
+		return in, err
+	}
+	json.Unmarshal(deviceFile, &in)
+
+	return in, nil
+}
+
+
+// *****************************************************************
+// Scheduler functions
 func ScheduleSet (s* Schedules, device string) (error){
-	key := device+"_schedule"
-	bytes, err := json.Marshal(s)
+	data, err := json.Marshal(s)
 	if err != nil{
 		log.Println(err)
 	}
 
-	c, err := DbConnect()
-	if err != nil{
+	if err := DbSet(device+"_schedule", data); err != nil{
 		return err
 	}
-	defer c.Close()
-	if _, err := c.Do("SET", key, string(bytes)); err != nil{
-		return err
-	}
-
 	return nil
 }
 
 func ScheduleGet (device string) (Schedules, error){
 	s := Schedules{}
-	key := device+"_schedule"
 
-	c, err := DbConnect()
+	value, err := DbGet(device+"_schedule")
 	if err != nil{
 		return s, err
 	}
-	defer c.Close()
-
-	value, err := redis.String(c.Do("GET", key))
 	json.Unmarshal([]byte(value), &s)
 
 	if len(s.Schedules) <= 1 {
@@ -87,15 +77,7 @@ func ScheduleGet (device string) (Schedules, error){
 }
 
 func ScheduleDel (device string) (error){
-	key := device+"_schedule"
-
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-
-	if _, err := c.Do("DEL", key, "*"); err != nil{
+	if err := DbDel(device+"_schedule"); err != nil{
 		return err
 	}
 	return nil
@@ -116,6 +98,9 @@ func ScheduleUpdate (device string, status string) (error){
 	return nil
 }
 
+
+// *****************************************************************
+// Redis functions
 func DbConnect()(redis.Conn, error){
 	var in Inputs
 
@@ -134,13 +119,70 @@ func DbConnect()(redis.Conn, error){
 	return conn, nil
 }
 
-func LoadDevices()(Inputs, error){
-	var in Inputs
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		return in, err
+func DbHashSet(key string, data interface{} ) error{
+	//equivalent to a redis HMSET
+	c, err := DbConnect()
+	if err != nil{
+		return err
 	}
-	json.Unmarshal(deviceFile, &in)
+	defer c.Close()
+	if _, err := c.Do("HMSET", redis.Args{key}.AddFlat(data)...); err != nil{
+		return err
+	}
 
-	return in, nil
+	return nil
+}
+
+func DbHashGet(key string)(values []interface{}, err error){
+	c, err := DbConnect()
+	if err != nil{
+		return nil, err
+	}
+	defer c.Close()
+
+	resp, err := redis.Values(c.Do("HGETALL", key))
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+func DbSet(key string, value []byte) error{
+	c, err := DbConnect()
+	if err != nil{
+		return err
+	}
+	defer c.Close()
+	if _, err := c.Do("SET", key, string(value)); err != nil{
+		return err
+	}
+	return nil
+}
+
+func DbGet(key string) (values string, err error){
+	c, err := DbConnect()
+	if err != nil{
+		return "", err
+	}
+	defer c.Close()
+	value, err := redis.String(c.Do("GET", key))
+	if err != nil{
+		return "", err
+	}
+
+	return value, nil
+}
+
+func DbDel(key string) error{
+	c, err := DbConnect()
+	if err != nil{
+		return err
+	}
+	defer c.Close()
+
+	if _, err := c.Do("DEL", key, "*"); err != nil{
+		return err
+	}
+
+	return nil
 }

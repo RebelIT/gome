@@ -1,7 +1,7 @@
 package roku
 
 import (
-	"github.com/gomodule/redigo/redis"
+	"github.com/pkg/errors"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
@@ -14,15 +14,12 @@ func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 	if err != nil{
 		return http.Response{}, err
 	}
-	log.Printf("dbData:  %+v\n", d)
 	url := "http://"+d.Addr+":"+d.NetPort+uriPart
-	log.Printf("roku doing post %s\n")
+
 	resp, err := http.Post(url, "", strings.NewReader(""))
 	if err != nil{
-		log.Println(err)
 		return *resp, err
 	}
-	log.Printf("roku post done app %s\n")
 	return *resp, nil
 }
 
@@ -35,7 +32,6 @@ func rokuGet(uriPart string, deviceName string) (http.Response, error) {
 
 	resp, err := http.Get(url)
 	if err != nil{
-		log.Println(err)
 		return *resp, err
 	}
 	return *resp, nil
@@ -46,16 +42,13 @@ func launchApp(deviceName string, app string) error {
 	if err != nil{
 		return err
 	}
-	log.Printf("roku details app %s device %s\n", id, deviceName)
-
 	uri := "/launch/"+id
 	resp, err := rokuPost(uri, deviceName)
-	log.Printf("roku launched app %s\n", id)
 	if err != nil{
 		return err
 	}
 	if resp.StatusCode != 200{
-		return err
+		return errors.New("non-200 status code return")
 	}
 	return nil
 }
@@ -66,7 +59,7 @@ func DeviceStatus(deviceName string){
 
 	resp, err := rokuGet(uriPart, deviceName)
 	if err != nil {
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return
 	}
@@ -81,18 +74,11 @@ func DeviceStatus(deviceName string){
 	}
 	data.Device = deviceName
 
-	c, err := devices.DbConnect()
-	if err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
-		return
-	}
-	defer c.Close()
-
-	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)...); err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+	if err := devices.DbHashSet(deviceName+"_"+"status", data); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}
 
-	log.Printf("[DEBUG] %s : status done\n", deviceName)
+	log.Printf("[DEBUG] %s :  device status done\n", deviceName)
 	return
 }
