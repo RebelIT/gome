@@ -5,12 +5,7 @@ import (
 	"github.com/rebelit/gome/notify"
 	"log"
 	"net/http"
-	"time"
 )
-
-func init() {
-	http.DefaultClient.Timeout = time.Second * 5
-}
 
 func HandleControl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

@@ -1,17 +1,12 @@
 package rpi
 
 import (
-	"github.com/gomodule/redigo/redis"
+	"errors"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
 	"net/http"
-	"time"
 )
-
-func init() {
-	http.DefaultClient.Timeout = time.Second * 5
-}
 
 func piGet(uriPart string, deviceName string) (http.Response, error) {
 	d, err := devices.DetailsGet(deviceName)
@@ -35,7 +30,7 @@ func doAction(deviceName string, action string) error {
 		return err
 	}
 	if resp.StatusCode != 200{
-		return err
+		return errors.New("non-200 status code")
 	}
 
 	return nil
@@ -47,7 +42,7 @@ func DeviceStatus(deviceName string) {
 
 	resp, err := piGet(uriPart, deviceName)
 	if err != nil {
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return
 	}
@@ -62,18 +57,11 @@ func DeviceStatus(deviceName string) {
 	}
 	data.Device = deviceName
 
-	c, err := devices.DbConnect()
-	if err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
-		return
-	}
-	defer c.Close()
-
-	if _, err := c.Do("HMSET", redis.Args{deviceName+"_"+"status"}.AddFlat(data)); err != nil{
-		log.Printf("[ERROR] %s : status, %s\n", deviceName, err)
+	if err := devices.DbHashSet(deviceName+"_"+"status", data); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}
 
-	log.Printf("[DEBUG] %s : status done\n", deviceName)
+	log.Printf("[DEBUG] %s : device status done\n", deviceName)
 	return
 }
