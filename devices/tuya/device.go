@@ -18,9 +18,7 @@ func DeviceStatus (addr string, id string, key string, deviceName string) {
 	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
 	if err != nil{
 		log.Printf("[ERROR] %s :  device status, %s\n", deviceName, err)
-		notify.MetricCmd("tuya-cli", "failed")
 	}
-	notify.MetricCmd("tuya-cli", "success")
 
 	if strings.Replace(cmdOut, "\n", "", -1) == "true"{
 		data.Alive = true

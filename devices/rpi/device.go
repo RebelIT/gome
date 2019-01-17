@@ -1,7 +1,6 @@
 package rpi
 
 import (
-	"errors"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
@@ -17,22 +16,21 @@ func piGet(uriPart string, deviceName string) (http.Response, error) {
 
 	resp, err := http.Get(url)
 	if err != nil{
+		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return *resp, err
 	}
-
+	notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 	return *resp, nil
 }
 
-func doAction(deviceName string, action string) error {
+func piPost(deviceName string, action string) error {
 	uriPart := "/action/"+action
 	resp, err := piGet(uriPart, deviceName)
 	if err != nil{
+		notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 		return err
 	}
-	if resp.StatusCode != 200{
-		return errors.New("non-200 status code")
-	}
-
+	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 	return nil
 }
 
@@ -43,12 +41,9 @@ func DeviceStatus(deviceName string) {
 	resp, err := piGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return
 	}
 	defer resp.Body.Close()
-
-	notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 
 	if resp.StatusCode != 200 {
 		data.Alive = false

@@ -12,7 +12,7 @@ func HandleControl(w http.ResponseWriter, r *http.Request) {
 	deviceName := vars["device"]
 	action := vars["action"]
 
-	if err := doAction(deviceName,action); err != nil{
+	if err := piPost(deviceName,action); err != nil{
 		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
 		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)

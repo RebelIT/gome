@@ -18,8 +18,10 @@ func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 
 	resp, err := http.Post(url, "", strings.NewReader(""))
 	if err != nil{
+		notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 		return *resp, err
 	}
+	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 	return *resp, nil
 }
 
@@ -32,8 +34,10 @@ func rokuGet(uriPart string, deviceName string) (http.Response, error) {
 
 	resp, err := http.Get(url)
 	if err != nil{
+		notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 		return *resp, err
 	}
+	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 	return *resp, nil
 }
 
@@ -60,12 +64,9 @@ func DeviceStatus(deviceName string){
 	resp, err := rokuGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 		return
 	}
 	defer resp.Body.Close()
-
-	notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
 
 	if resp.StatusCode != 200 {
 		data.Alive = false
