@@ -45,7 +45,7 @@ func MetricCmd(cmd string, response string){
 
 func MetricAws(awsService string, requestMethod string, status string, device string, action string){
 	//emits a new counter for every AWS action
-	//awsService == sqs, lambda
+	//awsService == sqs, lambda, alexa
 	//requestMethod == get, delete, post
 	//status == ok, failure
 	tags := statsd.Tags("aws_service", awsService, "request_method", requestMethod, "request_status", status,
