@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func piGet(uriPart string, deviceName string) (http.Response, error) {
+func PiGet(uriPart string, deviceName string) (http.Response, error) {
 	d, err := devices.DetailsGet(deviceName)
 	if err != nil{
 		return http.Response{}, err
@@ -23,9 +23,9 @@ func piGet(uriPart string, deviceName string) (http.Response, error) {
 	return *resp, nil
 }
 
-func piPost(deviceName string, action string) error {
+func PiPost(deviceName string, action string) error {
 	uriPart := "/action/"+action
-	resp, err := piGet(uriPart, deviceName)
+	resp, err := PiGet(uriPart, deviceName)
 	if err != nil{
 		notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 		return err
@@ -38,7 +38,7 @@ func DeviceStatus(deviceName string) {
 	data := devices.Status{}
 	uriPart := "/"
 
-	resp, err := piGet(uriPart, deviceName)
+	resp, err := PiGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
