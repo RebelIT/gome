@@ -7,21 +7,21 @@
                     "name": "tuya",
                     "slots": [
                         {
-                            "name": "NAME",
+                            "name": "TUYA_NAME",
                             "type": "TUYA_NAME"
                         },
                         {
-                            "name": "ACTION",
+                            "name": "TUYA_ACTION",
                             "type": "TUYA_ACTION"
                         }
                     ],
                     "samples": [
-                        "to turn {NAME} {ACTION}",
-                        "to power {NAME} {ACTION}",
-                        "to set {NAME} {ACTION}",
-                        "to set {ACTION} {NAME}",
-                        "to power {ACTION} {NAME}",
-                        "to turn {ACTION} {NAME}"
+                        "to turn {TUYA_NAME} {TUYA_ACTION}",
+                        "to power {TUYA_NAME} {TUYA_ACTION}",
+                        "to set {TUYA_NAME} {TUYA_ACTION}",
+                        "to set {TUYA_ACTION} {TUYA_NAME}",
+                        "to power {TUYA_ACTION} {TUYA_NAME}",
+                        "to turn {TUYA_ACTION} {TUYA_NAME}"
                     ]
                 },
                 {
@@ -39,6 +39,22 @@
                 {
                     "name": "AMAZON.NavigateHomeIntent",
                     "samples": []
+                },
+                {
+                    "name": "pi",
+                    "slots": [
+                        {
+                            "name": "PI_NAME",
+                            "type": "PI_NAME"
+                        },
+                        {
+                            "name": "PI_ACTION",
+                            "type": "PI_ACTION"
+                        }
+                    ],
+                    "samples": [
+                        "to {PI_ACTION} {PI_NAME}"
+                    ]
                 }
             ],
             "types": [
@@ -103,6 +119,87 @@
                                     "true",
                                     "up",
                                     "on"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "PI_NAME",
+                    "values": [
+                        {
+                            "id": "pi003",
+                            "name": {
+                                "value": "gome",
+                                "synonyms": [
+                                    "house",
+                                    "gome",
+                                    "go home",
+                                    "self"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "pi002",
+                            "name": {
+                                "value": "metrics",
+                                "synonyms": [
+                                    "grafana",
+                                    "database",
+                                    "influx",
+                                    "metrics"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "pi001",
+                            "name": {
+                                "value": "calendar",
+                                "synonyms": [
+                                    "dak calendar",
+                                    "kitchen tv",
+                                    "calendar display",
+                                    "wall calendar",
+                                    "dak",
+                                    "calendar"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "PI_ACTION",
+                    "values": [
+                        {
+                            "id": "update",
+                            "name": {
+                                "value": "update",
+                                "synonyms": [
+                                    "patch",
+                                    "update"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "shutdown",
+                            "name": {
+                                "value": "shutdown",
+                                "synonyms": [
+                                    "turn off",
+                                    "kill",
+                                    "power off",
+                                    "shutdown"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "reboot",
+                            "name": {
+                                "value": "reboot",
+                                "synonyms": [
+                                    "reload",
+                                    "restart",
+                                    "reboot"
                                 ]
                             }
                         }
