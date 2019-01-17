@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/devices/tuya"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
 	"strings"
@@ -53,36 +53,13 @@ func GoGoSQS() {
 				log.Printf("[ERROR] aws sqs, %s", err)
 			}
 
-			if err := doAction(deviceType,deviceName,deviceAction); err != nil{
+			if err := devices.DoWhatAlexaSays(deviceType,deviceName,deviceAction); err != nil{
 				log.Printf("[ERROR], aws sqs, %s", err)
 			}
 		}
 		time.Sleep(time.Second *2)
 	}
 	notify.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
-}
-
-func doAction(deviceType string, deviceName string, deviceAction string) error{
-	action := false
-
-	notify.MetricAws("sqs", "doAction", "nil",deviceName, deviceAction)
-
-	switch deviceType{
-	case "tuya":
-		if deviceAction == "on"{
-			action = true
-		}
-		if err := tuya.PowerControl(deviceName, action); err != nil{
-			return err
-		}
-		return nil
-
-	default:
-		//no match
-		return errors.New("no message in queue to parse")
-	}
-
-	return nil
 }
 
 func getMessage(c *sqs.SQS, queueUrl string)(string, *string, error){

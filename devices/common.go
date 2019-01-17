@@ -5,6 +5,9 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices/rpi"
+	"github.com/rebelit/gome/devices/tuya"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"log"
 )
@@ -43,6 +46,34 @@ func LoadDevices()(Inputs, error){
 	json.Unmarshal(deviceFile, &in)
 
 	return in, nil
+}
+
+func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
+	action := false
+
+	notify.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
+
+	switch deviceType{
+	case "tuya":
+		if deviceAction == "on"{
+			action = true
+		}
+		if err := tuya.PowerControl(deviceName, action); err != nil{
+			return err
+		}
+		return nil
+
+	case "pi":
+		if err := rpi.PiPost(deviceName, deviceAction); err != nil{
+			return err
+		}
+
+	default:
+		//no match
+		return errors.New("no message in queue to parse")
+	}
+
+	return nil
 }
 
 
