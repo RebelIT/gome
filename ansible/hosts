@@ -3,8 +3,6 @@
 [gome:vars]
   hostname=piGome
   ssh_user=pi
-  gopath=/home/pi/go/
-  repo=github.com/RebelIT/gome
   application=gome
   hardware=pi
   telegraf_db=10.10.10.10

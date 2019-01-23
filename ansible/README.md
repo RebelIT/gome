@@ -30,6 +30,12 @@
       * you have to create secrets.yml in `ansible/roles/application/vars/secrets.yml`. Not giving you mine. 
       * ```
         slack_secret: 'xxxxxx/xxxxx/xxxxxx' #slack token    (NOT the full https url, only the workspace/channel/token)
+        aws_id: 'xxxxxxxxxxxx'
+        aws_secret: 'xxxxxxxxxxxxxxxxxx'
+        aws_region: 'us-east-2'
+        aws_token: ''
+        aws_queue_url: 'https://sqs.us-east-2.amazonaws.com/xxxxxxxxxxx/xxxxxxx'
+
         ```
 * roles and deploy steps
    * ```

@@ -13,7 +13,3 @@ packages:
   go:
     pkg: git
 
-goRepos:
-  personal:
-    url: github.com/RebelIT/gome
-
