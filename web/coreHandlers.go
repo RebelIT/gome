@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
-	"github.com/rebelit/gome/runner"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -107,7 +107,10 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	}
 
 	//Re-run device loader to add to DB cache
-	runner.GoGODeviceLoader()
+	if err := devices.LoadDevices(); err != nil{
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)

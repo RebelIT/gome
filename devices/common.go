@@ -34,15 +34,49 @@ func DetailsGet (device string) (Devices, error){
 	return d, nil
 }
 
-func LoadDevices()(Inputs, error){
+func LoadDevices() error{
+	//Load Devices into database from file
+	log.Printf("[INFO] device loader, starting")
+	i, err := ReadDeviceFile()
+	if err != nil{
+		return err
+	}
+
+	if len(i.Devices) == 0{
+		log.Printf("[WARN] device loader, no devices to load, skipping")
+		return nil
+	}
+
+	for _, d := range i.Devices {
+		log.Printf("[INFO] device loader, loading %s under 'device_%s'", d.Name, d.Name)
+		if err := DbHashSet("device_"+d.Name,d); err != nil{
+			return err
+		}
+	}
+	log.Println("[INFO] device loader, all done")
+	return nil
+}
+
+func ReadDeviceFile()(Inputs, error){
 	var in Inputs
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		return in, err
 	}
-	json.Unmarshal(deviceFile, &in)
+	if err := json.Unmarshal(deviceFile, &in); err != nil{
+		return in, err
+	}
 
 	return in, nil
+}
+
+func GetAllDevicesFromDb() (devices []string, err error){
+	keySearch := "device_*"
+	keys, err := DbGetKeys(keySearch)
+	if err != nil{
+		return nil, err
+	}
+	return keys, nil
 }
 
 // *****************************************************************
@@ -142,6 +176,20 @@ func DbHashGet(key string)(values []interface{}, err error){
 	resp, err := redis.Values(c.Do("HGETALL", key))
 	if err != nil {
 		return resp, err
+	}
+	return resp, nil
+}
+
+func DbGetKeys(key string)(keys []string, err error){
+	c, err := DbConnect()
+	if err != nil{
+		return nil, err
+	}
+	defer c.Close()
+
+	resp, err := redis.Strings(c.Do("KEYS", key))
+	if err != nil {
+		return nil, err
 	}
 	return resp, nil
 }
