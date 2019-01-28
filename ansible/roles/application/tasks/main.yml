@@ -4,51 +4,22 @@
       dir: 'vars'
       extensions: ['yml']
 
-  - name: Clean any old versions for fun
-    command: rm -rf {{ gopath }}src
-    become: yes
-
-  - name: Install packages
-    apt:
-      update_cache: yes
-      name: "{{ item.value.pkg }}"
-      state: "latest"
-    with_dict: "{{ packages }}"
-    become: yes
-
-  - name: Create go project structure
-    file:
-      path: "{{ item.value.dir }}"
-      state: directory
-      mode: 0755
-    with_dict: "{{ structure }}"
-    become: yes
-
-  - name: Create bash bash_profile
-    file:
-      path: "/home/pi/.bash_profile"
-      state: touch
-    become: yes
-
-  - name: Set $GOPATH
-    lineinfile:
-      path: /home/pi/.bash_profile
-      line: 'export GOPATH={{ gopath }}'
-    become: yes
-
-  - name: "Go-Lang | Run get commands"
-    shell: "/usr/bin/go get {{ item.value.url }}"
-    environment:
-      GOPATH: "{{ gopath }}"
-    with_dict: "{{ goRepos }}"
-    become: yes
+  - name: Compile the application
+    shell: "GOOS=linux GOARCH=arm go build -o main ."
+    delegate_to: 127.0.0.1
 
   - name: Make sure config directory exists
     file:
       path: "/etc/gome/"
       state: directory
-      mode: 0755
+      mode: 0644
     become: yes
+
+  - name: Copy executable
+    copy:
+      src: "main"
+      dest: "/etc/gome/main"
+      mode: a+x
 
   - name: set application secrets
     template:
@@ -62,18 +33,6 @@
       dest: "/etc/gome/devices.json"
     become: yes
     when: push_blank_device_list
-
-  - name: Compile it!
-    shell: "go build -o main ."
-    args:
-      chdir: "{{ gopath }}src/{{ repo }}/"
-    environment:
-      GOPATH: "{{ gopath }}"
-    become: yes
-
-  - name: Did it Compile?
-    stat: "path={{ gopath }}src/{{ repo }}/main"
-    register: main
 
   - name: Make sure service directory exits
     file:

@@ -13,6 +13,12 @@ GoLang Home (gome)
    
 #### Still a work in progress as I contintue to learn GOLang.  but it works! :)
 
+## Test it:
+
+```
+docker build -t gometest .
+docker run -v $PWD:/go/src/github.com/rebelit/gome -i -t gometest /bin/bash
+```
 ## Deploy it
 ### Note:
 * tuya wall outlets and light switches control is dependent on tuya-api, had issues with performance and blocking on 

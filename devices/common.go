@@ -5,8 +5,10 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"log"
+	"net/http"
 )
 
 
@@ -93,10 +95,10 @@ func ScheduleSet (s* Schedules, device string) (error){
 	return nil
 }
 
-func ScheduleGet (device string) (Schedules, error){
+func ScheduleGet (devName string) (Schedules, error){
 	s := Schedules{}
 
-	value, err := DbGet(device+"_schedule")
+	value, err := DbGet(devName+"_schedule")
 	if err != nil{
 		return s, err
 	}
@@ -232,4 +234,31 @@ func DbDel(key string) error{
 	}
 
 	return nil
+}
+
+
+// *****************************************************************
+// Http Response helper functions
+func ReturnOk(w http.ResponseWriter, r *http.Request, resp http.Response){
+	code := http.StatusOK
+	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("[ERROR] %s : %s\n", r.URL.Path, err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(code)
+}
+
+func ReturnBad(w http.ResponseWriter, r *http.Request){
+	code := http.StatusBadRequest
+	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	w.WriteHeader(code)
+}
+
+func ReturnInternalError(w http.ResponseWriter, r *http.Request){
+	code := http.StatusInternalServerError
+	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	w.WriteHeader(code)
 }

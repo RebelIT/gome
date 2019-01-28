@@ -1,8 +1,10 @@
 package rpi
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/rebelit/gome/notify"
+	"github.com/rebelit/gome/devices"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -10,15 +12,34 @@ import (
 func HandleControl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
-	action := vars["action"]
+	component := vars["component"]
 
-	if err := PiPost(deviceName,action); err != nil{
-		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+	i := PiControl{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		devices.ReturnBad(w, r)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &i); err != nil {
+		devices.ReturnInternalError(w, r)
 		return
 	}
 
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
+	uri, err := compileUrl(component, i)
+	if err != nil{
+		devices.ReturnBad(w, r)
+		return
+	}
+
+	resp, err := PiPost(deviceName,uri)
+	if err != nil{
+		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
+		devices.ReturnInternalError(w, r)
+		return
+	}
+
+	devices.ReturnOk(w, r, resp)
 	return
 }

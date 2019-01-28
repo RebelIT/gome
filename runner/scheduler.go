@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"github.com/gomodule/redigo/redis"
+	"github.com/pkg/errors"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
@@ -11,92 +13,129 @@ import (
 )
 
 func GoGoScheduler() error {
-	log.Println("[INFO] scheduler runner, starting")
+	log.Println("[INFO] schedule runner, starting")
+	for {
+		doIt := true
 
-	for{
-		devs, err := devices.LoadDevices()
+		//get array of all devices in the database
+		devs, err := devices.GetAllDevicesFromDb()
 		if err != nil{
-			log.Printf("[WARN] scheduler, unable to load devices from file. skipping this round")
-		}else {
-			for _, d := range (devs.Devices) {
-				switch d.Device {
-				case "tuya":
-					go doSchedule(d.Name)
+			log.Printf("[WARN] schedule runner, get all devices: %s", err)
+			doIt = false
+		}
 
-				default:
-					log.Printf("[WARN] scheduler, %s no device types match", d.Name)
+		if len(devs) == 0{
+			log.Printf("[WARN] schedule runner, no devices found in the database")
+			doIt = false
+		}
+
+		if doIt {
+			for _, dev := range devs {
+				doItForReal := true
+				d := devices.Devices{}
+
+				//get device data from redis
+				devData, err := devices.DbHashGet(dev)
+				if err != nil {
+					log.Printf("[WARN] schedule runner, unable to get dbData for %s: %s", dev, err)
+					doItForReal = false
+				}
+				redis.ScanStruct(devData, &d)
+
+				//get schedules data from redis
+				s, err := devices.ScheduleGet(d.Name)
+				if err != nil{
+					log.Printf("[WARN] schedule runner, unable to get schedule for %s: %s", dev, err)
+					doItForReal = false
+				}
+
+				if s.Status != "enable"{
+					log.Printf("[INFO] schedule runner, %s has schedule defined but not enabled", dev)
+					doItForReal = false
+				}
+
+				if doItForReal {
+					go doSchedule(d, s.Schedules)
 				}
 			}
 		}
-		time.Sleep(time.Second *60)
+		time.Sleep(time.Second * 60)
 	}
 
 	notify.SendSlackAlert("[ERROR] scheduler, routine broke out of loop")
 	return nil
 }
 
-func doSchedule(device string) {
-	scheduleEnabled := false  //initialize top level device schedule enabled and default to do nothing
-	dontDoAnything := true  //initialize complete disable on error default to do nothing
+func doSchedule(device devices.Devices, schedules []devices.Schedule) {
 	_, iTime, day, _ := splitTime()  //custom parse date/time
-	schedule, err := devices.ScheduleGet(device)  //get any schedules
-	if err != nil {
-		dontDoAnything = false //error in getting schedule disable it all for device
-		log.Printf("[WARN] scheduler, skipping all %s : %s\n", device, err)
-		log.Printf("[WARN] trace: %+v\n", schedule)
-	}
-	//validate schedule is enabled
-	if schedule.Status == "enable"{
-		scheduleEnabled = true
-	}
-	if dontDoAnything {
-		devStatus, err := devices.StatusGet(device)
+
+	for _, schedule := range schedules {
+		devStatus, err := devices.StatusGet(device.Name)
 		if err != nil {
 			log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
 		}
 
-		if scheduleEnabled { //top level device schedule enabled
-			scheduleOutCol := []Validator{}
-			for _, s := range schedule.Schedules {
-				if day == strings.ToLower(s.Day) {
-					if s.Status == "enable" {
-						scheduleOut := Validator{}
+		scheduleOutCol := []Validator{}
+		for _, s := range schedules {
+			if day == strings.ToLower(s.Day) {
+				if s.Status == "enable" {
+					scheduleOut := Validator{}
 
-						onTime, _ := strconv.Atoi(s.On)   //time of day device is on
-						offTime, _ := strconv.Atoi(s.Off) //time of day device is off
+					onTime, _ := strconv.Atoi(s.On)   //time of day device is on
+					offTime, _ := strconv.Atoi(s.Off) //time of day device is off
 
-						//technically don't need `changeTo` anymore but I left it for now.
-						doChange, changeTo, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
+					doChange, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
 
-						scheduleOut.ChangeTo = changeTo
-						scheduleOut.DoChange = doChange
-						scheduleOut.InSchedule = isInScheduleBlock
+					scheduleOut.DoChange = doChange
+					scheduleOut.InSchedule = isInScheduleBlock
 
-						scheduleOutCol = append(scheduleOutCol, scheduleOut)
-					}
-				}
-			}
-
-			//if device is in any enabled schedule it must be on
-			for _, s := range scheduleOutCol {
-				if s.InSchedule && s.DoChange {
-					if err := tuya.PowerControl(device, true); err != nil { //change it to true
-						log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
-						notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
-					}
-				}
-			}
-
-			//if device is not in  any enabled schedule it must be off
-			if noSchedules(scheduleOutCol) {
-				if devStatus.Alive {
-					if err := tuya.PowerControl(device, false); err != nil { //change it to true
-						log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", device, err)
-						notify.SendSlackAlert("[ERROR] scheduler failed to change powerstate for " + device)
-					}
+					scheduleOutCol = append(scheduleOutCol, scheduleOut)
 				}
 			}
 		}
+
+		//if device is in any enabled schedule it must be on
+		for _, s := range scheduleOutCol {
+			if s.InSchedule && s.DoChange {
+				if err := doDeviceSpecificAction(device.Device, device.Name, schedule.Action, "on"); err != nil { //change it to true
+					log.Printf("[ERROR] schedule runner, %s failed to change powerstate: %s\n", device.Name, err)
+					notify.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
+				}
+			}
+		}
+
+		//if device is not in  any enabled schedule it must be off
+		if noSchedules(scheduleOutCol) {
+			if devStatus.Alive {
+				if err := doDeviceSpecificAction(device.Device, device.Name, schedule.Action, "off"); err != nil { //change it to true
+					log.Printf("[ERROR] schedule runner, %s failed to change powerstate: %s\n", device.Name, err)
+					notify.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
+				}
+			}
+		}
+	}
+}
+
+func doDeviceSpecificAction(deviceType string, deviceName string, deviceAction string, deviceStatus string) error{
+	switch deviceType {
+	case "tuya":
+		newStatus := false
+		if deviceStatus == "on"{
+			newStatus = true
+		}
+		if err := tuya.PowerControl(deviceName, newStatus); err != nil {
+			log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", deviceName, err)
+			notify.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for "+deviceName+" to "+deviceStatus)
+		}
+		return nil
+
+	case "pi":
+		return nil
+
+	default:
+		log.Printf("[WARN] schedule runner, %s no device types match", deviceName)
+		return errors.New("no device types match for "+deviceName)
+
 	}
 }
 
@@ -145,10 +184,9 @@ func noSchedules(v []Validator) bool {
 	return true
 }
 
-func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (changeState bool, changeTo bool, inScheduleBlock bool){
+func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (changeState bool, inScheduleBlock bool){
 	reverseCheck := false
 	changeState = false
-	changeTo = false
 	inScheduleBlock = false
 
 	if devOffTime <= devOnTime {
@@ -168,23 +206,21 @@ func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (chan
 		if inScheduleBlock{
 			//leave it be change state:false
 			changeState = false
-			return changeState, changeTo, inScheduleBlock
+			return changeState, inScheduleBlock
 		} else {
 			//change state:true. change the power control to false
 			changeState = true
-			changeTo = false
-			return changeState, changeTo, inScheduleBlock
+			return changeState, inScheduleBlock
 		}
 	} else {
 		if inScheduleBlock{
 			//change state:true. change the power control to true
 			changeState = true
-			changeTo = true
-			return changeState, changeTo, inScheduleBlock
+			return changeState, inScheduleBlock
 		}else {
 			//leave it be change state:false
 			changeState = false
-			return changeState, changeTo, inScheduleBlock
+			return changeState, inScheduleBlock
 		}
 	}
 }

@@ -130,7 +130,8 @@ func doWhatAlexaSays(deviceType string, deviceName string, deviceAction string) 
 		return nil
 
 	case "pi":
-		if err := rpi.PiPost(deviceName, deviceAction); err != nil{
+		_, err := rpi.PiPost(deviceName, deviceAction)
+		if err != nil{
 			return err
 		}
 

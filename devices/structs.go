@@ -34,6 +34,7 @@ type Schedule struct{
 	Day		string `json:"day"`
 	Status 	string `json:"status"`
 	Desc	string `json:"desc"`
+	Action  string `json:"action"`
 	On		string `json:"on"`
 	Off 	string `json:"off"`
 }
