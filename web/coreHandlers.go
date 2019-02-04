@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
-	"github.com/rebelit/gome/runner"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +16,7 @@ import (
 //
 func getDevices(w http.ResponseWriter,r *http.Request){
 	log.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
-	var i Inputs
+	var i devices.Inputs
 
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
@@ -39,8 +39,8 @@ func getDevices(w http.ResponseWriter,r *http.Request){
 
 func addDevice(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
-	var i Devices
-	fullDevs := &Inputs{}
+	var i devices.Devices
+	fullDevs := &devices.Inputs{}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -107,7 +107,10 @@ func addDevice(w http.ResponseWriter,r *http.Request){
 	}
 
 	//Re-run device loader to add to DB cache
-	runner.GoGODeviceLoader()
+	if err := devices.LoadDevices(); err != nil{
+		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)

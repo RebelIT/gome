@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/runner"
 	"github.com/rebelit/gome/web"
 	"log"
@@ -10,11 +11,11 @@ import (
 
 func main(){
 
-	listenOn := "6661"
-	runner.GoGODeviceLoader()
+	listenOn := "6660"
+	devices.LoadDevices()
 	time.Sleep(time.Second *2)
 
-	go runner.GoGoRunners()
+	go runner.GoGoDeviceStatus()
 	time.Sleep(time.Second *5)
 
 	go runner.GoGoScheduler()

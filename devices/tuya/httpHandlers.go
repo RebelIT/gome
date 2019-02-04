@@ -2,7 +2,7 @@ package tuya
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/rebelit/gome/notify"
+	"github.com/rebelit/gome/devices"
 	"log"
 	"net/http"
 )
@@ -18,19 +18,16 @@ func HandleControl(w http.ResponseWriter, r *http.Request) {
 	} else if state == "off"{
 		action = false
 	} else{
-		log.Printf("[ERROR] %s : control %s, state %s not found", deviceName, r.Method, state)
-		notify.MetricHttpIn(r.URL.Path, http.StatusBadRequest, r.Method)
-		w.WriteHeader(http.StatusBadRequest)
+		devices.ReturnBad(w,r)
 		return
 	}
 
 	if err := PowerControl(deviceName, action); err != nil{
 		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+		devices.ReturnInternalError(w,r)
 		return
 	}
 
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
+	devices.ReturnOk(w,r, http.Response{})
 	return
 }

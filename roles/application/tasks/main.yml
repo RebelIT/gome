@@ -1,0 +1,50 @@
+---
+  - name: Gather vars
+    include_vars:
+      dir: 'vars'
+      extensions: ['yml']
+
+  - name: Compile the application
+    shell: "GOOS=linux GOARCH=arm go build -o main ."
+    environment:
+      GOPATH: "{{ gopath }}"
+      GOROOT: "{{ goroot }}"
+    delegate_to: 127.0.0.1
+
+  - name: Make sure config directory exists
+    file:
+      path: "/etc/gome-server/"
+      state: directory
+      mode: 0644
+
+  - name: Copy executable
+    copy:
+      src: "main"
+      dest: "/etc/gome-server/main"
+      mode: a+x
+
+  - name: set application secrets
+    template:
+      src: roles/application/templates/secrets.json.j2
+      dest: "/etc/gome-server/secrets.json"
+
+  - name: set device file
+    template:
+      src: roles/application/templates/devices.json.j2
+      dest: "/etc/gome-server/devices.json"
+    when: push_blank_device_list
+
+  - name: Make sure service directory exits
+    file:
+      path: "/usr/lib/systemd/system/"
+      state: directory
+
+  - name: Copy Service Files
+    template:
+      src: "roles/application/templates/gome-server.service"
+      dest: "/usr/lib/systemd/system/"
+
+  - name: Unleash the daemon (make new service known)
+    command: systemctl daemon-reload
+    notify:
+      - restart gome

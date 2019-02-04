@@ -8,7 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/devices"
+	"github.com/rebelit/gome/devices/rpi"
+	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
 	"log"
 	"strings"
@@ -53,11 +54,11 @@ func GoGoSQS() {
 				log.Printf("[ERROR] aws sqs, %s", err)
 			}
 
-			if err := devices.DoWhatAlexaSays(deviceType,deviceName,deviceAction); err != nil{
+			if err := doWhatAlexaSays(deviceType,deviceName,deviceAction); err != nil{
 				log.Printf("[ERROR], aws sqs, %s", err)
 			}
 		}
-		time.Sleep(time.Second *2)
+		time.Sleep(time.Second *common.AWS_SEC)
 	}
 	notify.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
 }
@@ -110,5 +111,34 @@ func deleteMessage(c *sqs.SQS,queueUrl string, receipt *string) error{
 		return err
 	}
 	notify.MetricAws("sqs", "delete", "success","nil", "nil")
+	return nil
+}
+
+func doWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
+	action := false
+
+	notify.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
+
+	switch deviceType{
+	case "tuya":
+		if deviceAction == "on"{
+			action = true
+		}
+		if err := tuya.PowerControl(deviceName, action); err != nil{
+			return err
+		}
+		return nil
+
+	case "pi":
+		_, err := rpi.PiPost(deviceName, deviceAction)
+		if err != nil{
+			return err
+		}
+
+	default:
+		//no match
+		return errors.New("no message in queue to parse")
+	}
+
 	return nil
 }

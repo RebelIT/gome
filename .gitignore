@@ -4,6 +4,6 @@
 */dev/*
 *.idea
 devices.json
-*secrets.json
+secrets.json
 main
 testing/

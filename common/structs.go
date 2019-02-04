@@ -12,4 +12,6 @@ type Secrets struct{
 	AwsToken		string `json:"aws_token"`
 	AwsRegion 		string `json:"aws_region"`
 	AWSQueueUrl 	string `json:"aws_queue_url"`
+	RpiotUser		string `json:"rpiot_user"`
+	RpiotToken		string `json:"rpiot_token"`
 }

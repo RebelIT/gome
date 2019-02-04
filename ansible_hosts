@@ -1,0 +1,18 @@
+###############################
+## gome deployemnt
+[gome:vars]
+  hostname=piGome
+  ssh_user=pi
+  redis_host=127.0.0.1
+  redis_memory=50M
+  timezone=America/Chicago
+  push_blank_device_list=false
+  gopath=/Users/rebelit/go
+  goroot=/usr/local/opt/go/libexec
+
+[gome:children]
+  main
+
+[main]
+  10.0.0.106
+###############################

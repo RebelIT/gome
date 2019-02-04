@@ -1,8 +1,38 @@
 {
-  "database":"10.10.10.100:6379",
+  "database":"127.0.0.1:6379",
   "devices":[
-    {"device":"tuya","name":"livingroom", "aws_id": "someUniqueName", "address":"10.10.10.10", "port":"6888", "id":"123456abcdefg", "key":"123456abcdefg"},
-    {"device":"roku","name":"bedroom", "aws_id": "someUniqueName", "address":"10.10.10.11", "port":"8060", "id":"", "key":""},
-    {"device":"pi","name":"webServer", "aws_id": "someUniqueName", "address":"10.10.10.12", "port":"8080", "id":"", "key":""}
+    {
+      "device": "tuya",
+      "type": "outlet",
+      "name": "tuya001",
+      "name_friendly": "lampInThisRoom",
+      "address": "10.0.0.196",
+      "port": "6668",
+      "id": "sdfkdlsjfglkdfsjg",
+      "key": "lkdfglkj",
+      "dps": "1"
+    },
+    {
+      "device": "roku",
+      "type": "tv",
+      "name": "roku001",
+      "name_friendly": "familyRoom",
+      "address": "10.0.0.197",
+      "port": "8060",
+      "id": "",
+      "key": "",
+      "dps": ""
+    },
+    {
+      "device": "pi",
+      "type": "pi3",
+      "name": "pi001",
+      "name_friendly": "calendar",
+      "address": "10.0.0.197",
+      "port": "6661",
+      "id": "",
+      "key": "",
+      "dps": ""
+    }
   ]
 }

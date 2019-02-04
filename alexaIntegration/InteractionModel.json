@@ -62,6 +62,38 @@
                     "name": "TUYA_NAME",
                     "values": [
                         {
+                            "id": "tuya005",
+                            "name": {
+                                "value": "familyRoomSwitch",
+                                "synonyms": [
+                                    "mantle light",
+                                    "family room lights",
+                                    "family room light",
+                                    "mantle lights",
+                                    "family room"
+                                ]
+                            }
+                        },
+                        {
+                            "id": "tuya004",
+                            "name": {
+                                "value": "diningRoomSwitch",
+                                "synonyms": [
+                                    "dining table lights",
+                                    "dining table light",
+                                    "dining room light",
+                                    "dining room lights",
+                                    "table lights",
+                                    "dining table lamps",
+                                    "dining table lamp",
+                                    "table lamps",
+                                    "table lamp",
+                                    "dining table",
+                                    "dining room"
+                                ]
+                            }
+                        },
+                        {
                             "id": "tuya003",
                             "name": {
                                 "value": "mahlonLamp",

@@ -17,7 +17,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	details, err := DetailsGet(deviceName)
+	details, err := DetailsGet("device_"+deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : details %s, %s", deviceName, r.Method, err)
 		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)
@@ -53,11 +53,16 @@ func HandleScheduleGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	schedule, err := ScheduleGet(deviceName)
+	hasSchedule, schedule, err := ScheduleGet(deviceName)
 	if err != nil{
 		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
 		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if !hasSchedule{
+		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 

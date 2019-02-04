@@ -21,6 +21,5 @@ type Inputs struct{
 
 type Validator struct{
 	DoChange 	bool
-	ChangeTo	bool
 	InSchedule 	bool
 }

@@ -3,13 +3,13 @@ package devices
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/devices/rpi"
-	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"log"
+	"net/http"
 )
 
 
@@ -34,48 +34,67 @@ func DetailsGet (device string) (Devices, error){
 		return d, err
 	}
 	redis.ScanStruct(values, &d)
+	fmt.Printf("dbget: %+v\n",d)
 	return d, nil
 }
 
-func LoadDevices()(Inputs, error){
+func LoadDevices() error{
+	//Load Devices into database from file
+	log.Printf("[INFO] device loader, starting")
+	i, err := ReadDeviceFile()
+	if err != nil{
+		return err
+	}
+
+	if len(i.Devices) == 0{
+		log.Printf("[WARN] device loader, no devices to load, skipping")
+		return nil
+	}
+
+	for _, d := range i.Devices {
+		log.Printf("[INFO] device loader, loading %s under 'device_%s'", d.Name, d.Name)
+		if err := DbHashSet("device_"+d.Name,d); err != nil{
+			return err
+		}
+	}
+	log.Println("[INFO] device loader, all done")
+	return nil
+}
+
+func ReadDeviceFile()(Inputs, error){
 	var in Inputs
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		return in, err
 	}
-	json.Unmarshal(deviceFile, &in)
+	if err := json.Unmarshal(deviceFile, &in); err != nil{
+		return in, err
+	}
 
 	return in, nil
 }
 
-func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
-	action := false
+func GetAllDevicesFromDb() (devices []string, err error){
+	keySearch := "device_*"
+	keys, err := DbGetKeys(keySearch)
+	if err != nil{
+		return nil, err
+	}
+	return keys, nil
+}
 
-	notify.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
+func UpdateStatus(deviceName string, status bool) error{
+	statusData := Status{}
+	statusData.Device = deviceName
+	statusData.Alive = status
 
-	switch deviceType{
-	case "tuya":
-		if deviceAction == "on"{
-			action = true
-		}
-		if err := tuya.PowerControl(deviceName, action); err != nil{
-			return err
-		}
-		return nil
-
-	case "pi":
-		if err := rpi.PiPost(deviceName, deviceAction); err != nil{
-			return err
-		}
-
-	default:
-		//no match
-		return errors.New("no message in queue to parse")
+	if err := DbHashSet(deviceName+"_"+"status", statusData); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		return err
 	}
 
 	return nil
 }
-
 
 // *****************************************************************
 // Scheduler functions
@@ -91,20 +110,24 @@ func ScheduleSet (s* Schedules, device string) (error){
 	return nil
 }
 
-func ScheduleGet (device string) (Schedules, error){
+func ScheduleGet (devName string) (hasSchedule bool, schedules Schedules, error error){
 	s := Schedules{}
 
-	value, err := DbGet(device+"_schedule")
+	value, err := DbGet(devName+"_schedule")
 	if err != nil{
-		return s, err
+		return false, s, err
 	}
+	if value == ""{
+		return false, s, nil
+	}
+
 	json.Unmarshal([]byte(value), &s)
 
 	if len(s.Schedules) <= 1 {
-		return s, errors.New("invalid schedule struct")
+		return false, s, errors.New("invalid schedule struct")
 	}
 
-	return s, nil
+	return true, s, nil
 }
 
 func ScheduleDel (device string) (error){
@@ -115,7 +138,7 @@ func ScheduleDel (device string) (error){
 }
 
 func ScheduleUpdate (device string, status string) (error){
-	s, err := ScheduleGet(device)
+	_, s, err := ScheduleGet(device)
 	if err != nil{
 		return err
 	}
@@ -178,6 +201,20 @@ func DbHashGet(key string)(values []interface{}, err error){
 	return resp, nil
 }
 
+func DbGetKeys(key string)(keys []string, err error){
+	c, err := DbConnect()
+	if err != nil{
+		return nil, err
+	}
+	defer c.Close()
+
+	resp, err := redis.Strings(c.Do("KEYS", key))
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func DbSet(key string, value []byte) error{
 	c, err := DbConnect()
 	if err != nil{
@@ -198,9 +235,12 @@ func DbGet(key string) (values string, err error){
 	defer c.Close()
 	value, err := redis.String(c.Do("GET", key))
 	if err != nil{
+		if err.Error() == "redigo: nil returned"{
+			//This is fine, redis connection OK, just no data returned
+			return "", nil
+		}
 		return "", err
 	}
-
 	return value, nil
 }
 
@@ -216,4 +256,31 @@ func DbDel(key string) error{
 	}
 
 	return nil
+}
+
+
+// *****************************************************************
+// Http Response helper functions
+func ReturnOk(w http.ResponseWriter, r *http.Request, resp http.Response){
+	code := http.StatusOK
+	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("[ERROR] %s : %s\n", r.URL.Path, err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(code)
+}
+
+func ReturnBad(w http.ResponseWriter, r *http.Request){
+	code := http.StatusBadRequest
+	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	w.WriteHeader(code)
+}
+
+func ReturnInternalError(w http.ResponseWriter, r *http.Request){
+	code := http.StatusInternalServerError
+	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	w.WriteHeader(code)
 }
