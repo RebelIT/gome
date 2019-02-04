@@ -3,15 +3,12 @@ package devices
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/notify"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
-
 
 // *****************************************************************
 // General device functions
@@ -34,7 +31,6 @@ func DetailsGet (device string) (Devices, error){
 		return d, err
 	}
 	redis.ScanStruct(values, &d)
-	fmt.Printf("dbget: %+v\n",d)
 	return d, nil
 }
 
@@ -95,6 +91,7 @@ func UpdateStatus(deviceName string, status bool) error{
 
 	return nil
 }
+
 
 // *****************************************************************
 // Scheduler functions
@@ -261,26 +258,29 @@ func DbDel(key string) error{
 
 // *****************************************************************
 // Http Response helper functions
-func ReturnOk(w http.ResponseWriter, r *http.Request, resp http.Response){
+func ReturnOk(w http.ResponseWriter, r *http.Request, response interface{}){
 	code := http.StatusOK
-	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	common.MetricHttpIn(r.RequestURI, code, r.Method)
 
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("[ERROR] %s : %s\n", r.URL.Path, err)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(code)
+	return
 }
 
 func ReturnBad(w http.ResponseWriter, r *http.Request){
 	code := http.StatusBadRequest
-	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	common.MetricHttpIn(r.RequestURI, code, r.Method)
 	w.WriteHeader(code)
+	return
 }
 
 func ReturnInternalError(w http.ResponseWriter, r *http.Request){
 	code := http.StatusInternalServerError
-	notify.MetricHttpIn(r.RequestURI, code, r.Method)
+	common.MetricHttpIn(r.RequestURI, code, r.Method)
 	w.WriteHeader(code)
+	return
 }

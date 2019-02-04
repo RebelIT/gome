@@ -23,8 +23,8 @@ func NewRouter() *mux.Router {
 
 var routes = Routes{
 	//Devices Endpoints
-	Route{"device", "GET", "/api/devices", getDevices},
-	Route{"device", "POST", "/api/devices/new", addDevice},
+	Route{"device", "GET", "/api/devices", devices.GetDevices},
+	Route{"device", "POST", "/api/devices/new", devices.AddDevice},
 	Route{"device", "POST", "/api/tuya/{name}/{state}", tuya.HandleControl},
 	Route{"device", "POST", "/api/roku/{name}/app/{app}", roku.HandleLaunchApp},
 	Route{"device", "POST", "/api/pi/{name}/{component}", rpi.HandleControl},
