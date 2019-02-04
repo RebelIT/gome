@@ -2,6 +2,7 @@ package runner
 
 import (
 	"github.com/gomodule/redigo/redis"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
@@ -26,7 +27,7 @@ func GoGoDeviceStatus() {
 		}
 
 		if doIt {
-			for _, dev := range (devs) {
+			for _, dev := range devs {
 				doItForReal := true
 				devData, err := devices.DbHashGet(dev)
 				if err != nil {
@@ -39,13 +40,13 @@ func GoGoDeviceStatus() {
 
 					switch d.Device {
 					case "pi":
-						go rpi.DeviceStatus(d.Name)
+						go rpi.DeviceStatus(d.Name, randomizeCollection())
 
 					case "roku":
-						go roku.DeviceStatus(d.Name)
+						go roku.DeviceStatus(d.Name, randomizeCollection())
 
 					case "tuya":
-						go tuya.DeviceStatus(d.Addr, d.Id, d.Key, d.Name)
+						go tuya.DeviceStatus(d.Name, randomizeCollection())
 
 					default:
 						log.Printf("[WARN] device status runner, %s no device types match", d.Name)
@@ -53,7 +54,7 @@ func GoGoDeviceStatus() {
 				}
 			}
 		}
-		time.Sleep(time.Second *10)
+		time.Sleep(time.Minute *common.STATUS_MIN)
 	}
 
 	log.Printf("[ERROR] device status runner broke out of loop")

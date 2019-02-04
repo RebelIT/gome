@@ -2,6 +2,10 @@
 Golang based home automation
 GoLang Home (gome)
 
+###Current Development Status:
+* Stable (it runs) Tuya schedules work. other device control endpoints work. 
+* ToDo: see issues. 
+
 ## About it
    I wanted to automate my home and all my IoT devices, I buy cheap and build from scratch.  There are many home
    automation systems out there but I didn't want any vendor or protocol lock. So I'm building my own starting with an 
@@ -19,6 +23,7 @@ GoLang Home (gome)
 docker build -t gometest .
 docker run -v $PWD:/go/src/github.com/rebelit/gome -i -t gometest /bin/bash
 ```
+
 ## Deploy it
 ### Note:
 * tuya wall outlets and light switches control is dependent on tuya-api, had issues with performance and blocking on 
@@ -38,7 +43,7 @@ Ansible deployment: see doco in ansible dir
    
    [x] Scheduler for outlets to auto turn on and off on date/time
    
-   [ ] Tuya WiFi light switches (with external tuya-cli dependency
+   [x] Tuya WiFi light switches (with external tuya-cli dependency
    
    [ ] Plex API - not sure yet what i can do with it
    

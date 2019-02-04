@@ -1,0 +1,11 @@
+---
+- hosts:
+    gome
+  connection: ssh
+  remote_user: pi
+
+  roles:
+#    - common
+#    - reboot
+#    - redis
+    - application

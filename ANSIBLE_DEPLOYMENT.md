@@ -35,6 +35,8 @@
         aws_region: 'us-east-2'
         aws_token: ''
         aws_queue_url: 'https://sqs.us-east-2.amazonaws.com/xxxxxxxxxxx/xxxxxxx'
+        rpiot_user: 'user'
+        rpiot_token: 'aSyperSecretToken'
 
         ```
 * roles and deploy steps
@@ -44,7 +46,6 @@
        - reboot    (reboots to set some common settings)
        - redis     (installs local redis listening on localhost only)
        - application    (installs this gome application, see below for more details)
-       - telegraf     (installs telegraf and sets global tags for your metrics)
      ```
      
      * application role explained:
@@ -61,7 +62,7 @@
 
 * --ask-sudo-pass may be required if running reboot role due to your local setup
    ```
-   ansible-playbook gome_deploy.yml --ask-vault-pass -i hosts --ask-sudo-pass
+   ansible-playbook ansible_deploy.yml --ask-vault-pass -i ansible_hosts --ask-sudo-pass
    ```
    
 * manually update the devices.json or start adding devices by using the /api/devices endpoint which will 

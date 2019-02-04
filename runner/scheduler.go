@@ -3,6 +3,7 @@ package runner
 import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/tuya"
 	"github.com/rebelit/gome/notify"
@@ -43,15 +44,22 @@ func GoGoScheduler() error {
 				redis.ScanStruct(devData, &d)
 
 				//get schedules data from redis
-				s, err := devices.ScheduleGet(d.Name)
+				hasSchedule, s, err := devices.ScheduleGet(d.Name)
 				if err != nil{
 					log.Printf("[WARN] schedule runner, unable to get schedule for %s: %s", dev, err)
 					doItForReal = false
 				}
 
-				if s.Status != "enable"{
-					log.Printf("[INFO] schedule runner, %s has schedule defined but not enabled", dev)
+				if !hasSchedule {
+					log.Printf("[INFO] schedule runner, no schedule for %s", dev)
 					doItForReal = false
+				}
+
+				if doItForReal {
+					if s.Status != "enable" {
+						log.Printf("[INFO] schedule runner, %s has schedule defined but not enabled", dev)
+						doItForReal = false
+					}
 				}
 
 				if doItForReal {
@@ -59,7 +67,7 @@ func GoGoScheduler() error {
 				}
 			}
 		}
-		time.Sleep(time.Second * 60)
+		time.Sleep(time.Minute *common.SCHEDULE_MIN)
 	}
 
 	notify.SendSlackAlert("[ERROR] scheduler, routine broke out of loop")
@@ -136,42 +144,6 @@ func doDeviceSpecificAction(deviceType string, deviceName string, deviceAction s
 		log.Printf("[WARN] schedule runner, %s no device types match", deviceName)
 		return errors.New("no device types match for "+deviceName)
 
-	}
-}
-
-func splitTime()(strTime string, intTime int, weekday string, now time.Time){
-	Now := time.Now()
-	NowMinute := Now.Minute()
-	NowHour := Now.Hour()
-	NowDay := Now.Weekday()
-
-	sTime := ""
-	singleMinute := inBetween(NowMinute, 0,9)
-	if singleMinute{
-		sTime = strconv.Itoa(NowHour) + "0"+ strconv.Itoa(NowMinute)
-	} else{
-		sTime = strconv.Itoa(NowHour) + strconv.Itoa(NowMinute)
-	}
-
-	iTime, _ := strconv.Atoi(sTime)
-	day := strings.ToLower(NowDay.String())
-
-	return sTime, iTime, day, Now
-}
-
-func inBetween(i, min, max int) bool {
-	if (i >= min) && (i <= max) {
-		return true
-	} else {
-		return false
-	}
-}
-
-func inBetweenReverse(i, min, max int) bool {
-	if (i >= min) && (i <= max) {
-		return false
-	} else {
-		return true
 	}
 }
 

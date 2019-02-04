@@ -58,7 +58,7 @@ func GoGoSQS() {
 				log.Printf("[ERROR], aws sqs, %s", err)
 			}
 		}
-		time.Sleep(time.Second *2)
+		time.Sleep(time.Second *common.AWS_SEC)
 	}
 	notify.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
 }

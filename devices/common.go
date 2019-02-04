@@ -3,6 +3,7 @@ package devices
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/notify"
@@ -33,6 +34,7 @@ func DetailsGet (device string) (Devices, error){
 		return d, err
 	}
 	redis.ScanStruct(values, &d)
+	fmt.Printf("dbget: %+v\n",d)
 	return d, nil
 }
 
@@ -81,6 +83,19 @@ func GetAllDevicesFromDb() (devices []string, err error){
 	return keys, nil
 }
 
+func UpdateStatus(deviceName string, status bool) error{
+	statusData := Status{}
+	statusData.Device = deviceName
+	statusData.Alive = status
+
+	if err := DbHashSet(deviceName+"_"+"status", statusData); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		return err
+	}
+
+	return nil
+}
+
 // *****************************************************************
 // Scheduler functions
 func ScheduleSet (s* Schedules, device string) (error){
@@ -95,20 +110,24 @@ func ScheduleSet (s* Schedules, device string) (error){
 	return nil
 }
 
-func ScheduleGet (devName string) (Schedules, error){
+func ScheduleGet (devName string) (hasSchedule bool, schedules Schedules, error error){
 	s := Schedules{}
 
 	value, err := DbGet(devName+"_schedule")
 	if err != nil{
-		return s, err
+		return false, s, err
 	}
+	if value == ""{
+		return false, s, nil
+	}
+
 	json.Unmarshal([]byte(value), &s)
 
 	if len(s.Schedules) <= 1 {
-		return s, errors.New("invalid schedule struct")
+		return false, s, errors.New("invalid schedule struct")
 	}
 
-	return s, nil
+	return true, s, nil
 }
 
 func ScheduleDel (device string) (error){
@@ -119,7 +138,7 @@ func ScheduleDel (device string) (error){
 }
 
 func ScheduleUpdate (device string, status string) (error){
-	s, err := ScheduleGet(device)
+	_, s, err := ScheduleGet(device)
 	if err != nil{
 		return err
 	}
@@ -216,9 +235,12 @@ func DbGet(key string) (values string, err error){
 	defer c.Close()
 	value, err := redis.String(c.Do("GET", key))
 	if err != nil{
+		if err.Error() == "redigo: nil returned"{
+			//This is fine, redis connection OK, just no data returned
+			return "", nil
+		}
 		return "", err
 	}
-
 	return value, nil
 }
 

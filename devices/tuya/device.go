@@ -2,6 +2,7 @@ package tuya
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
@@ -11,46 +12,71 @@ import (
 	"time"
 )
 
-func DeviceStatus (addr string, id string, key string, deviceName string) {
-	data := devices.Status{}
+func DeviceStatus (deviceName string, collectionDelayMin time.Duration) {
+	fmt.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+	time.Sleep(time.Second * collectionDelayMin)
+	statusData := devices.Status{}
+	doStatus := true
 
-	args := []string{"get","--ip", addr,"--id", id, "--key", key}
-	cmdOut, err := tryTuyaCli(string("tuya-cli"), args)
+	d, err := devices.DetailsGet("device_"+deviceName)
 	if err != nil{
-		log.Printf("[ERROR] %s :  device status, %s\n", deviceName, err)
-	}
-
-	if strings.Replace(cmdOut, "\n", "", -1) == "true"{
-		data.Alive = true
-	} else {
-		data.Alive = false
-	}
-	data.Device = deviceName
-
-	if err := devices.DbHashSet(deviceName+"_"+"status", data); err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return
+		doStatus = false
 	}
 
-	log.Printf("[DEBUG] device status %s : done\n", deviceName)
+	cliArgs, err := generateGetCliArgs(d)
+	if err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		doStatus = false
+	}
+
+	cmdOut, err := tryTuyaCli("tuya-cli", cliArgs)
+	if err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+	}
+
+	if doStatus{
+		if strings.Replace(cmdOut, "\n", "", -1) == "true"{
+			statusData.Alive = true
+		} else {
+			statusData.Alive = false
+		}
+		statusData.Device = deviceName
+
+		if err := devices.DbHashSet(deviceName+"_"+"status", statusData); err != nil{
+			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+			return
+		}
+	}
+
+	log.Printf("[INFO] %s device status : done\n", deviceName)
 	return
 }
 
-func PowerControl(device string, value bool) error {
-	d, err := devices.DetailsGet(device)
+func PowerControl(deviceName string, value bool) error {
+	fmt.Printf("devName: %s", deviceName)
+	d, err := devices.DetailsGet("device_"+deviceName)
 	if err != nil{
 		return err
 	}
-	log.Printf("[INFO] issuing power control for %s\n", device)
-	args := []string{"set","--ip", d.Addr, "--id", d.Id, "--key", d.Key, "--set", strconv.FormatBool(value)}
-	cmdOut, err := tryTuyaCli("tuya-cli", args)
+	fmt.Printf("pwr control: %+v\n",d)
+	cliArgs, err := generateSetCliArgs(d, value)
+	if err != nil{
+		return err
+	}
+
+	log.Printf("[INFO] issuing power control for %s\n", deviceName)
+	cmdOut, err := tryTuyaCli("tuya-cli", cliArgs)
 	if err != nil{
 		return err
 	} else {
-		log.Printf("[DEBUG]: cmd return for %s : %s\n", device, cmdOut)
+		log.Printf("[DEBUG]: cmd return for %s : %s\n", deviceName, cmdOut)
 		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
 		if fmtOut == "Set succeeded."{
-			notify.SendSlackAlert("Tuya PowerControl initiated for "+device+" to "+strconv.FormatBool(value)+"")
+			if err := devices.UpdateStatus(deviceName, value); err != nil{
+				log.Printf("[ERROR] Update Device Status, %s : %s", deviceName, err)
+			}
+			notify.SendSlackAlert("Tuya PowerControl initiated for "+deviceName+" to "+strconv.FormatBool(value)+"")
 			return nil
 		} else{
 			return fmt.Errorf("error setting device status\n")
@@ -94,4 +120,39 @@ func tuyaCli(cmdName string, args []string) (string, error) {
 		}
 	}
 
+}
+
+func generateSetCliArgs(deviceDetails devices.Devices, pwrState bool)(cliArg []string, err error){
+	args := []string{}
+	fmt.Printf("%+v\n",deviceDetails)
+	switch deviceDetails.Type{
+		case "outlet":
+			args = []string{"set", "--set", strconv.FormatBool(pwrState), "--ip", deviceDetails.Addr,
+							"--id", deviceDetails.Id, "--key", deviceDetails.Key}
+
+		case "switch":
+			args = []string{"set", "--set", strconv.FormatBool(pwrState), "--ip", deviceDetails.Addr,
+				"--id", deviceDetails.Id, "--key", deviceDetails.Key, "--dps", deviceDetails.Dps}
+
+		default:
+			return args, errors.New("no device type "+deviceDetails.Type+" found in cli args switch")
+	}
+	return args, nil
+}
+
+func generateGetCliArgs(deviceDetails devices.Devices)(cliArg []string, err error){
+	args := []string{}
+
+	switch deviceDetails.Type{
+	case "outlet":
+		args = []string{"get", "--ip", deviceDetails.Addr, "--id", deviceDetails.Id, "--key", deviceDetails.Key}
+
+	case "switch":
+		args = []string{"get", "--ip", deviceDetails.Addr, "--id", deviceDetails.Id, "--key", deviceDetails.Key,
+						"--dps", deviceDetails.Dps}
+
+	default:
+		return args, errors.New("no device type "+deviceDetails.Type+" found in cli args switch")
+	}
+	return args, nil
 }

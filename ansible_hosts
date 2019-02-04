@@ -3,13 +3,12 @@
 [gome:vars]
   hostname=piGome
   ssh_user=pi
-  application=gome
-  hardware=pi
-  telegraf_db=10.10.10.10
   redis_host=127.0.0.1
   redis_memory=50M
   timezone=America/Chicago
   push_blank_device_list=false
+  gopath=/Users/rebelit/go
+  goroot=/usr/local/opt/go/libexec
 
 [gome:children]
   main

@@ -16,7 +16,7 @@ import (
 //
 func getDevices(w http.ResponseWriter,r *http.Request){
 	log.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
-	var i Inputs
+	var i devices.Inputs
 
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
@@ -39,8 +39,8 @@ func getDevices(w http.ResponseWriter,r *http.Request){
 
 func addDevice(w http.ResponseWriter,r *http.Request){
 	fmt.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
-	var i Devices
-	fullDevs := &Inputs{}
+	var i devices.Devices
+	fullDevs := &devices.Inputs{}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {

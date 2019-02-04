@@ -1,42 +1,60 @@
 package roku
 
 import (
+	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/notify"
 	"log"
 	"net/http"
-	"strings"
+	"time"
 )
 
 func rokuPost(uriPart string, deviceName string) (http.Response, error) {
-	d, err := devices.DetailsGet(deviceName)
+	d, err := devices.DetailsGet("device_"+deviceName)
 	if err != nil{
 		return http.Response{}, err
 	}
 	url := "http://"+d.Addr+":"+d.NetPort+uriPart
 
-	resp, err := http.Post(url, "", strings.NewReader(""))
+	ctx, cncl := context.WithTimeout(context.Background(), time.Second*1)
+	defer cncl()
+
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil{
-		notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
-		return *resp, err
+		return http.Response{}, err
 	}
+
+	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil{
+		return http.Response{}, err
+	}
+
 	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 	return *resp, nil
 }
 
 func rokuGet(uriPart string, deviceName string) (http.Response, error) {
-	d, err := devices.DetailsGet(deviceName)
+	d, err := devices.DetailsGet("device_"+deviceName)
 	if err != nil{
 		return http.Response{}, err
 	}
-	url := "http://"+d.Addr+":8060"+uriPart
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
 
-	resp, err := http.Get(url)
+	ctx, cncl := context.WithTimeout(context.Background(), time.Second*1)
+	defer cncl()
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil{
-		notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
-		return *resp, err
+		return http.Response{}, err
 	}
+
+	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil{
+		return http.Response{}, err
+	}
+
 	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
 	return *resp, nil
 }
@@ -57,7 +75,9 @@ func launchApp(deviceName string, app string) error {
 	return nil
 }
 
-func DeviceStatus(deviceName string){
+func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
+	fmt.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+	time.Sleep(time.Second * collectionDelayMin)
 	data := devices.Status{}
 	uriPart := "/"
 
@@ -80,6 +100,6 @@ func DeviceStatus(deviceName string){
 		return
 	}
 
-	log.Printf("[DEBUG] %s :  device status done\n", deviceName)
+	log.Printf("[INFO] %s device status : done\n", deviceName)
 	return
 }

@@ -11,9 +11,9 @@ import (
 
 func main(){
 
-	listenOn := "6661"
+	listenOn := "6660"
 	devices.LoadDevices()
-	time.Sleep(time.Second *3)
+	time.Sleep(time.Second *2)
 
 	go runner.GoGoDeviceStatus()
 	time.Sleep(time.Second *5)
@@ -21,7 +21,7 @@ func main(){
 	go runner.GoGoScheduler()
 	time.Sleep(time.Second *5)
 
-	//go runner.GoGoSQS()
+	go runner.GoGoSQS()
 
 	start(listenOn)
 

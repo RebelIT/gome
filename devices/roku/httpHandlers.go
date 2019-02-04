@@ -3,7 +3,6 @@ package roku
 import (
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/devices"
-	"log"
 	"net/http"
 	"time"
 )
@@ -17,7 +16,6 @@ func HandleLaunchApp(w http.ResponseWriter, r *http.Request) {
 	deviceName := vars["device"]
 	appName := vars["app"]
 
-	log.Printf("roku app load %s %s\n", deviceName, appName)
 	if err := launchApp(deviceName,appName); err != nil{
 		devices.ReturnInternalError(w,r)
 		return
