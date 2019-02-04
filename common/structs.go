@@ -15,3 +15,9 @@ type Secrets struct{
 	RpiotUser		string `json:"rpiot_user"`
 	RpiotToken		string `json:"rpiot_token"`
 }
+
+type SlackMsg struct{
+	Text		string `json:"text"`
+	Username 	string `json:"username"`
+	IconPath	string `json:"icon_path"`
+}

@@ -1,14 +1,13 @@
-package notify
+package common
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/rebelit/gome/common"
 	"log"
 )
 
-
 func SendSlackAlert (message string){
-	s, err := common.GetSecrets()
+	s, err := GetSecrets()
 	if err != nil{
 		log.Printf("[ERROR] slack alert: %s\n", err)
 		return
@@ -17,17 +16,18 @@ func SendSlackAlert (message string){
 	content := SlackMsg{}
 	content.Text = message
 	content.Username = "gome"
+	content.IconPath = ""
 
-	respCode, err := common.PostWebReq(content, "https://hooks.slack.com/services/"+ s.SlackSecret)
+	body, _ := json.Marshal(content)
+	resp, err := HttpPost( "https://hooks.slack.com/services/"+ s.SlackSecret, body,nil)
 	if err != nil{
 		log.Printf("[ERROR] slack alert: %s\n", err)
 		return
 	}
-	if respCode != 200 {
+	if resp.StatusCode != 200 {
 		log.Printf("[ERROR] slack alert: %s\n", fmt.Errorf("slack returned a non 200 response"))
 		return
 	} else{
 		log.Printf("[INFO] slack alert sent: %s\n", message)
 	}
-	MetricHttpOut("slack", respCode, "POST")
 }

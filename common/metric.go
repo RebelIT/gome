@@ -1,11 +1,9 @@
-package notify
+package common
 
 import (
-	"github.com/rebelit/gome/common"
 	"gopkg.in/alexcesaro/statsd.v2"
 	"strconv"
 )
-
 
 func MetricDeviceStatus(deviceName string, deviceType string, alive bool){
 	//emits a new generic metric for device status
@@ -29,10 +27,10 @@ func MetricHttpIn(uri string, reponseCode int, method string){
 	sendCounter(measurement, tags)
 }
 
-func MetricHttpOut(destination string, reponseCode int, method string){
+func MetricHttpOut(destination string, method string, status string){
 	//emits a new counter for every external web request
-	tags := statsd.Tags("destination", destination, "response_code", strconv.Itoa(reponseCode), "method", method)
-	measurement := "gome_http_out"
+	tags := statsd.Tags("destination", destination, "method", method, "status", status)
+	measurement := "http_out"
 	sendCounter(measurement, tags)
 }
 
@@ -55,11 +53,11 @@ func MetricAws(awsService string, requestMethod string, status string, device st
 }
 
 func sendCounter(measurement string, tags statsd.Option){
-	if common.STATSD == ""{
+	if STATSD == ""{
 		//metrics disabled don't do anything
 		return
 	}
-	addrOpt := statsd.Address(common.STATSD)
+	addrOpt := statsd.Address(STATSD)
 	fmtOpt := statsd.TagsFormat(statsd.InfluxDB)
 	c, err := statsd.New(addrOpt,fmtOpt,tags)
 	if err != nil {
@@ -71,11 +69,11 @@ func sendCounter(measurement string, tags statsd.Option){
 }
 
 func sendUnique(measurement string, tags statsd.Option, value string){
-	if common.STATSD == ""{
+	if STATSD == ""{
 		//metrics disabled don't do anything
 		return
 	}
-	addrOpt := statsd.Address(common.STATSD)
+	addrOpt := statsd.Address(STATSD)
 	fmtOpt := statsd.TagsFormat(statsd.InfluxDB)
 	c, err := statsd.New(addrOpt,fmtOpt,tags)
 	if err != nil {

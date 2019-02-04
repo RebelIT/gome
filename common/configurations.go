@@ -8,6 +8,8 @@ const SCHEDULE_MIN = 1
 const STATUS_MIN = 5
 const AWS_SEC = 2
 const HTTP_TIMEOUT = 2
+const SUCCESS = "success"
+const FAILED = "failed"
 
 // flip this on for local testing
 //const FILE  = "./devices.json"

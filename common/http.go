@@ -3,13 +3,12 @@ package common
 import (
 	"bytes"
 	"context"
-	"github.com/rebelit/gome/notify"
 	"net/http"
 	"time"
 )
 
-//NOTE:  b, _ := json.Marshal(body)
-
+//NOTE:
+//	common http functions with metrics for project use
 
 func HttpPost(url string, body []byte, headers map[string]string)(response http.Response, err error){
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second * HTTP_TIMEOUT)
@@ -26,11 +25,11 @@ func HttpPost(url string, body []byte, headers map[string]string)(response http.
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil{
-		notify.MetricHttpOut(url, http.MethodPost, notify.FAILED)
+		MetricHttpOut(url, http.MethodPost, FAILED)
 		return http.Response{}, err
 	}
 
-	notify.MetricHttpOut(url, http.MethodPost, notify.SUCCESS)
+	MetricHttpOut(url, http.MethodPost, SUCCESS)
 	return *resp, nil
 }
 
@@ -49,11 +48,11 @@ func HttpPut(url string, body []byte, headers map[string]string)(response http.R
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil{
-		notify.MetricHttpOut(url, http.MethodPut, notify.FAILED)
+		MetricHttpOut(url, http.MethodPut, FAILED)
 		return http.Response{}, err
 	}
 
-	notify.MetricHttpOut(url, http.MethodPut, notify.SUCCESS)
+	MetricHttpOut(url, http.MethodPut, SUCCESS)
 	return *resp, nil
 }
 
@@ -72,11 +71,11 @@ func HttpDelete(url string, body []byte, headers map[string]string)(response htt
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil{
-		notify.MetricHttpOut(url, http.MethodDelete, notify.FAILED)
+		MetricHttpOut(url, http.MethodDelete, FAILED)
 		return http.Response{}, err
 	}
 
-	notify.MetricHttpOut(url, http.MethodDelete, notify.SUCCESS)
+	MetricHttpOut(url, http.MethodDelete, SUCCESS)
 	return *resp, nil
 }
 
@@ -91,10 +90,10 @@ func HttpGet(url string)(response http.Response, error error){
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if err != nil{
-		notify.MetricHttpOut(url, http.MethodGet, notify.FAILED)
+		MetricHttpOut(url, http.MethodGet, FAILED)
 		return http.Response{}, err
 	}
 
-	notify.MetricHttpOut(url, http.MethodGet, notify.FAILED)
+	MetricHttpOut(url, http.MethodGet, FAILED)
 	return *resp, nil
 }
