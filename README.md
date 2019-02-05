@@ -3,6 +3,13 @@ Golang based home automation
 GoLang Home (gome)
 
 ###Current Development Status:
+* ToDo next:  
+    * better AWS SQS wrappers
+    * move database to seperate package
+    * consolidate devices to a single package
+    * move device specific items out of runners into common devices
+    * move tuyaCLi to common Command func with common tryCommand func
+    
 * Stable (it runs) Tuya schedules work. other device control endpoints work. 
 * ToDo: see issues. 
 
