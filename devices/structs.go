@@ -18,7 +18,6 @@ type Devices struct{
 }
 
 type Status struct{
-	Device	string `json:"device"`
 	Alive	bool `json:"alive"`
 	Url		string `json:"url"`
 }

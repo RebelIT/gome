@@ -10,7 +10,6 @@ import (
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices/rpi"
 	"github.com/rebelit/gome/devices/tuya"
-	"github.com/rebelit/gome/notify"
 	"log"
 	"strings"
 	"time"
@@ -60,7 +59,7 @@ func GoGoSQS() {
 		}
 		time.Sleep(time.Second *common.AWS_SEC)
 	}
-	notify.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
+	common.SendSlackAlert("AWS SQS runner broke out of the loop. Get it back in there")
 }
 
 func getMessage(c *sqs.SQS, queueUrl string)(string, *string, error){
@@ -83,10 +82,10 @@ func getMessage(c *sqs.SQS, queueUrl string)(string, *string, error){
 
 	result, err := c.ReceiveMessage(param)
 	if err != nil{
-		notify.MetricAws("sqs", "get", "failure","nil", "nil")
+		common.MetricAws("sqs", "get", "failure","nil", "nil")
 		return "", nil, err
 	}
-	notify.MetricAws("sqs", "get", "success","nil", "nil")
+	common.MetricAws("sqs", "get", "success","nil", "nil")
 
 	if len(result.Messages) == 0 {
 		return "", nil, errors.New("no messages in queue")
@@ -107,17 +106,17 @@ func deleteMessage(c *sqs.SQS,queueUrl string, receipt *string) error{
 	}
 	_, err := c.DeleteMessage(param)
 	if err != nil {
-		notify.MetricAws("sqs", "delete", "failure","nil", "nil")
+		common.MetricAws("sqs", "delete", "failure","nil", "nil")
 		return err
 	}
-	notify.MetricAws("sqs", "delete", "success","nil", "nil")
+	common.MetricAws("sqs", "delete", "success","nil", "nil")
 	return nil
 }
 
 func doWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
 	action := false
 
-	notify.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
+	common.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
 
 	switch deviceType{
 	case "tuya":

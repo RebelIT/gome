@@ -4,12 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/devices"
 	"net/http"
-	"time"
 )
-
-func init() {
-	http.DefaultClient.Timeout = time.Second * 5
-}
 
 func HandleLaunchApp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

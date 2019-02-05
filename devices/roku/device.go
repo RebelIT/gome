@@ -1,62 +1,40 @@
 package roku
 
 import (
-	"context"
-	"fmt"
 	"github.com/pkg/errors"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/notify"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
-func rokuPost(uriPart string, deviceName string) (http.Response, error) {
-	d, err := devices.DetailsGet("device_"+deviceName)
-	if err != nil{
-		return http.Response{}, err
+func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
+	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+	time.Sleep(time.Second * collectionDelayMin)
+
+	uriPart := "/"
+	alive := false
+
+	resp, err := rokuGet(uriPart, deviceName)
+	if err != nil {
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		return
 	}
-	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+	defer resp.Body.Close()
 
-	ctx, cncl := context.WithTimeout(context.Background(), time.Second*1)
-	defer cncl()
-
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil{
-		return http.Response{}, err
+	if resp.StatusCode == 200 {
+		alive = true
 	}
 
-	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
-	return *resp, nil
-}
-
-func rokuGet(uriPart string, deviceName string) (http.Response, error) {
-	d, err := devices.DetailsGet("device_"+deviceName)
-	if err != nil{
-		return http.Response{}, err
-	}
-	url := "http://"+d.Addr+":"+d.NetPort+uriPart
-
-	ctx, cncl := context.WithTimeout(context.Background(), time.Second*1)
-	defer cncl()
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil{
-		return http.Response{}, err
+	if err := devices.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		return
 	}
 
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
-	return *resp, nil
+	log.Printf("[INFO] %s device status : done\n", deviceName)
+	return
 }
 
 func launchApp(deviceName string, app string) error {
@@ -75,31 +53,34 @@ func launchApp(deviceName string, app string) error {
 	return nil
 }
 
-func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
-	fmt.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
-	time.Sleep(time.Second * collectionDelayMin)
-	data := devices.Status{}
-	uriPart := "/"
 
-	resp, err := rokuGet(uriPart, deviceName)
-	if err != nil {
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return
+// http wrappers
+func rokuPost(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName+"_device")
+	if err != nil{
+		return http.Response{}, err
 	}
-	defer resp.Body.Close()
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
 
-	if resp.StatusCode != 200 {
-		data.Alive = false
-	} else {
-		data.Alive = true
-	}
-	data.Device = deviceName
-
-	if err := devices.DbHashSet(deviceName+"_"+"status", data); err != nil{
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return
+	resp, err := common.HttpPost(url,nil,nil)
+	if err != nil{
+		return http.Response{}, err
 	}
 
-	log.Printf("[INFO] %s device status : done\n", deviceName)
-	return
+	return resp, nil
+}
+
+func rokuGet(uriPart string, deviceName string) (http.Response, error) {
+	d, err := devices.DetailsGet(deviceName+"_device")
+	if err != nil{
+		return http.Response{}, err
+	}
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+
+	resp, err := common.HttpGet(url, nil)
+	if err != nil{
+		return http.Response{}, err
+	}
+
+	return resp, nil
 }

@@ -3,8 +3,8 @@ package tuya
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/notify"
 	"log"
 	"os/exec"
 	"strconv"
@@ -13,12 +13,13 @@ import (
 )
 
 func DeviceStatus (deviceName string, collectionDelayMin time.Duration) {
-	fmt.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
-	statusData := devices.Status{}
-	doStatus := true
 
-	d, err := devices.DetailsGet("device_"+deviceName)
+	doStatus := true
+	alive := false
+
+	d, err := devices.DetailsGet(deviceName+"_device")
 	if err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		doStatus = false
@@ -37,13 +38,10 @@ func DeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 
 	if doStatus{
 		if strings.Replace(cmdOut, "\n", "", -1) == "true"{
-			statusData.Alive = true
-		} else {
-			statusData.Alive = false
+			alive = true
 		}
-		statusData.Device = deviceName
 
-		if err := devices.DbHashSet(deviceName+"_"+"status", statusData); err != nil{
+		if err := devices.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
 			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 			return
 		}
@@ -53,13 +51,13 @@ func DeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 	return
 }
 
+// device wrappers
 func PowerControl(deviceName string, value bool) error {
-	fmt.Printf("devName: %s", deviceName)
-	d, err := devices.DetailsGet("device_"+deviceName)
+	d, err := devices.DetailsGet(deviceName+"_device")
 	if err != nil{
 		return err
 	}
-	fmt.Printf("pwr control: %+v\n",d)
+
 	cliArgs, err := generateSetCliArgs(d, value)
 	if err != nil{
 		return err
@@ -70,13 +68,12 @@ func PowerControl(deviceName string, value bool) error {
 	if err != nil{
 		return err
 	} else {
-		log.Printf("[DEBUG]: cmd return for %s : %s\n", deviceName, cmdOut)
 		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
 		if fmtOut == "Set succeeded."{
 			if err := devices.UpdateStatus(deviceName, value); err != nil{
 				log.Printf("[ERROR] Update Device Status, %s : %s", deviceName, err)
 			}
-			notify.SendSlackAlert("Tuya PowerControl initiated for "+deviceName+" to "+strconv.FormatBool(value)+"")
+			common.SendSlackAlert("Tuya PowerControl initiated for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
 			return nil
 		} else{
 			return fmt.Errorf("error setting device status\n")
@@ -96,7 +93,7 @@ func tryTuyaCli(cmdName string, args []string) (string, error){
 		if err == nil{
 			return cmdOut, err
 		}
-		notify.MetricCmd("tuya-cli", "retry")
+		common.MetricCmd("tuya-cli", "retry")
 		log.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
 		time.Sleep(retrySleep)
 	}
@@ -107,15 +104,15 @@ func tryTuyaCli(cmdName string, args []string) (string, error){
 func tuyaCli(cmdName string, args []string) (string, error) {
 	out, err := exec.Command(cmdName, args...).Output()
 	if err != nil{
-		notify.MetricCmd("tuya-cli", "failed")
+		common.MetricCmd("tuya-cli", "failed")
 		return "",err
 	} else {
 		fmtOut := strings.Replace(string(out), "\n", "", -1)
 		if fmtOut == "Set succeeded." || fmtOut == "false" || fmtOut == "true" {
-			notify.MetricCmd("tuya-cli", "success")
+			common.MetricCmd("tuya-cli", "success")
 			return fmtOut, nil
 		} else{
-			notify.MetricCmd("tuya-cli", "failed")
+			common.MetricCmd("tuya-cli", "failed")
 			return "", fmt.Errorf("error with tuya-cli\n")
 		}
 	}

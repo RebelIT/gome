@@ -14,7 +14,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	details, err := DetailsGet("device_"+deviceName)
+	details, err := DetailsGet(deviceName+"_device")
 	if err != nil {
 		log.Printf("[ERROR] %s : details %s, %s", deviceName, r.Method, err)
 		ReturnInternalError(w,r)

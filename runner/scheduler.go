@@ -6,7 +6,6 @@ import (
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/tuya"
-	"github.com/rebelit/gome/notify"
 	"log"
 	"strconv"
 	"strings"
@@ -70,7 +69,7 @@ func GoGoScheduler() error {
 		time.Sleep(time.Minute *common.SCHEDULE_MIN)
 	}
 
-	notify.SendSlackAlert("[ERROR] scheduler, routine broke out of loop")
+	common.SendSlackAlert("[ERROR] scheduler, routine broke out of loop")
 	return nil
 }
 
@@ -78,10 +77,11 @@ func doSchedule(device devices.Devices, schedules []devices.Schedule) {
 	_, iTime, day, _ := splitTime()  //custom parse date/time
 
 	for _, schedule := range schedules {
-		devStatus, err := devices.StatusGet(device.Name)
+		devStatusRtn, err := devices.StatusGet(device.Name)
 		if err != nil {
 			log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
 		}
+		devOn, err := strconv.ParseBool(devStatusRtn)
 
 		scheduleOutCol := []Validator{}
 		for _, s := range schedules {
@@ -92,7 +92,7 @@ func doSchedule(device devices.Devices, schedules []devices.Schedule) {
 					onTime, _ := strconv.Atoi(s.On)   //time of day device is on
 					offTime, _ := strconv.Atoi(s.Off) //time of day device is off
 
-					doChange, isInScheduleBlock := whatDoIDo(devStatus.Alive, iTime, onTime, offTime)
+					doChange, isInScheduleBlock := whatDoIDo(devOn, iTime, onTime, offTime)
 
 					scheduleOut.DoChange = doChange
 					scheduleOut.InSchedule = isInScheduleBlock
@@ -107,17 +107,17 @@ func doSchedule(device devices.Devices, schedules []devices.Schedule) {
 			if s.InSchedule && s.DoChange {
 				if err := doDeviceSpecificAction(device.Device, device.Name, schedule.Action, "on"); err != nil { //change it to true
 					log.Printf("[ERROR] schedule runner, %s failed to change powerstate: %s\n", device.Name, err)
-					notify.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
+					common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
 				}
 			}
 		}
 
 		//if device is not in  any enabled schedule it must be off
 		if noSchedules(scheduleOutCol) {
-			if devStatus.Alive {
+			if devOn {
 				if err := doDeviceSpecificAction(device.Device, device.Name, schedule.Action, "off"); err != nil { //change it to true
 					log.Printf("[ERROR] schedule runner, %s failed to change powerstate: %s\n", device.Name, err)
-					notify.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
+					common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
 				}
 			}
 		}
@@ -133,7 +133,7 @@ func doDeviceSpecificAction(deviceType string, deviceName string, deviceAction s
 		}
 		if err := tuya.PowerControl(deviceName, newStatus); err != nil {
 			log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", deviceName, err)
-			notify.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for "+deviceName+" to "+deviceStatus)
+			common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for "+deviceName+" to "+deviceStatus)
 		}
 		return nil
 

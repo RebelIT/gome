@@ -79,13 +79,17 @@ func HttpDelete(url string, body []byte, headers map[string]string)(response htt
 	return *resp, nil
 }
 
-func HttpGet(url string)(response http.Response, error error){
+func HttpGet(url string, headers map[string]string)(response http.Response, error error){
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second * HTTP_TIMEOUT)
 	defer cncl()
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil{
 		return http.Response{}, err
+	}
+
+	for key, value := range headers {
+		req.Header.Set(key,value)
 	}
 
 	resp, err := http.DefaultClient.Do(req.WithContext(ctx))

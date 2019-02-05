@@ -1,88 +1,21 @@
 package rpi
 
 import (
-	"context"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/notify"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
-func init() {
-	http.DefaultClient.Timeout = time.Second * 2
-}
-
-func PiGet(uriPart string, deviceName string) (response http.Response, err error) {
-	d, err := devices.DetailsGet("device_"+deviceName)
-	if err != nil{
-		return http.Response{}, err
-	}
-	url := "http://"+d.Addr+":"+d.NetPort+uriPart
-
-	ctx, cncl := context.WithTimeout(context.Background(), time.Second*1)
-	defer cncl()
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	s, err := common.GetSecrets()
-	if err != nil{
-		return http.Response{}, err
-	}
-	req.Header.Set("X-API-User", s.RpiotUser)
-	req.Header.Set("X-API-Token", s.RpiotToken)
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	notify.MetricHttpOut(deviceName, resp.StatusCode, "GET")
-	return *resp, nil
-}
-
-func PiPost(deviceName string, uri string) (response http.Response, err error) {
-	d, err := devices.DetailsGet("device_"+deviceName)
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	url := "http://"+d.Addr+":"+d.NetPort+"/api/"+uri
-
-	ctx, cncl := context.WithTimeout(context.Background(), time.Second*1)
-	defer cncl()
-
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	s, err := common.GetSecrets()
-	if err != nil{
-		return http.Response{}, err
-	}
-	req.Header.Set("X-API-User", s.RpiotUser)
-	req.Header.Set("X-API-Token", s.RpiotToken)
-	resp, err := http.DefaultClient.Do(req.WithContext(ctx))
-	if err != nil{
-		return http.Response{}, err
-	}
-
-	notify.MetricHttpOut(deviceName, resp.StatusCode, "POST")
-
-	return *resp, nil
-}
-
 func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
-	fmt.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
-	data := devices.Status{}
+
 	uriPart := "/api/alive"
+	alive := false
 
 	resp, err := PiGet(uriPart, deviceName)
 	if err != nil {
@@ -91,14 +24,11 @@ func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		data.Alive = false
-	} else {
-		data.Alive = true
+	if resp.StatusCode == 200 {
+		alive = true
 	}
-	data.Device = deviceName
 
-	if err := devices.DbHashSet(deviceName+"_"+"status", data); err != nil{
+	if err := devices.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}
@@ -107,6 +37,42 @@ func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	return
 }
 
+
+// http wrappers
+func PiGet(uriPart string, deviceName string) (response http.Response, err error) {
+	d, err := devices.DetailsGet(deviceName+"_device")
+	if err != nil{
+		return http.Response{}, err
+	}
+
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+
+	resp, err := common.HttpGet(url, rpIotHeaders())
+	if err != nil{
+		return http.Response{}, err
+	}
+
+	return resp, nil
+}
+
+func PiPost(deviceName string, uriPart string) (response http.Response, err error) {
+	d, err := devices.DetailsGet(deviceName+"_device")
+	if err != nil{
+		return http.Response{}, err
+	}
+
+	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+
+	resp, err := common.HttpPost(url,nil, rpIotHeaders())
+	if err != nil{
+		return http.Response{}, err
+	}
+
+	return resp, nil
+}
+
+
+// helpers
 func compileUrl(uriPart string, d PiControl) (uri string, err error){
 	switch uriPart {
 	case "power":
@@ -133,4 +99,18 @@ func compileUrl(uriPart string, d PiControl) (uri string, err error){
 	}
 
 	return "",nil
+}
+
+func rpIotHeaders()(headers map[string]string){
+	s, err := common.GetSecrets()
+	if err != nil{
+		log.Printf("[ERROR] unable to set RaspberryPi rpIoT headers")
+		return
+	}
+
+	h := map[string]string{
+		"X-API-User": s.RpiotUser,
+		"X-API-Token": s.RpiotToken,
+	}
+	return h
 }
