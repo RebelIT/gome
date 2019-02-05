@@ -9,6 +9,7 @@ GoLang Home (gome)
     * consolidate devices to a single package
     * move device specific items out of runners into common devices
     * move tuyaCLi to common Command func with common tryCommand func
+    * simplify deploy to a single playbook. move rest to common rPi-Ansible repo
     
 * Stable (it runs) Tuya schedules work. other device control endpoints work. 
 * ToDo: see issues. 
