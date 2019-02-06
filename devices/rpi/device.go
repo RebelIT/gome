@@ -3,6 +3,7 @@ package rpi
 import (
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
 	"log"
 	"net/http"
@@ -28,7 +29,7 @@ func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 		alive = true
 	}
 
-	if err := devices.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+	if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}

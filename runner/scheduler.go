@@ -4,6 +4,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/tuya"
 	"log"
@@ -35,7 +36,7 @@ func GoGoScheduler() error {
 				d := devices.Devices{}
 
 				//get device data from redis
-				devData, err := devices.DbHashGet(dev)
+				devData, err := database.DbHashGet(dev)
 				if err != nil {
 					log.Printf("[WARN] schedule runner, unable to get dbData for %s: %s", dev, err)
 					doItForReal = false

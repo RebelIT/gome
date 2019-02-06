@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/database"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 // *****************************************************************
 // General device functions
 func StatusGet (device string) (status string, error error){  //Gets the device status from redis
-	value, err := DbGet(device+"_status")
+	value, err := database.DbGet(device+"_status")
 	if err != nil{
 		return "", err
 	}
@@ -25,7 +26,7 @@ func UpdateStatus(deviceName string, status bool) error{  //Update the device st
 	statusData := Status{}
 	statusData.Alive = status
 
-	if err := DbHashSet(deviceName+"_"+"status", statusData); err != nil{
+	if err := database.DbHashSet(deviceName+"_"+"status", statusData); err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return err
 	}
@@ -36,7 +37,7 @@ func UpdateStatus(deviceName string, status bool) error{  //Update the device st
 func DetailsGet (device string) (Devices, error){  //Gets the device details from redis
 	d := Devices{}
 
-	values, err := DbHashGet(device)
+	values, err := database.DbHashGet(device)
 	if err != nil{
 		return d, err
 	}
@@ -58,7 +59,7 @@ func LoadDevices() error{  //Load Devices into redis from devices.json file
 
 	for _, d := range i.Devices {
 		log.Printf("[INFO] device loader, loading %s under '%s_device'", d.Name, d.Name)
-		if err := DbHashSet(d.Name+"_device",d); err != nil{
+		if err := database.DbHashSet(d.Name+"_device",d); err != nil{
 			return err
 		}
 	}
@@ -81,7 +82,7 @@ func ReadDeviceFile()(Inputs, error){  //Read the devices.json
 
 func GetAllDevicesFromDb() (devices []string, err error){  //Gets a full inventory of devices from redis
 	keySearch := "*_device"
-	keys, err := DbGetKeys(keySearch)
+	keys, err := database.DbGetKeys(keySearch)
 	if err != nil{
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func ScheduleSet (s* Schedules, device string) (error){
 		log.Println(err)
 	}
 
-	if err := DbSet(device+"_schedule", data); err != nil{
+	if err := database.DbSet(device+"_schedule", data); err != nil{
 		return err
 	}
 	return nil
@@ -106,7 +107,7 @@ func ScheduleSet (s* Schedules, device string) (error){
 func ScheduleGet (devName string) (hasSchedule bool, schedules Schedules, error error){
 	s := Schedules{}
 
-	value, err := DbGet(devName+"_schedule")
+	value, err := database.DbGet(devName+"_schedule")
 	if err != nil{
 		return false, s, err
 	}
@@ -124,7 +125,7 @@ func ScheduleGet (devName string) (hasSchedule bool, schedules Schedules, error 
 }
 
 func ScheduleDel (device string) (error){
-	if err := DbDel(device+"_schedule"); err != nil{
+	if err := database.DbDel(device+"_schedule"); err != nil{
 		return err
 	}
 	return nil
@@ -139,112 +140,6 @@ func ScheduleUpdate (device string, status string) (error){
 	s.Status = status
 
 	if err := ScheduleSet(&s,device); err != nil{
-		return err
-	}
-
-	return nil
-}
-
-
-// *****************************************************************
-// Redis functions
-func DbConnect()(redis.Conn, error){
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		return nil, err
-	}
-
-	json.Unmarshal(deviceFile, &in)
-
-	db := in.Database
-	conn, err := redis.Dial("tcp", db)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
-}
-
-func DbHashSet(key string, data interface{} ) error{
-	//equivalent to a redis HMSET
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-	if _, err := c.Do("HMSET", redis.Args{key}.AddFlat(data)...); err != nil{
-		return err
-	}
-
-	return nil
-}
-
-func DbHashGet(key string)(values []interface{}, err error){
-	c, err := DbConnect()
-	if err != nil{
-		return nil, err
-	}
-	defer c.Close()
-
-	resp, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
-func DbGetKeys(key string)(keys []string, err error){
-	c, err := DbConnect()
-	if err != nil{
-		return nil, err
-	}
-	defer c.Close()
-
-	resp, err := redis.Strings(c.Do("KEYS", key))
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func DbSet(key string, value []byte) error{
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-	if _, err := c.Do("SET", key, string(value)); err != nil{
-		return err
-	}
-	return nil
-}
-
-func DbGet(key string) (values string, err error){
-	c, err := DbConnect()
-	if err != nil{
-		return "", err
-	}
-	defer c.Close()
-	value, err := redis.String(c.Do("GET", key))
-	if err != nil{
-		if err.Error() == "redigo: nil returned"{
-			//This is fine, redis connection OK, just no data returned
-			return "", nil
-		}
-		return "", err
-	}
-	return value, nil
-}
-
-func DbDel(key string) error{
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-
-	if _, err := c.Do("DEL", key, "*"); err != nil{
 		return err
 	}
 

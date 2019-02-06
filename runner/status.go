@@ -3,6 +3,7 @@ package runner
 import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/devices/roku"
 	"github.com/rebelit/gome/devices/rpi"
@@ -29,7 +30,7 @@ func GoGoDeviceStatus() {
 		if doIt {
 			for _, dev := range devs {
 				doItForReal := true
-				devData, err := devices.DbHashGet(dev)
+				devData, err := database.DbHashGet(dev)
 				if err != nil {
 					log.Printf("[WARN] device status runner, unable to get dbData for %s: %s", dev, err)
 					doItForReal = false
