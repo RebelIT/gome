@@ -1,17 +1,16 @@
-package rpi
+package devices
 
 import (
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
-	"github.com/rebelit/gome/devices"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
+func RpIotDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
 
@@ -41,7 +40,7 @@ func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 
 // http wrappers
 func PiGet(uriPart string, deviceName string) (response http.Response, err error) {
-	d, err := devices.DetailsGet(deviceName+"_device")
+	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
 		return http.Response{}, err
 	}
@@ -57,7 +56,7 @@ func PiGet(uriPart string, deviceName string) (response http.Response, err error
 }
 
 func PiPost(deviceName string, uriPart string) (response http.Response, err error) {
-	d, err := devices.DetailsGet(deviceName+"_device")
+	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
 		return http.Response{}, err
 	}

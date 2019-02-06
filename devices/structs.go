@@ -39,3 +39,10 @@ type Schedule struct{
 	On		string `json:"on"`
 	Off 	string `json:"off"`
 }
+
+type PiControl struct{
+	Service   	string `json:"service"`
+	Package		string `json:"package"`
+	PinNumber 	string `json:"pin_number"`
+	Action 		string `json:"action"`
+}

@@ -1,11 +1,10 @@
-package tuya
+package devices
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
-	"github.com/rebelit/gome/devices"
 	"log"
 	"os/exec"
 	"strconv"
@@ -13,7 +12,7 @@ import (
 	"time"
 )
 
-func DeviceStatus (deviceName string, collectionDelayMin time.Duration) {
+func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
 

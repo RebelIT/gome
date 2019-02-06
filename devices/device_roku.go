@@ -1,15 +1,50 @@
-package roku
+package devices
 
 import (
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
-	"github.com/rebelit/gome/devices"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
+
+//Roku App ID's
+const NETFLIX = 12
+const PLEX = 13535
+const SLING = 46041
+const PANDORA = 28
+const PRIME_VIDEO = 13
+const GOOGLE_PLAY = 50025
+const HBOGO = 8378
+const YOUTUBE = 837
+
+func getAppId(app string)(string, error){
+	id := 0
+	switch app {
+	case "netflix":
+		id = NETFLIX
+	case "plex":
+		id = PLEX
+	case "sling":
+		id = SLING
+	case "pandora":
+		id = PANDORA
+	case "prime":
+		id = PRIME_VIDEO
+	case "google":
+		id = GOOGLE_PLAY
+	case "hbo":
+		id = HBOGO
+	case "youtube":
+		id = YOUTUBE
+	default:
+		return "", errors.New("no app "+app+" found")
+	}
+
+	return strconv.Itoa(id), nil
+}
 
 func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
@@ -57,7 +92,7 @@ func launchApp(deviceName string, app string) error {
 
 // http wrappers
 func rokuPost(uriPart string, deviceName string) (http.Response, error) {
-	d, err := devices.DetailsGet(deviceName+"_device")
+	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
 		return http.Response{}, err
 	}
@@ -72,7 +107,7 @@ func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 }
 
 func rokuGet(uriPart string, deviceName string) (http.Response, error) {
-	d, err := devices.DetailsGet(deviceName+"_device")
+	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
 		return http.Response{}, err
 	}

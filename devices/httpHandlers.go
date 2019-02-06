@@ -125,3 +125,83 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	ReturnOk(w,r,i)
 	return
 }
+
+//**********************************************************************
+// tuya device endpoints
+func TuyaControl(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	deviceName := vars["name"]
+	state := vars["state"]
+
+	action := false
+	if state == "on"{
+		action = true
+	} else if state == "off"{
+		action = false
+	} else{
+		ReturnBad(w,r)
+		return
+	}
+
+	if err := PowerControl(deviceName, action); err != nil{
+		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
+		ReturnInternalError(w,r)
+		return
+	}
+
+	ReturnOk(w,r, http.Response{})
+	return
+}
+
+//**********************************************************************
+// raspberryPi IoT device endpoints
+func RpIotControl(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	deviceName := vars["device"]
+	component := vars["component"]
+
+	i := PiControl{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		ReturnBad(w, r)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &i); err != nil {
+		ReturnInternalError(w, r)
+		return
+	}
+
+	uri, err := compileUrl(component, i)
+	if err != nil{
+		ReturnBad(w, r)
+		return
+	}
+
+	resp, err := PiPost(deviceName,uri)
+	if err != nil{
+		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
+		ReturnInternalError(w, r)
+		return
+	}
+
+	ReturnOk(w, r, resp)
+	return
+}
+
+//**********************************************************************
+// roku device endpoints
+func RokuLaunchApp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	deviceName := vars["device"]
+	appName := vars["app"]
+
+	if err := launchApp(deviceName,appName); err != nil{
+		ReturnInternalError(w,r)
+		return
+	}
+
+	ReturnOk(w,r,http.Response{})
+	return
+}
