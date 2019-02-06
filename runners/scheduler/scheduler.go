@@ -1,4 +1,4 @@
-package runner
+package scheduler
 
 import (
 	"github.com/gomodule/redigo/redis"
@@ -6,7 +6,6 @@ import (
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/devices/tuya"
 	"log"
 	"strconv"
 	"strings"
@@ -132,7 +131,7 @@ func doDeviceSpecificAction(deviceType string, deviceName string, deviceAction s
 		if deviceStatus == "on"{
 			newStatus = true
 		}
-		if err := tuya.PowerControl(deviceName, newStatus); err != nil {
+		if err := devices.TuyaPowerControl(deviceName, newStatus); err != nil {
 			log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", deviceName, err)
 			common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for "+deviceName+" to "+deviceStatus)
 		}

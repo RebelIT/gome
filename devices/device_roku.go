@@ -46,7 +46,7 @@ func getAppId(app string)(string, error){
 	return strconv.Itoa(id), nil
 }
 
-func DeviceStatus(deviceName string, collectionDelayMin time.Duration) {
+func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
 

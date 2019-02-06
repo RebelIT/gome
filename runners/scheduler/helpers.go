@@ -1,11 +1,15 @@
-package runner
+package scheduler
 
 import (
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type Validator struct{
+	DoChange 	bool
+	InSchedule 	bool
+}
 
 func splitTime()(strTime string, intTime int, weekday string, now time.Time){
 	Now := time.Now()
@@ -41,14 +45,4 @@ func inBetweenReverse(i, min, max int) bool {
 	} else {
 		return true
 	}
-}
-
-func randomizeCollection() time.Duration {
-	min := 0
-	max := 300
-
-	rand.Seed(time.Now().UTC().UnixNano())
-	i := rand.Intn(max - min) + min
-
-	return time.Duration(int64(i))
 }

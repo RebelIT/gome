@@ -19,7 +19,7 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 	doStatus := true
 	alive := false
 
-	d, err := devices.DetailsGet(deviceName+"_device")
+	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		doStatus = false
@@ -52,8 +52,8 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 }
 
 // device wrappers
-func PowerControl(deviceName string, value bool) error {
-	d, err := devices.DetailsGet(deviceName+"_device")
+func TuyaPowerControl(deviceName string, value bool) error {
+	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
 		return err
 	}
@@ -70,7 +70,7 @@ func PowerControl(deviceName string, value bool) error {
 	} else {
 		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
 		if fmtOut == "Set succeeded."{
-			if err := devices.UpdateStatus(deviceName, value); err != nil{
+			if err := UpdateStatus(deviceName, value); err != nil{
 				log.Printf("[ERROR] Update Device Status, %s : %s", deviceName, err)
 			}
 			common.SendSlackAlert("Tuya PowerControl initiated for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
@@ -119,7 +119,7 @@ func tuyaCli(cmdName string, args []string) (string, error) {
 
 }
 
-func generateSetCliArgs(deviceDetails devices.Devices, pwrState bool)(cliArg []string, err error){
+func generateSetCliArgs(deviceDetails Devices, pwrState bool)(cliArg []string, err error){
 	args := []string{}
 	fmt.Printf("%+v\n",deviceDetails)
 	switch deviceDetails.Type{
@@ -137,7 +137,7 @@ func generateSetCliArgs(deviceDetails devices.Devices, pwrState bool)(cliArg []s
 	return args, nil
 }
 
-func generateGetCliArgs(deviceDetails devices.Devices)(cliArg []string, err error){
+func generateGetCliArgs(deviceDetails Devices)(cliArg []string, err error){
 	args := []string{}
 
 	switch deviceDetails.Type{

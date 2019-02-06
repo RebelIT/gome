@@ -1,4 +1,4 @@
-package runner
+package aws
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -8,8 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/devices/rpi"
-	"github.com/rebelit/gome/devices/tuya"
+	"github.com/rebelit/gome/devices"
 	"log"
 	"strings"
 	"time"
@@ -123,13 +122,13 @@ func doWhatAlexaSays(deviceType string, deviceName string, deviceAction string) 
 		if deviceAction == "on"{
 			action = true
 		}
-		if err := tuya.PowerControl(deviceName, action); err != nil{
+		if err := devices.TuyaPowerControl(deviceName, action); err != nil{
 			return err
 		}
 		return nil
 
 	case "pi":
-		_, err := rpi.PiPost(deviceName, deviceAction)
+		_, err := devices.PiPost(deviceName, deviceAction)
 		if err != nil{
 			return err
 		}

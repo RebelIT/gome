@@ -1,13 +1,10 @@
-package runner
+package status
 
 import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/devices/roku"
-	"github.com/rebelit/gome/devices/rpi"
-	"github.com/rebelit/gome/devices/tuya"
 	"log"
 	"time"
 )
@@ -41,13 +38,13 @@ func GoGoDeviceStatus() {
 
 					switch d.Device {
 					case "pi":
-						go rpi.DeviceStatus(d.Name, randomizeCollection())
+						go devices.RpIotDeviceStatus(d.Name, randomizeCollection())
 
 					case "roku":
-						go roku.DeviceStatus(d.Name, randomizeCollection())
+						go devices.RokuDeviceStatus(d.Name, randomizeCollection())
 
 					case "tuya":
-						go tuya.DeviceStatus(d.Name, randomizeCollection())
+						go devices.TuyaDeviceStatus(d.Name, randomizeCollection())
 
 					default:
 						log.Printf("[WARN] device status runner, %s no device types match", d.Name)

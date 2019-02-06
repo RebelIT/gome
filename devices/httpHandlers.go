@@ -143,7 +143,7 @@ func TuyaControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := PowerControl(deviceName, action); err != nil{
+	if err := TuyaPowerControl(deviceName, action); err != nil{
 		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
 		ReturnInternalError(w,r)
 		return
