@@ -3,13 +3,15 @@ package common
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 )
 
 //NOTE:
+// *****************************************************************
 //	common http functions with metrics for project use
-
 func HttpPost(url string, body []byte, headers map[string]string)(response http.Response, err error){
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second * HTTP_TIMEOUT)
 	defer cncl()
@@ -100,4 +102,34 @@ func HttpGet(url string, headers map[string]string)(response http.Response, erro
 
 	MetricHttpOut(url, http.MethodGet, FAILED)
 	return *resp, nil
+}
+
+
+// *****************************************************************
+// Http Response helper functions
+func ReturnOk(w http.ResponseWriter, r *http.Request, response interface{}){
+	code := http.StatusOK
+	MetricHttpIn(r.RequestURI, code, r.Method)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Printf("[ERROR] %s : %s\n", r.URL.Path, err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(code)
+	return
+}
+
+func ReturnBad(w http.ResponseWriter, r *http.Request){
+	code := http.StatusBadRequest
+	MetricHttpIn(r.RequestURI, code, r.Method)
+	w.WriteHeader(code)
+	return
+}
+
+func ReturnInternalError(w http.ResponseWriter, r *http.Request){
+	code := http.StatusInternalServerError
+	MetricHttpIn(r.RequestURI, code, r.Method)
+	w.WriteHeader(code)
+	return
 }

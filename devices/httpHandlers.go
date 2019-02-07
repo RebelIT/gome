@@ -17,11 +17,11 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	details, err := DetailsGet(deviceName+"_device")
 	if err != nil {
 		log.Printf("[ERROR] %s : details %s, %s", deviceName, r.Method, err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	ReturnOk(w,r,details)
+	common.ReturnOk(w,r,details)
 	return
 }
 
@@ -32,11 +32,11 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	status, err := StatusGet(deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : status %s, %s", deviceName, r.Method, err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	ReturnOk(w,r,status)
+	common.ReturnOk(w,r,status)
 	return
 }
 
@@ -47,13 +47,13 @@ func GetDevices(w http.ResponseWriter,r *http.Request){
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
 	json.Unmarshal(deviceFile, &i)
 
-	ReturnOk(w,r,i)
+	common.ReturnOk(w,r,i)
 
 	return
 }
@@ -65,14 +65,14 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
-		ReturnBad(w,r)
+		common.ReturnBad(w,r)
 		return
 	}
 	defer r.Body.Close()
 
 	if err := json.Unmarshal(body, &i); err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
@@ -80,7 +80,7 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	deviceFile, err := os.OpenFile(common.FILE, os.O_RDWR, 0644)
 	if err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 	defer deviceFile.Close()
@@ -88,13 +88,13 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	bytes, err := ioutil.ReadAll(deviceFile)
 	if err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
 	if err := json.Unmarshal(bytes, &fullDevs); err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
@@ -104,7 +104,7 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	newBytes, err := json.MarshalIndent(fullDevs, "", "    ")
 	if err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
@@ -112,17 +112,17 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	_, err = deviceFile.WriteAt(newBytes, 0)
 	if err != nil {
 		log.Println(err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
 	//Re-run device loader to add to DB cache
 	if err := LoadDevices(); err != nil{
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	ReturnOk(w,r,i)
+	common.ReturnOk(w,r,i)
 	return
 }
 
@@ -139,17 +139,17 @@ func TuyaControl(w http.ResponseWriter, r *http.Request) {
 	} else if state == "off"{
 		action = false
 	} else{
-		ReturnBad(w,r)
+		common.ReturnBad(w,r)
 		return
 	}
 
 	if err := TuyaPowerControl(deviceName, action); err != nil{
 		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	ReturnOk(w,r, http.Response{})
+	common.ReturnOk(w,r, http.Response{})
 	return
 }
 
@@ -163,30 +163,30 @@ func RpIotControl(w http.ResponseWriter, r *http.Request) {
 	i := PiControl{}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		ReturnBad(w, r)
+		common.ReturnBad(w, r)
 		return
 	}
 	defer r.Body.Close()
 
 	if err := json.Unmarshal(body, &i); err != nil {
-		ReturnInternalError(w, r)
+		common.ReturnInternalError(w, r)
 		return
 	}
 
 	uri, err := compileUrl(component, i)
 	if err != nil{
-		ReturnBad(w, r)
+		common.ReturnBad(w, r)
 		return
 	}
 
 	resp, err := PiPost(deviceName,uri)
 	if err != nil{
 		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
-		ReturnInternalError(w, r)
+		common.ReturnInternalError(w, r)
 		return
 	}
 
-	ReturnOk(w, r, resp)
+	common.ReturnOk(w, r, resp)
 	return
 }
 
@@ -198,10 +198,10 @@ func RokuLaunchApp(w http.ResponseWriter, r *http.Request) {
 	appName := vars["app"]
 
 	if err := launchApp(deviceName,appName); err != nil{
-		ReturnInternalError(w,r)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	ReturnOk(w,r,http.Response{})
+	common.ReturnOk(w,r,http.Response{})
 	return
 }

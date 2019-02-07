@@ -52,7 +52,7 @@ func GoGoSQS() {
 				log.Printf("[ERROR] aws sqs, %s", err)
 			}
 
-			if err := doWhatAlexaSays(deviceType,deviceName,deviceAction); err != nil{
+			if err := devices.DoWhatAlexaSays(deviceType,deviceName,deviceAction); err != nil{
 				log.Printf("[ERROR], aws sqs, %s", err)
 			}
 		}
@@ -112,31 +112,3 @@ func deleteMessage(c *sqs.SQS,queueUrl string, receipt *string) error{
 	return nil
 }
 
-func doWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
-	action := false
-
-	common.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
-
-	switch deviceType{
-	case "tuya":
-		if deviceAction == "on"{
-			action = true
-		}
-		if err := devices.TuyaPowerControl(deviceName, action); err != nil{
-			return err
-		}
-		return nil
-
-	case "pi":
-		_, err := devices.PiPost(deviceName, deviceAction)
-		if err != nil{
-			return err
-		}
-
-	default:
-		//no match
-		return errors.New("no message in queue to parse")
-	}
-
-	return nil
-}

@@ -32,23 +32,15 @@ func GoGoDeviceStatus() {
 					log.Printf("[WARN] device status runner, unable to get dbData for %s: %s", dev, err)
 					doItForReal = false
 				}
+
+				d := devices.Devices{}
+				if err := redis.ScanStruct(devData, &d); err != nil{
+					log.Printf("[WARN] device status runner, unable to parse dbData for %s: %s", dev, err)
+					doItForReal = false
+				}
+
 				if doItForReal {
-					d := devices.Devices{}
-					redis.ScanStruct(devData, &d)
-
-					switch d.Device {
-					case "pi":
-						go devices.RpIotDeviceStatus(d.Name, randomizeCollection())
-
-					case "roku":
-						go devices.RokuDeviceStatus(d.Name, randomizeCollection())
-
-					case "tuya":
-						go devices.TuyaDeviceStatus(d.Name, randomizeCollection())
-
-					default:
-						log.Printf("[WARN] device status runner, %s no device types match", d.Name)
-					}
+					go devices.GetDeviceStatus(d)
 				}
 			}
 		}

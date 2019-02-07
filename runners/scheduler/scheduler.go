@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"github.com/gomodule/redigo/redis"
-	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
@@ -43,7 +42,7 @@ func GoGoScheduler() error {
 				redis.ScanStruct(devData, &d)
 
 				//get schedules data from redis
-				hasSchedule, s, err := devices.ScheduleGet(d.Name)
+				hasSchedule, s, err := scheduleGet(d.Name)
 				if err != nil{
 					log.Printf("[WARN] schedule runner, unable to get schedule for %s: %s", dev, err)
 					doItForReal = false
@@ -73,7 +72,7 @@ func GoGoScheduler() error {
 	return nil
 }
 
-func doSchedule(device devices.Devices, schedules []devices.Schedule) {
+func doSchedule(device devices.Devices, schedules []Schedule) {
 	_, iTime, day, _ := splitTime()  //custom parse date/time
 
 	for _, schedule := range schedules {
@@ -105,45 +104,16 @@ func doSchedule(device devices.Devices, schedules []devices.Schedule) {
 		//if device is in any enabled schedule it must be on
 		for _, s := range scheduleOutCol {
 			if s.InSchedule && s.DoChange {
-				if err := doDeviceSpecificAction(device.Device, device.Name, schedule.Action, "on"); err != nil { //change it to true
-					log.Printf("[ERROR] schedule runner, %s failed to change powerstate: %s\n", device.Name, err)
-					common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
-				}
+				devices.DoScheduledAction(device.Device, device.Name, schedule.Action, "on") //turn it on
 			}
 		}
 
 		//if device is not in  any enabled schedule it must be off
 		if noSchedules(scheduleOutCol) {
 			if devOn {
-				if err := doDeviceSpecificAction(device.Device, device.Name, schedule.Action, "off"); err != nil { //change it to true
-					log.Printf("[ERROR] schedule runner, %s failed to change powerstate: %s\n", device.Name, err)
-					common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for " + device.Name)
-				}
+				devices.DoScheduledAction(device.Device, device.Name, schedule.Action, "on") //turn it off
 			}
 		}
-	}
-}
-
-func doDeviceSpecificAction(deviceType string, deviceName string, deviceAction string, deviceStatus string) error{
-	switch deviceType {
-	case "tuya":
-		newStatus := false
-		if deviceStatus == "on"{
-			newStatus = true
-		}
-		if err := devices.TuyaPowerControl(deviceName, newStatus); err != nil {
-			log.Printf("[ERROR] scheduler, %s failed to change powerstate: %s\n", deviceName, err)
-			common.SendSlackAlert("[ERROR] schedule runner failed to change powerstate for "+deviceName+" to "+deviceStatus)
-		}
-		return nil
-
-	case "pi":
-		return nil
-
-	default:
-		log.Printf("[WARN] schedule runner, %s no device types match", deviceName)
-		return errors.New("no device types match for "+deviceName)
-
 	}
 }
 

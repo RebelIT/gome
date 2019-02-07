@@ -26,20 +26,6 @@ type DeviceAction struct{
 	Action		bool `json:"action"`
 }
 
-type Schedules struct {
-	Status 		string `json:"status"`
-	Schedules		[]Schedule `json:"schedules"`
-}
-
-type Schedule struct{
-	Day		string `json:"day"`
-	Status 	string `json:"status"`
-	Desc	string `json:"desc"`
-	Action  string `json:"action"`
-	On		string `json:"on"`
-	Off 	string `json:"off"`
-}
-
 type PiControl struct{
 	Service   	string `json:"service"`
 	Package		string `json:"package"`
