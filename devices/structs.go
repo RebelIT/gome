@@ -32,3 +32,8 @@ type PiControl struct{
 	PinNumber 	string `json:"pin_number"`
 	Action 		string `json:"action"`
 }
+
+type PiResponse struct {
+	Namespace 	string `json:"namespace"`
+	Message		string `json:"message"`
+}

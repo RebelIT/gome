@@ -44,6 +44,19 @@ func DetailsGet (device string) (Devices, error){  //Gets the device details fro
 	return d, nil
 }
 
+func StateGet (device string, component string) (status string, error error){  //Gets the device status from redis
+	/*component:
+		power - tuya
+		display - rpIoT HDMI status
+	*/
+	value, err := database.DbGet(device+"_"+component+"_state")
+	if err != nil{
+		return "", err
+	}
+
+	return value, nil
+}
+
 func LoadDevices() error{  //Load Devices into redis from devices.json file
 	log.Printf("[INFO] device loader, starting")
 	i, err := ReadDeviceFile()
@@ -109,24 +122,45 @@ func GetDeviceStatus(d Devices) {
 	}
 }
 
-func DoScheduledAction(device string, deviceName string, deviceAction string, deviceStatus string){
+func DoScheduledAction(device string, deviceName string, deviceComponent string, deviceStatus string){
 	switch device {
 	case "tuya":
-		if deviceAction == "power"{
+		if deviceComponent == "power"{
 			newStatus := false
 			if deviceStatus == "on"{
 				newStatus = true
 			}
 			if err := TuyaPowerControl(deviceName, newStatus); err != nil {
-				log.Printf("[ERROR] DoScheduledAction, %s failed to change powerstate: %s\n", deviceName, err)
-				common.SendSlackAlert("[ERROR] DoScheduledAction failed to change powerstate for "+deviceName+" to "+deviceStatus)
+				log.Printf("[ERROR] DoScheduledAction, %s failed to change %s to %s\n", deviceName, deviceComponent, deviceStatus)
+				common.SendSlackAlert("[ERROR] DoScheduledAction failed to change "+deviceComponent+" for "+deviceName+" to "+deviceStatus)
 			}
 			return
 		}
-		log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceAction)
+		log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceComponent)
 		return
 
 	case "pi":
+		uriPart := "/api"
+		doErr := false
+
+		if deviceComponent == "display"{
+			resp, err := PiPost(deviceName, uriPart+"/"+deviceComponent+"/"+deviceStatus)
+			if err != nil{
+				doErr = true
+			}
+			if resp.StatusCode != 200{
+				doErr = true
+			}
+		} else{
+			log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceComponent)
+			return
+		}
+
+		if doErr{
+			log.Printf("[ERROR] DoScheduledAction, %s failed to change %s to %s\n", deviceName, deviceComponent, deviceStatus)
+			common.SendSlackAlert("[ERROR] DoScheduledAction failed to change "+deviceComponent+" for "+deviceName+" to "+deviceStatus)
+			return
+		}
 		return
 
 	default:
@@ -134,7 +168,6 @@ func DoScheduledAction(device string, deviceName string, deviceAction string, de
 		return
 
 	}
-
 }
 
 func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{

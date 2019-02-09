@@ -5,7 +5,6 @@ GoLang Home (gome)
 ###Current Development Status:
 * ToDo next:  
     * better AWS SQS wrappers
-    * move device specific items out of runners into common devices
     * move tuyaCLi to common Command func with common tryCommand func
     * simplify deploy to a single playbook. move rest to common rPi-Ansible repo
     

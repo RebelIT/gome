@@ -21,12 +21,13 @@ type Schedules struct {
 }
 
 type Schedule struct{
-	Day		string `json:"day"`
-	Status 	string `json:"status"`
-	Desc	string `json:"desc"`
-	Action  string `json:"action"`
-	On		string `json:"on"`
-	Off 	string `json:"off"`
+	Day			string `json:"day"`
+	Status 		string `json:"status"`
+	Desc		string `json:"desc"`
+	Component	string `json:"component"`
+	Action  	string `json:"action"`
+	On			string `json:"on"`
+	Off 		string `json:"off"`
 }
 
 // *****************************************************************

@@ -1,9 +1,11 @@
 package devices
 
 import (
+	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,6 +16,15 @@ func RpIotDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
 
+	rpIotAliveStatus(deviceName)
+	rpIotDisplayStatus(deviceName)
+
+	log.Printf("[INFO] %s device status : done\n", deviceName)
+	return
+}
+
+
+func rpIotAliveStatus(deviceName string){
 	uriPart := "/api/alive"
 	alive := false
 
@@ -32,11 +43,35 @@ func RpIotDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}
-
-	log.Printf("[INFO] %s device status : done\n", deviceName)
 	return
 }
 
+func rpIotDisplayStatus(deviceName string){
+	uriPart := "/api/display"
+	state := false
+
+	piBody := PiResponse{}
+
+	resp, err := PiGet(uriPart, deviceName)
+	if err != nil {
+		log.Printf("[ERROR] %s : hdmi status, %s\n", deviceName, err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	json.Unmarshal(body, &piBody)
+
+	if piBody.Message == "1"{
+		state = true
+	}
+
+	if err := database.DbSet(deviceName+"_display"+"_state", []byte(strconv.FormatBool(state))); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		return
+	}
+	return
+}
 
 // http wrappers
 func PiGet(uriPart string, deviceName string) (response http.Response, err error) {

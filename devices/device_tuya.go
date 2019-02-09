@@ -18,6 +18,7 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 
 	doStatus := true
 	alive := false
+	powerState := false
 
 	d, err := DetailsGet(deviceName+"_device")
 	if err != nil{
@@ -31,17 +32,26 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 		doStatus = false
 	}
 
-	cmdOut, err := tryTuyaCli("tuya-cli", cliArgs)
-	if err != nil{
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-	}
-
 	if doStatus{
-		if strings.Replace(cmdOut, "\n", "", -1) == "true"{
+		cmdOut, err := tryTuyaCli("tuya-cli", cliArgs)
+		if err != nil{
+			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		}else{
 			alive = true
 		}
 
+		if strings.Replace(cmdOut, "\n", "", -1) == "true"{
+			powerState = true
+		}
+
+		//status = is on the network and accessible
 		if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+			return
+		}
+
+		//state = the current switch power state on/true | off/false
+		if err := database.DbSet(deviceName+"_power"+"_state", []byte(strconv.FormatBool(powerState))); err != nil{
 			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 			return
 		}
