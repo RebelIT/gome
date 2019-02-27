@@ -56,6 +56,10 @@ func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	resp, err := rokuGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+			return
+		}
 		return
 	}
 	defer resp.Body.Close()

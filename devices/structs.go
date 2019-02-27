@@ -1,7 +1,6 @@
 package devices
 
 type Inputs struct{
-	Database	string `json:"database"`
 	Devices		[]Devices
 }
 

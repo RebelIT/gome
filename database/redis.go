@@ -1,26 +1,21 @@
 package database
 
 import (
-	"encoding/json"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/devices"
-	"io/ioutil"
+	"log"
 )
 
 // *****************************************************************
 // Redis functions
 func DbConnect()(redis.Conn, error){
-	var in devices.Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
+	s, err := common.GetSecrets()
+	if err != nil{
+		log.Printf("[ERROR] slack alert: %s\n", err)
 		return nil, err
 	}
 
-	json.Unmarshal(deviceFile, &in)
-
-	db := in.Database
+	db := s.Database
 	conn, err := redis.Dial("tcp", db)
 	if err != nil {
 		return nil, err

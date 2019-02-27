@@ -75,53 +75,58 @@ func GoGoScheduler() error {
 func doSchedule(device devices.Devices, schedules []Schedule) {
 	_, iTime, day, _ := splitTime()  //custom parse date/time
 
-	for _, schedule := range schedules {
-		devStatus, err := devices.StatusGet(device.Name)
-		if err != nil {
-			log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
-			return
-		}
-		devAlive, _ := strconv.ParseBool(devStatus)
+	devStatus, err := devices.StatusGet(device.Name)
+	if err != nil {
+		log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
+		return
+	}
+	devAlive, _ := strconv.ParseBool(devStatus)
 
-		if devAlive {
+	if devAlive {
+		for _, schedule := range schedules {
+			today := []Schedule{}
+
+			scheduleOutCol := []Validator{}
 
 			devComponentState, err := devices.StateGet(device.Name, schedule.Component)
-			if err != nil{
+			if err != nil {
 				log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
 				return
 			}
 			componentState, _ := strconv.ParseBool(devComponentState)
 
-			scheduleOutCol := []Validator{}
-			for _, s := range schedules {
-				if day == strings.ToLower(s.Day) {
-					if s.Status == "enable" {
-						scheduleOut := Validator{}
+			if schedule.Status == "enable" {
+				if day == strings.ToLower(schedule.Day) {
+					today = append(today, schedule)
+					///add an array of schedules to today, 
 
-						onTime, _ := strconv.Atoi(s.On)   //time of day device is on
-						offTime, _ := strconv.Atoi(s.Off) //time of day device is off
-
-						doChange, isInScheduleBlock := whatDoIDo(componentState, iTime, onTime, offTime)
-
-						scheduleOut.DoChange = doChange
-						scheduleOut.InSchedule = isInScheduleBlock
-
-						scheduleOutCol = append(scheduleOutCol, scheduleOut)
-					}
+					//scheduleOut := Validator{}
+					//
+					//onTime, _ := strconv.Atoi(schedule.On)   //time of day device is on
+					//offTime, _ := strconv.Atoi(schedule.Off) //time of day device is off
+					//
+					//doChange, isInScheduleBlock := whatDoIDo(componentState, iTime, onTime, offTime)
+					//
+					//scheduleOut.DoChange = doChange
+					//scheduleOut.InSchedule = isInScheduleBlock
+					//
+					//scheduleOutCol = append(scheduleOutCol, scheduleOut)
 				}
 			}
 
 			//if device is in any enabled schedule it must be on
 			for _, s := range scheduleOutCol {
 				if s.InSchedule && s.DoChange {
-					devices.DoScheduledAction(device.Device, device.Name, schedule.Action, "on") //turn it on
+					log.Printf("[ANDY] %s turn on\n", device.Name)
+					devices.DoScheduledAction(device.Device, device.Name, schedule.Component, "on") //turn it on
 				}
 			}
 
 			//if device is not in  any enabled schedule it must be off
 			if noSchedules(scheduleOutCol) {
 				if componentState {
-					devices.DoScheduledAction(device.Device, device.Name, schedule.Action, "off") //turn it off
+					log.Printf("[ANDY] %s turn off\n", device.Name)
+					devices.DoScheduledAction(device.Device, device.Name, schedule.Component, "off") //turn it off
 				}
 			}
 		}

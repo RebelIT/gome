@@ -14,6 +14,7 @@ type Secrets struct{
 	AWSQueueUrl 	string `json:"aws_queue_url"`
 	RpiotUser		string `json:"rpiot_user"`
 	RpiotToken		string `json:"rpiot_token"`
+	Database 		string `json:"database"`
 }
 
 type SlackMsg struct{

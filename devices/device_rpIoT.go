@@ -23,7 +23,6 @@ func RpIotDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	return
 }
 
-
 func rpIotAliveStatus(deviceName string){
 	uriPart := "/api/alive"
 	alive := false
@@ -31,6 +30,10 @@ func rpIotAliveStatus(deviceName string){
 	resp, err := PiGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+			return
+		}
 		return
 	}
 	defer resp.Body.Close()
@@ -59,7 +62,6 @@ func rpIotDisplayStatus(deviceName string){
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-
 	json.Unmarshal(body, &piBody)
 
 	if piBody.Message == "1"{
@@ -71,6 +73,32 @@ func rpIotDisplayStatus(deviceName string){
 		return
 	}
 	return
+}
+
+func rpIotDisplayToggle(deviceName string, toggle string) error{
+	uriPart := "/api/display/"+toggle
+
+	resp, err := PiPost(deviceName, uriPart)
+	if err != nil{
+		return err
+	}
+
+	if resp.StatusCode != 200{
+		return errors.Errorf("%s returned %d for %s", deviceName, resp.StatusCode, uriPart)
+	}
+
+	state := false
+	if toggle == "on"{
+		state = true
+	}
+
+	if err := database.DbSet(deviceName+"_display"+"_state", []byte(strconv.FormatBool(state))); err != nil{
+		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+		return errors.Errorf("%s failed to set device status after issuing display %s", deviceName, toggle)
+	}
+
+
+	return nil
 }
 
 // http wrappers

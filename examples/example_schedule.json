@@ -4,58 +4,74 @@
     {
       "day": "sunday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
-      "on": "700",
-      "off": "2100"
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
+      "on": "1610",
+      "off": "1900"
     },
     {
       "day": "monday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     },
     {
       "day": "tuesday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     },
     {
       "day": "tuesday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     },
     {
       "day": "wednesday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     },
     {
       "day": "thursday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     },
     {
       "day": "friday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     },
     {
       "day": "saturday",
       "status": "enable",
-      "desc": "KidBedtimeLampOn",
+      "desc": "Calendar Display",
+      "component": "display",
+      "action": "on",
       "on": "700",
-      "off": "2100"
+      "off": "1900"
     }
   ]
 }

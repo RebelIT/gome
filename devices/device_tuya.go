@@ -6,7 +6,6 @@ import (
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
 	"log"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -33,14 +32,14 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 	}
 
 	if doStatus{
-		cmdOut, err := tryTuyaCli("tuya-cli", cliArgs)
+		cmdOut, err := tuyaCliWrapper("tuya-cli", cliArgs)
 		if err != nil{
 			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		}else{
 			alive = true
 		}
 
-		if strings.Replace(cmdOut, "\n", "", -1) == "true"{
+		if cmdOut == "true"{
 			powerState = true
 		}
 
@@ -74,59 +73,42 @@ func TuyaPowerControl(deviceName string, value bool) error {
 	}
 
 	log.Printf("[INFO] issuing power control for %s\n", deviceName)
-	cmdOut, err := tryTuyaCli("tuya-cli", cliArgs)
+	cmdOut, err := tuyaCliWrapper("tuya-cli", cliArgs)
 	if err != nil{
 		return err
-	} else {
-		fmtOut := strings.Replace(cmdOut, "\n", "", -1)
-		if fmtOut == "Set succeeded."{
-			if err := UpdateStatus(deviceName, value); err != nil{
-				log.Printf("[ERROR] Update Device Status, %s : %s", deviceName, err)
-			}
-			common.SendSlackAlert("Tuya PowerControl initiated for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
-			return nil
-		} else{
-			return fmt.Errorf("error setting device status\n")
-		}
 	}
-}
-
-func tryTuyaCli(cmdName string, args []string) (string, error){
-	maxRetry := 10
-	retrySleep := time.Second * 1
-
-	for i := 0; ;i++ {
-		if i >= maxRetry{
-			break
-		}
-		cmdOut, err := tuyaCli(cmdName, args)
-		if err == nil{
-			return cmdOut, err
-		}
-		common.MetricCmd("tuya-cli", "retry")
-		log.Printf("[WARN] cmd %s failed, retrying\n", cmdName)
-		time.Sleep(retrySleep)
+	if cmdOut != "ok"{
+		common.SendSlackAlert("Tuya PowerControl failed for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
+		return err
+	}
+	if err := UpdateStatus(deviceName, value); err != nil{
+		log.Printf("[ERROR] Update Device Status, %s : %s", deviceName, err)
 	}
 
-	return "", fmt.Errorf("max retries %i reached for %s\n", maxRetry, cmdName)
+	common.SendSlackAlert("Tuya PowerControl initiated for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
+	return nil
 }
 
-func tuyaCli(cmdName string, args []string) (string, error) {
-	out, err := exec.Command(cmdName, args...).Output()
+func tuyaCliWrapper(cmdName string, args []string) (cmdReturn string, error error){
+	cmdOut, err := common.TryCommand(cmdName, args,5)
 	if err != nil{
-		common.MetricCmd("tuya-cli", "failed")
 		return "",err
-	} else {
-		fmtOut := strings.Replace(string(out), "\n", "", -1)
-		if fmtOut == "Set succeeded." || fmtOut == "false" || fmtOut == "true" {
-			common.MetricCmd("tuya-cli", "success")
-			return fmtOut, nil
-		} else{
-			common.MetricCmd("tuya-cli", "failed")
-			return "", fmt.Errorf("error with tuya-cli\n")
-		}
 	}
 
+	fmtOut := strings.Replace(string(cmdOut), "\n", "", -1)
+	if fmtOut == "Set succeeded." {
+		return "ok", nil
+
+	}else if fmtOut == "false" {
+		return fmtOut, nil
+
+	} else if fmtOut == "true"{
+		return fmtOut, nil
+
+	} else{
+		return "",errors.Errorf("cmd returnes could not be formatted: returned %s", fmtOut)
+
+	}
 }
 
 func generateSetCliArgs(deviceDetails Devices, pwrState bool)(cliArg []string, err error){

@@ -5,7 +5,7 @@ GoLang Home (gome)
 ###Current Development Status:
 * ToDo next:  
     * better AWS SQS wrappers
-    * move tuyaCLi to common Command func with common tryCommand func
+    * post new schedule: 2019/02/10 18:45:19 http: multiple response.WriteHeader calls
     * simplify deploy to a single playbook. move rest to common rPi-Ansible repo
     
 * Stable (it runs) Tuya schedules work. other device control endpoints work. 
