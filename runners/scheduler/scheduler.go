@@ -73,7 +73,7 @@ func GoGoScheduler() error {
 }
 
 func doSchedule(device devices.Devices, schedules []Schedule) {
-	_, iTime, day, _ := splitTime()  //custom parse date/time
+	_, _, day, _ := splitTime()  //custom parse date/time
 
 	devStatus, err := devices.StatusGet(device.Name)
 	if err != nil {
