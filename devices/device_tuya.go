@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/database"
 	"log"
 	"strconv"
 	"strings"
@@ -19,7 +18,7 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 	alive := false
 	powerState := false
 
-	d, err := DetailsGet(deviceName+"_device")
+	d, err := GetDevice(deviceName)
 	if err != nil{
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		doStatus = false
@@ -44,15 +43,12 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 		}
 
 		//status = is on the network and accessible
-		if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
-			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-			return
+		if err := UpdateDeviceAliveState(deviceName, alive); err != nil{
+			log.Printf("[ERROR] %s : update device status, %s\n", deviceName, err)
 		}
 
-		//state = the current switch power state on/true | off/false
-		if err := database.DbSet(deviceName+"_power"+"_state", []byte(strconv.FormatBool(powerState))); err != nil{
-			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-			return
+		if err := UpdateDeviceComponentState(deviceName, "power", powerState); err != nil{
+			log.Printf("[ERROR] %s : update device status, %s\n", deviceName, err)
 		}
 	}
 
@@ -62,7 +58,7 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 
 // device wrappers
 func TuyaPowerControl(deviceName string, value bool) error {
-	d, err := DetailsGet(deviceName+"_device")
+	d, err := GetDevice(deviceName)
 	if err != nil{
 		return err
 	}
@@ -81,7 +77,7 @@ func TuyaPowerControl(deviceName string, value bool) error {
 		common.SendSlackAlert("Tuya PowerControl failed for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
 		return err
 	}
-	if err := UpdateStatus(deviceName, value); err != nil{
+	if err := UpdateDeviceComponentState(deviceName,"power", value); err != nil{
 		log.Printf("[ERROR] Update Device Status, %s : %s", deviceName, err)
 	}
 

@@ -1,13 +1,11 @@
 [Unit]
 Description=gome-server
-After=redis-server.service
-Requires=redis-server.service
 
 [Service]
 Type=simple
 User=root
 Group=root
-ExecStart=/etc/gome-server/main
+ExecStart=/etc/apps/gome-server/gome-server
 Restart=always
 
 [Install]

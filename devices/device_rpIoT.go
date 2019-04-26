@@ -103,7 +103,7 @@ func rpIotDisplayToggle(deviceName string, toggle string) error{
 
 // http wrappers
 func PiGet(uriPart string, deviceName string) (response http.Response, err error) {
-	d, err := DetailsGet(deviceName+"_device")
+	d, err := GetDevice(deviceName)
 	if err != nil{
 		return http.Response{}, err
 	}
@@ -119,7 +119,7 @@ func PiGet(uriPart string, deviceName string) (response http.Response, err error
 }
 
 func PiPost(deviceName string, uriPart string) (response http.Response, err error) {
-	d, err := DetailsGet(deviceName+"_device")
+	d, err := GetDevice(deviceName)
 	if err != nil{
 		return http.Response{}, err
 	}

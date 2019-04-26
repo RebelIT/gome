@@ -1,166 +1,128 @@
 package scheduler
 
 import (
-	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 )
 
 func GoGoScheduler() error {
 	log.Println("[INFO] schedule runner, starting")
 	for {
-		doIt := true
+		processSchedules := true
 
-		//get array of all devices in the database
 		devs, err := devices.GetAllDevicesFromDb()
 		if err != nil{
 			log.Printf("[WARN] schedule runner, get all devices: %s", err)
-			doIt = false
+			processSchedules = false
 		}
 
 		if len(devs) == 0{
 			log.Printf("[WARN] schedule runner, no devices found in the database")
-			doIt = false
+			processSchedules = false
 		}
 
-		if doIt {
+		if processSchedules {
 			for _, dev := range devs {
 				doItForReal := true
-				d := devices.Devices{}
 
-				//get device data from redis
-				devData, err := database.DbHashGet(dev)
+				d, err := devices.GetDevice(dev)
 				if err != nil {
 					log.Printf("[WARN] schedule runner, unable to get dbData for %s: %s", dev, err)
-					doItForReal = false
-				}
-				redis.ScanStruct(devData, &d)
-
-				//get schedules data from redis
-				hasSchedule, s, err := scheduleGet(d.Name)
-				if err != nil{
-					log.Printf("[WARN] schedule runner, unable to get schedule for %s: %s", dev, err)
-					doItForReal = false
 				}
 
-				if !hasSchedule {
-					log.Printf("[INFO] schedule runner, no schedule for %s", dev)
-					doItForReal = false
+				//check if device is online 'alive'
+				devStatus, err := devices.GetDeviceAliveState(d.Name)
+				if err != nil {
+					log.Printf("[ERROR] scheduler runner, unable to get %s alive status: %s\n", d.Name, err)
 				}
+				devAlive, _ := strconv.ParseBool(devStatus)
 
-				if doItForReal {
-					if s.Status != "enable" {
-						log.Printf("[INFO] schedule runner, %s has schedule defined but not enabled", dev)
+				if devAlive {
+					//get schedules data from redis
+					hasSchedule, s, err := scheduleGet(d.Name)
+					if err != nil {
+						log.Printf("[WARN] schedule runner, unable to get %s schedule: %s", dev, err)
 						doItForReal = false
 					}
-				}
 
-				if doItForReal {
-					go doSchedule(d, s.Schedules)
+					if !hasSchedule {
+						log.Printf("[DEBUG] schedule runner, no schedule for %s", dev)
+						doItForReal = false
+					}
+
+					if doItForReal {
+						if s.Status != "enable" {
+							log.Printf("[DEBUG] schedule runner, %s has schedule defined but not enabled", dev)
+							doItForReal = false
+						}
+					}
+
+					if doItForReal {
+						go doSchedule(d, s.Schedules)
+					}
 				}
 			}
 		}
 		time.Sleep(time.Minute *common.SCHEDULE_MIN)
 	}
-
-	common.SendSlackAlert("[ERROR] scheduler, routine broke out of loop")
-	return nil
 }
 
 func doSchedule(device devices.Devices, schedules []Schedule) {
-	_, _, day, _ := splitTime()  //custom parse date/time
+	_, iTime, day, _ := splitTime()  //custom parse date/time
 
-	devStatus, err := devices.StatusGet(device.Name)
-	if err != nil {
-		log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
-		return
-	}
-	devAlive, _ := strconv.ParseBool(devStatus)
-
-	if devAlive {
-		for _, schedule := range schedules {
-			today := []Schedule{}
-
-			scheduleOutCol := []Validator{}
-
-			devComponentState, err := devices.StateGet(device.Name, schedule.Component)
-			if err != nil {
-				log.Printf("[ERROR] scheduler, %s : %s\n", device, err)
-				return
-			}
-			componentState, _ := strconv.ParseBool(devComponentState)
-
+	for _, schedule := range schedules {
+		if schedule.Day == day {
 			if schedule.Status == "enable" {
-				if day == strings.ToLower(schedule.Day) {
-					today = append(today, schedule)
-					///add an array of schedules to today, 
 
-					//scheduleOut := Validator{}
-					//
-					//onTime, _ := strconv.Atoi(schedule.On)   //time of day device is on
-					//offTime, _ := strconv.Atoi(schedule.Off) //time of day device is off
-					//
-					//doChange, isInScheduleBlock := whatDoIDo(componentState, iTime, onTime, offTime)
-					//
-					//scheduleOut.DoChange = doChange
-					//scheduleOut.InSchedule = isInScheduleBlock
-					//
-					//scheduleOutCol = append(scheduleOutCol, scheduleOut)
+				devComponentState, err := devices.GetDeviceComponentState(device.Name, schedule.Component)
+				if err != nil {
+					log.Printf("[ERROR] doSchedule, get %s %s state: %s\n", device, schedule.Component, err)
+					return
 				}
-			}
 
-			//if device is in any enabled schedule it must be on
-			for _, s := range scheduleOutCol {
-				if s.InSchedule && s.DoChange {
-					log.Printf("[ANDY] %s turn on\n", device.Name)
-					devices.DoScheduledAction(device.Device, device.Name, schedule.Component, "on") //turn it on
-				}
-			}
+				componentState, _ := strconv.ParseBool(devComponentState) //state of the device component in the schedule
+				onTime, _ := strconv.Atoi(schedule.On)                    //time of day device is on
+				offTime, _ := strconv.Atoi(schedule.Off)                  //time of day device is off
 
-			//if device is not in  any enabled schedule it must be off
-			if noSchedules(scheduleOutCol) {
-				if componentState {
-					log.Printf("[ANDY] %s turn off\n", device.Name)
-					devices.DoScheduledAction(device.Device, device.Name, schedule.Component, "off") //turn it off
+				doChange, inSchedule := changeComponentState(componentState, iTime, onTime, offTime)
+
+				if doChange {
+					if inSchedule {
+						log.Printf("[DEBUG] %s turn on\n", device.Name)
+						devices.DoScheduledAction(device.Device, device.Name, schedule.Component, "on") //turn it on
+					}
+					if !inSchedule {
+						log.Printf("[ANDY] %s turn off\n", device.Name)
+						devices.DoScheduledAction(device.Device, device.Name, schedule.Component, "off") //turn it off
+					}
 				}
 			}
 		}
 	}
 }
 
-func noSchedules(v []Validator) bool {
-	for _, s := range v {
-		if s.InSchedule {
-			return false
-		}
-	}
-	return true
-}
-
-func whatDoIDo(devOn bool, currentHour int, devOnTime int, devOffTime int) (changeState bool, inScheduleBlock bool){
+func changeComponentState(componentState bool, currentHour int, onTime int, offTime int) (changeState bool, inScheduleBlock bool){
 	reverseCheck := false
 	changeState = false
 	inScheduleBlock = false
 
-	if devOffTime <= devOnTime {
+	if offTime <= onTime {
 		//spans a day PM to AM on schedule
 		reverseCheck = true
 	}
 
 	if !reverseCheck{
 		//does not span PM to AM
-		inScheduleBlock = inBetween(currentHour, devOnTime, devOffTime)
+		inScheduleBlock = inBetween(currentHour, onTime, offTime)
 	} else {
 		//spans a day PM to AM reverse check the schedule
-		inScheduleBlock = inBetweenReverse(currentHour, devOffTime, devOnTime)
+		inScheduleBlock = inBetweenReverse(currentHour, offTime, onTime)
 	}
 
-	if devOn{
+	if componentState {
 		if inScheduleBlock{
 			//leave it be change state:false
 			changeState = false

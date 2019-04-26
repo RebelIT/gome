@@ -1,9 +1,7 @@
 package status
 
 import (
-	"github.com/gomodule/redigo/redis"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/database"
 	"github.com/rebelit/gome/devices"
 	"log"
 	"time"
@@ -26,21 +24,16 @@ func GoGoDeviceStatus() {
 
 		if doIt {
 			for _, dev := range devs {
+				log.Printf("[DEBUG] device status runner, processing %s\n", dev)
 				doItForReal := true
-				devData, err := database.DbHashGet(dev)
+				d, err := devices.GetDevice(dev)
 				if err != nil {
 					log.Printf("[WARN] device status runner, unable to get dbData for %s: %s", dev, err)
 					doItForReal = false
 				}
 
-				d := devices.Devices{}
-				if err := redis.ScanStruct(devData, &d); err != nil{
-					log.Printf("[WARN] device status runner, unable to parse dbData for %s: %s", dev, err)
-					doItForReal = false
-				}
-
 				if doItForReal {
-					go devices.GetDeviceStatus(d)
+					go devices.GetDeviceStatus(&d)
 				}
 			}
 		}

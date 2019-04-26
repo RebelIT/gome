@@ -2,18 +2,64 @@ package devices
 
 import (
 	"encoding/json"
-	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	"github.com/rebelit/gome/database"
 	"io/ioutil"
 	"log"
+	"strconv"
+	"strings"
 )
 
 // *****************************************************************
 // General device functions
-func StatusGet (device string) (status string, error error){  //Gets the device status from redis
-	value, err := database.DbGet(device+"_status")
+func GetAllDevicesFromDb() (devices []string, err error){  //Gets a full inventory of devices from redis
+	keySearch := "*_device"
+	keys, err := database.DbGetKeys(keySearch)
+	if err != nil{
+		return nil, err
+	}
+	return keys, nil
+}
+
+func GetDevice (deviceName string) (deviceDetails Devices, error error){  //Gets the device status from redis
+	key := ""
+	if strings.Contains(deviceName, "_device"){
+		key = deviceName
+	}else{
+		key = deviceName+"_device"
+	}
+
+	d := Devices{}
+
+	value, err := database.DbGet(key)
+	if err != nil{
+		return d, err
+	}
+
+	json.Unmarshal([]byte(value), &d)
+
+	return d, nil
+}
+
+func UpdateDevice (d* Devices) error{  //Gets the device status from redis
+	key := d.Name+"_device"
+
+	value, err := json.Marshal(d)
+	if err != nil{
+		log.Println(err)
+	}
+
+	if err := database.DbSet(key, value); err != nil{
+		return err
+	}
+	return nil
+}
+
+func GetDeviceAliveState (deviceName string) (status string, error error){  //Gets the device status from redis
+	key := deviceName+"_alive"
+
+	value, err := database.DbGet(key)
 	if err != nil{
 		return "", err
 	}
@@ -21,40 +67,36 @@ func StatusGet (device string) (status string, error error){  //Gets the device 
 	return value, nil
 }
 
-func UpdateStatus(deviceName string, status bool) error{  //Update the device status in redis
-	statusData := Status{}
-	statusData.Alive = status
+func UpdateDeviceAliveState(deviceName string, status bool) error{  //Update the device status in redis
+	key := deviceName+"_alive"
+	value := []byte(strconv.FormatBool(status))
 
-	if err := database.DbHashSet(deviceName+"_"+"status", statusData); err != nil{
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
+	if err := database.DbSet(key,value); err != nil{
 		return err
 	}
 
 	return nil
 }
 
-func DetailsGet (device string) (Devices, error){  //Gets the device details from redis
-	d := Devices{}
+func GetDeviceComponentState(deviceName string, component string) (status string, error error){  //Gets the device component status from redis
+	key := deviceName+"_"+component+"_state"
 
-	values, err := database.DbHashGet(device)
-	if err != nil{
-		return d, err
-	}
-	redis.ScanStruct(values, &d)
-	return d, nil
-}
-
-func StateGet (device string, component string) (status string, error error){  //Gets the device component status from redis
-	/*component:
-		power - tuya
-		display - rpIoT HDMI status
-	*/
-	value, err := database.DbGet(device+"_"+component+"_state")
+	value, err := database.DbGet(key)
 	if err != nil{
 		return "", err
 	}
 
 	return value, nil
+}
+
+func UpdateDeviceComponentState(deviceName string, component string, state bool) error{  //Update the device component state in redis
+	key := deviceName+"_"+component+"_state"
+	value := []byte(strconv.FormatBool(state))
+	if err := database.DbSet(key,value); err != nil{
+		return err
+	}
+
+	return nil
 }
 
 func LoadDevices() error{  //Load Devices into redis from devices.json file
@@ -71,7 +113,8 @@ func LoadDevices() error{  //Load Devices into redis from devices.json file
 
 	for _, d := range i.Devices {
 		log.Printf("[INFO] device loader, loading %s under '%s_device'", d.Name, d.Name)
-		if err := database.DbHashSet(d.Name+"_device",d); err != nil{
+
+		if err := UpdateDevice(&d); err != nil{
 			return err
 		}
 	}
@@ -92,19 +135,10 @@ func ReadDeviceFile()(Inputs, error){  //Read the devices.json
 	return in, nil
 }
 
-func GetAllDevicesFromDb() (devices []string, err error){  //Gets a full inventory of devices from redis
-	keySearch := "*_device"
-	keys, err := database.DbGetKeys(keySearch)
-	if err != nil{
-		return nil, err
-	}
-	return keys, nil
-}
-
 
 // *****************************************************************
 // Runner device functions
-func GetDeviceStatus(d Devices) {
+func GetDeviceStatus(d* Devices) {
 	delay := randomizeCollection()
 
 	switch d.Device {

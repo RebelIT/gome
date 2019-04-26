@@ -7,6 +7,7 @@
   redis_memory=50M
   timezone=America/Chicago
   push_blank_device_list=false
+  push_blank_secrets=false
   gopath=/Users/rebelit/go
   goroot=/usr/local/opt/go/libexec
 

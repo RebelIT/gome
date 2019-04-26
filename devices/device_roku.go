@@ -96,7 +96,7 @@ func launchApp(deviceName string, app string) error {
 
 // http wrappers
 func rokuPost(uriPart string, deviceName string) (http.Response, error) {
-	d, err := DetailsGet(deviceName+"_device")
+	d, err := GetDevice(deviceName)
 	if err != nil{
 		return http.Response{}, err
 	}
@@ -111,7 +111,7 @@ func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 }
 
 func rokuGet(uriPart string, deviceName string) (http.Response, error) {
-	d, err := DetailsGet(deviceName+"_device")
+	d, err := GetDevice(deviceName)
 	if err != nil{
 		return http.Response{}, err
 	}

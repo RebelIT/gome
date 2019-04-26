@@ -5,7 +5,7 @@
       extensions: ['yml']
 
   - name: Compile the application
-    shell: "GOOS=linux GOARCH=arm go build -o main ."
+    shell: "GOOS=linux GOARCH=arm go build -o gome-server ."
     environment:
       GOPATH: "{{ gopath }}"
       GOROOT: "{{ goroot }}"
@@ -13,25 +13,26 @@
 
   - name: Make sure config directory exists
     file:
-      path: "/etc/gome-server/"
+      path: "/etc/apps/gome-server/"
       state: directory
-      mode: 0644
+      mode: 0755
 
   - name: Copy executable
     copy:
-      src: "main"
-      dest: "/etc/gome-server/main"
+      src: "gome-server"
+      dest: "/etc/apps/gome-server/gome-server"
       mode: a+x
 
   - name: set application secrets
     template:
       src: roles/application/templates/secrets.json.j2
-      dest: "/etc/gome-server/secrets.json"
+      dest: "/etc/apps/gome-server/secrets.json"
+    when: push_blank_secrets
 
   - name: set device file
     template:
       src: roles/application/templates/devices.json.j2
-      dest: "/etc/gome-server/devices.json"
+      dest: "/etc/apps/gome-server/devices.json"
     when: push_blank_device_list
 
   - name: Make sure service directory exits

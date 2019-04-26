@@ -14,7 +14,7 @@ func HandleDetails(w http.ResponseWriter,r *http.Request){
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	details, err := DetailsGet(deviceName+"_device")
+	details, err := GetDevice(deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : details %s, %s", deviceName, r.Method, err)
 		common.ReturnInternalError(w,r)
@@ -29,7 +29,7 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	status, err := StatusGet(deviceName)
+	status, err := GetDeviceAliveState(deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : status %s, %s", deviceName, r.Method, err)
 		common.ReturnInternalError(w,r)
