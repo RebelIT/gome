@@ -136,12 +136,12 @@
   version = "v0.8.1"
 
 [[projects]]
-  digest = "1:6f5c9c218d876ac3d7f9f84a0b3804017d4ec662342e1edb9caacca523d911aa"
+  digest = "1:fe2f15c1980dc4b4bd390e4a2586d4d7efa2fafb1ed3974a16141de23ecc0a4a"
   name = "github.com/rebelit/gome_badger"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f4b9e6e44fa175fd2e249ffb7e073acd497288b0"
-  version = "v1.0.0"
+  revision = "8be77990297f53078f9dfe278d7bc523231e72f6"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"

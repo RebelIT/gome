@@ -28,9 +28,7 @@ func Open(path string) (Database, error) {
 	}
 
 	d := Badger{}
-	opts := badger.DefaultOptions
-	opts.Dir = path
-	opts.ValueDir = path
+	opts := badger.DefaultOptions(path)
 	db, err := badger.Open(opts)
 	if err != nil {
 		log.Printf("[ERROR] db new %s", err)
