@@ -3,31 +3,25 @@ package devices
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/rebelit/gome/notify"
+	"github.com/rebelit/gome/common"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
+	"os"
 )
-func init() {
-	http.DefaultClient.Timeout = time.Second * 5
-}
 
 func HandleDetails(w http.ResponseWriter,r *http.Request){
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	details, err := DetailsGet("device_"+deviceName)
+	details, err := GetDevice(deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : details %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	notify.MetricHttpIn(r.URL.Path, http.StatusOK, r.Method)
-	json.NewEncoder(w).Encode(details)
+	common.ReturnOk(w,r,details)
 	return
 }
 
@@ -35,102 +29,179 @@ func HandleStatus(w http.ResponseWriter,r *http.Request) {
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
 
-	status, err := StatusGet(deviceName)
+	status, err := GetDeviceAliveState(deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : status %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.URL.Path, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	notify.MetricHttpIn(r.URL.Path, http.StatusOK, r.Method)
-	json.NewEncoder(w).Encode(status)
+	common.ReturnOk(w,r,status)
 	return
 }
 
-func HandleScheduleGet(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deviceName := vars["device"]
+func GetDevices(w http.ResponseWriter,r *http.Request){
+	log.Println("[DEBUG] "+ r.Method + " " + r.RequestURI)
+	var i Inputs
 
-	hasSchedule, schedule, err := ScheduleGet(deviceName)
-	if err != nil{
-		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if !hasSchedule{
-		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
-		w.WriteHeader(http.StatusBadRequest)
+	deviceFile, err := ioutil.ReadFile(common.FILE)
+	if err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
-	json.NewEncoder(w).Encode(schedule)
+	json.Unmarshal(deviceFile, &i)
+
+	common.ReturnOk(w,r,i)
+
 	return
 }
 
-func HandleScheduleSet(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deviceName := vars["device"]
-	in := Schedules{}
+func AddDevice(w http.ResponseWriter,r *http.Request){
+	var i Devices
+	fullDevs := &Inputs{}
 
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil{
-		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusBadRequest, r.Method)
-		w.WriteHeader(http.StatusBadRequest)
+	if err != nil {
+		log.Println(err)
+		common.ReturnBad(w,r)
 		return
 	}
 	defer r.Body.Close()
 
-	if err := json.Unmarshal(body, &in); err != nil {
-		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+	if err := json.Unmarshal(body, &i); err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	if err := ScheduleSet(&in, deviceName); err != nil{
-		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+	//Read devices.json and unmarshal into struct
+	deviceFile, err := os.OpenFile(common.FILE, os.O_RDWR, 0644)
+	if err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
+		return
+	}
+	defer deviceFile.Close()
+
+	bytes, err := ioutil.ReadAll(deviceFile)
+	if err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
 		return
 	}
 
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
+	if err := json.Unmarshal(bytes, &fullDevs); err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
+		return
+	}
+
+	//Append new device to devices array struct
+	fullDevs.Devices = append(fullDevs.Devices,i)
+
+	newBytes, err := json.MarshalIndent(fullDevs, "", "    ")
+	if err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
+		return
+	}
+
+	//Write new file with the new device appended to struct
+	_, err = deviceFile.WriteAt(newBytes, 0)
+	if err != nil {
+		log.Println(err)
+		common.ReturnInternalError(w,r)
+		return
+	}
+
+	//Re-run device loader to add to DB cache
+	if err := LoadDevices(); err != nil{
+		common.ReturnInternalError(w,r)
+		return
+	}
+
+	common.ReturnOk(w,r,i)
 	return
 }
 
-func HandleScheduleDel(w http.ResponseWriter, r *http.Request) {
+//**********************************************************************
+// tuya device endpoints
+func TuyaControl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	deviceName := vars["device"]
+	deviceName := vars["name"]
+	state := vars["state"]
 
-	if err := ScheduleDel(deviceName); err != nil{
-		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+	action := false
+	if state == "on"{
+		action = true
+	} else if state == "off"{
+		action = false
+	} else{
+		common.ReturnBad(w,r)
 		return
 	}
 
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
+	if err := TuyaPowerControl(deviceName, action); err != nil{
+		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
+		common.ReturnInternalError(w,r)
+		return
+	}
+
+	common.ReturnOk(w,r, http.Response{})
 	return
 }
 
-func HandleScheduleUpdate(w http.ResponseWriter, r *http.Request) {
+//**********************************************************************
+// raspberryPi IoT device endpoints
+func RpIotControl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	deviceName := vars["device"]
-	status := vars["status"]
+	component := vars["component"]
 
-	if err := ScheduleUpdate(deviceName, status); err != nil{
-		log.Printf("[ERROR] %s : schedule %s, %s", deviceName, r.Method, err)
-		notify.MetricHttpIn(r.RequestURI, http.StatusInternalServerError, r.Method)
-		w.WriteHeader(http.StatusInternalServerError)
+	i := PiControl{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		common.ReturnBad(w, r)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &i); err != nil {
+		common.ReturnInternalError(w, r)
 		return
 	}
 
-	notify.MetricHttpIn(r.RequestURI, http.StatusOK, r.Method)
+	uri, err := compileUrl(component, i)
+	if err != nil{
+		common.ReturnBad(w, r)
+		return
+	}
+
+	resp, err := PiPost(deviceName,uri)
+	if err != nil{
+		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
+		common.ReturnInternalError(w, r)
+		return
+	}
+
+	common.ReturnOk(w, r, resp)
+	return
+}
+
+//**********************************************************************
+// roku device endpoints
+func RokuLaunchApp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	deviceName := vars["device"]
+	appName := vars["app"]
+
+	if err := launchApp(deviceName,appName); err != nil{
+		common.ReturnInternalError(w,r)
+		return
+	}
+
+	common.ReturnOk(w,r,http.Response{})
 	return
 }

@@ -2,44 +2,104 @@ package devices
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/gomodule/redigo/redis"
+	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/notify"
+	"github.com/rebelit/gome/database"
 	"io/ioutil"
 	"log"
-	"net/http"
+	"strconv"
+	"strings"
 )
-
 
 // *****************************************************************
 // General device functions
-func StatusGet (device string) (Status, error){
-	s := Status{}
-
-	values, err := DbHashGet(device+"_status")
+func GetAllDevicesFromDb() (devices []string, err error){  //Gets a full inventory of devices from redis
+	keySearch := "*_device"
+	keys, err := database.DbGetKeys(keySearch)
 	if err != nil{
-		return s, err
+		return nil, err
 	}
-	redis.ScanStruct(values, &s)
-	return s, nil
+	return keys, nil
 }
 
-func DetailsGet (device string) (Devices, error){
+func GetDevice (deviceName string) (deviceDetails Devices, error error){  //Gets the device status from redis
+	key := ""
+	if strings.Contains(deviceName, "_device"){
+		key = deviceName
+	}else{
+		key = deviceName+"_device"
+	}
+
 	d := Devices{}
 
-	values, err := DbHashGet(device)
+	value, err := database.DbGet(key)
 	if err != nil{
 		return d, err
 	}
-	redis.ScanStruct(values, &d)
-	fmt.Printf("dbget: %+v\n",d)
+
+	json.Unmarshal([]byte(value), &d)
+
 	return d, nil
 }
 
-func LoadDevices() error{
-	//Load Devices into database from file
+func UpdateDevice (d* Devices) error{  //Gets the device status from redis
+	key := d.Name+"_device"
+
+	value, err := json.Marshal(d)
+	if err != nil{
+		log.Println(err)
+	}
+
+	if err := database.DbSet(key, value); err != nil{
+		return err
+	}
+	return nil
+}
+
+func GetDeviceAliveState (deviceName string) (status string, error error){  //Gets the device status from redis
+	key := deviceName+"_alive"
+
+	value, err := database.DbGet(key)
+	if err != nil{
+		return "", err
+	}
+
+	return value, nil
+}
+
+func UpdateDeviceAliveState(deviceName string, status bool) error{  //Update the device status in redis
+	key := deviceName+"_alive"
+	value := []byte(strconv.FormatBool(status))
+
+	if err := database.DbSet(key,value); err != nil{
+		return err
+	}
+
+	return nil
+}
+
+func GetDeviceComponentState(deviceName string, component string) (status string, error error){  //Gets the device component status from redis
+	key := deviceName+"_"+component+"_state"
+
+	value, err := database.DbGet(key)
+	if err != nil{
+		return "", err
+	}
+
+	return value, nil
+}
+
+func UpdateDeviceComponentState(deviceName string, component string, state bool) error{  //Update the device component state in redis
+	key := deviceName+"_"+component+"_state"
+	value := []byte(strconv.FormatBool(state))
+	if err := database.DbSet(key,value); err != nil{
+		return err
+	}
+
+	return nil
+}
+
+func LoadDevices() error{  //Load Devices into redis from devices.json file
 	log.Printf("[INFO] device loader, starting")
 	i, err := ReadDeviceFile()
 	if err != nil{
@@ -52,8 +112,9 @@ func LoadDevices() error{
 	}
 
 	for _, d := range i.Devices {
-		log.Printf("[INFO] device loader, loading %s under 'device_%s'", d.Name, d.Name)
-		if err := DbHashSet("device_"+d.Name,d); err != nil{
+		log.Printf("[INFO] device loader, loading %s under '%s_device'", d.Name, d.Name)
+
+		if err := UpdateDevice(&d); err != nil{
 			return err
 		}
 	}
@@ -61,7 +122,7 @@ func LoadDevices() error{
 	return nil
 }
 
-func ReadDeviceFile()(Inputs, error){
+func ReadDeviceFile()(Inputs, error){  //Read the devices.json
 	var in Inputs
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
@@ -74,213 +135,100 @@ func ReadDeviceFile()(Inputs, error){
 	return in, nil
 }
 
-func GetAllDevicesFromDb() (devices []string, err error){
-	keySearch := "device_*"
-	keys, err := DbGetKeys(keySearch)
-	if err != nil{
-		return nil, err
-	}
-	return keys, nil
-}
-
-func UpdateStatus(deviceName string, status bool) error{
-	statusData := Status{}
-	statusData.Device = deviceName
-	statusData.Alive = status
-
-	if err := DbHashSet(deviceName+"_"+"status", statusData); err != nil{
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return err
-	}
-
-	return nil
-}
 
 // *****************************************************************
-// Scheduler functions
-func ScheduleSet (s* Schedules, device string) (error){
-	data, err := json.Marshal(s)
-	if err != nil{
-		log.Println(err)
-	}
+// Runner device functions
+func GetDeviceStatus(d* Devices) {
+	delay := randomizeCollection()
 
-	if err := DbSet(device+"_schedule", data); err != nil{
-		return err
+	switch d.Device {
+	case "pi":
+		go RpIotDeviceStatus(d.Name, delay)
+
+	case "roku":
+		go RokuDeviceStatus(d.Name, delay)
+
+	case "tuya":
+		go TuyaDeviceStatus(d.Name, delay)
+
+	default:
+		log.Printf("[WARN] GetDeviceStatus, no device types match %s", d.Name)
 	}
-	return nil
 }
 
-func ScheduleGet (devName string) (hasSchedule bool, schedules Schedules, error error){
-	s := Schedules{}
-
-	value, err := DbGet(devName+"_schedule")
-	if err != nil{
-		return false, s, err
-	}
-	if value == ""{
-		return false, s, nil
-	}
-
-	json.Unmarshal([]byte(value), &s)
-
-	if len(s.Schedules) <= 1 {
-		return false, s, errors.New("invalid schedule struct")
-	}
-
-	return true, s, nil
-}
-
-func ScheduleDel (device string) (error){
-	if err := DbDel(device+"_schedule"); err != nil{
-		return err
-	}
-	return nil
-}
-
-func ScheduleUpdate (device string, status string) (error){
-	_, s, err := ScheduleGet(device)
-	if err != nil{
-		return err
-	}
-
-	s.Status = status
-
-	if err := ScheduleSet(&s,device); err != nil{
-		return err
-	}
-
-	return nil
-}
-
-
-// *****************************************************************
-// Redis functions
-func DbConnect()(redis.Conn, error){
-	var in Inputs
-
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		return nil, err
-	}
-
-	json.Unmarshal(deviceFile, &in)
-
-	db := in.Database
-	conn, err := redis.Dial("tcp", db)
-	if err != nil {
-		return nil, err
-	}
-	return conn, nil
-}
-
-func DbHashSet(key string, data interface{} ) error{
-	//equivalent to a redis HMSET
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-	if _, err := c.Do("HMSET", redis.Args{key}.AddFlat(data)...); err != nil{
-		return err
-	}
-
-	return nil
-}
-
-func DbHashGet(key string)(values []interface{}, err error){
-	c, err := DbConnect()
-	if err != nil{
-		return nil, err
-	}
-	defer c.Close()
-
-	resp, err := redis.Values(c.Do("HGETALL", key))
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
-func DbGetKeys(key string)(keys []string, err error){
-	c, err := DbConnect()
-	if err != nil{
-		return nil, err
-	}
-	defer c.Close()
-
-	resp, err := redis.Strings(c.Do("KEYS", key))
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func DbSet(key string, value []byte) error{
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
-	if _, err := c.Do("SET", key, string(value)); err != nil{
-		return err
-	}
-	return nil
-}
-
-func DbGet(key string) (values string, err error){
-	c, err := DbConnect()
-	if err != nil{
-		return "", err
-	}
-	defer c.Close()
-	value, err := redis.String(c.Do("GET", key))
-	if err != nil{
-		if err.Error() == "redigo: nil returned"{
-			//This is fine, redis connection OK, just no data returned
-			return "", nil
+func DoScheduledAction(device string, deviceName string, deviceComponent string, deviceStatus string){
+	switch device {
+	case "tuya":
+		if deviceComponent == "power"{
+			newStatus := false
+			if deviceStatus == "on"{
+				newStatus = true
+			}
+			if err := TuyaPowerControl(deviceName, newStatus); err != nil {
+				log.Printf("[ERROR] DoScheduledAction, %s failed to change %s to %s\n", deviceName, deviceComponent, deviceStatus)
+				doScheduleEror(deviceName, deviceComponent, deviceStatus)
+				return
+			}
+			doScheduleOk(deviceName, deviceComponent, deviceStatus)
+			return
 		}
-		return "", err
+		log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceComponent)
+		return
+
+	case "pi":
+		if deviceComponent == "display"{  //scheduler switch for rPioT display controls
+			if err := rpIotDisplayToggle(deviceName, deviceStatus); err != nil{
+				doScheduleEror(deviceName, deviceComponent, deviceStatus)
+				return
+			}
+		} else{
+			log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceComponent)
+			return
+		}
+		doScheduleOk(deviceName, deviceComponent, deviceStatus)
+		return
+
+	default:
+		log.Printf("[WARN] DoScheduledAction, no device types match %s", deviceName)
+		return
 	}
-	return value, nil
 }
 
-func DbDel(key string) error{
-	c, err := DbConnect()
-	if err != nil{
-		return err
-	}
-	defer c.Close()
+func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
+	action := false
 
-	if _, err := c.Do("DEL", key, "*"); err != nil{
-		return err
+	common.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
+
+	switch deviceType{
+	case "tuya":
+		if deviceAction == "on"{
+			action = true
+		}
+		if err := TuyaPowerControl(deviceName, action); err != nil{
+			return err
+		}
+		return nil
+
+	case "pi":
+		_, err := PiPost(deviceName, deviceAction)
+		if err != nil{
+			return err
+		}
+
+	default:
+		//no match
+		return errors.New("no message in queue to parse")
 	}
 
 	return nil
 }
 
-
-// *****************************************************************
-// Http Response helper functions
-func ReturnOk(w http.ResponseWriter, r *http.Request, resp http.Response){
-	code := http.StatusOK
-	notify.MetricHttpIn(r.RequestURI, code, r.Method)
-
-	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		log.Printf("[ERROR] %s : %s\n", r.URL.Path, err)
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(code)
+func doScheduleEror(deviceName string, deviceComponent string, deviceState string){
+	common.SendSlackAlert("Scheduler failed to do a scheduled action\n" +
+		""+deviceName+" - "+deviceComponent+" - "+deviceState)
 }
 
-func ReturnBad(w http.ResponseWriter, r *http.Request){
-	code := http.StatusBadRequest
-	notify.MetricHttpIn(r.RequestURI, code, r.Method)
-	w.WriteHeader(code)
-}
-
-func ReturnInternalError(w http.ResponseWriter, r *http.Request){
-	code := http.StatusInternalServerError
-	notify.MetricHttpIn(r.RequestURI, code, r.Method)
-	w.WriteHeader(code)
+func doScheduleOk(deviceName string, deviceComponent string, deviceState string){
+	common.SendSlackAlert("Scheduler did it's thing!\n" +
+		""+deviceName+" - "+deviceComponent+" - "+deviceState)
 }

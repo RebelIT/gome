@@ -1,0 +1,68 @@
+{
+  "status": "enable",
+  "schedules": [
+    {
+      "day": "sunday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    },
+    {
+      "day": "monday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    },
+    {
+      "day": "tuesday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    },
+    {
+      "day": "wednesday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    },
+    {
+      "day": "thursday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    },
+    {
+      "day": "friday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    },
+    {
+      "day": "saturday",
+      "status": "enable",
+      "desc": "lamp on",
+      "component": "power",
+      "action": "on",
+      "on": "1900",
+      "off": "2100"
+    }
+  ]
+}

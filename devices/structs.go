@@ -1,7 +1,6 @@
 package devices
 
 type Inputs struct{
-	Database	string `json:"database"`
 	Devices		[]Devices
 }
 
@@ -18,7 +17,6 @@ type Devices struct{
 }
 
 type Status struct{
-	Device	string `json:"device"`
 	Alive	bool `json:"alive"`
 	Url		string `json:"url"`
 }
@@ -27,16 +25,14 @@ type DeviceAction struct{
 	Action		bool `json:"action"`
 }
 
-type Schedules struct {
-	Status 		string `json:"status"`
-	Schedules		[]Schedule `json:"schedules"`
+type PiControl struct{
+	Service   	string `json:"service"`
+	Package		string `json:"package"`
+	PinNumber 	string `json:"pin_number"`
+	Action 		string `json:"action"`
 }
 
-type Schedule struct{
-	Day		string `json:"day"`
-	Status 	string `json:"status"`
-	Desc	string `json:"desc"`
-	Action  string `json:"action"`
-	On		string `json:"on"`
-	Off 	string `json:"off"`
+type PiResponse struct {
+	Namespace 	string `json:"namespace"`
+	Message		string `json:"message"`
 }

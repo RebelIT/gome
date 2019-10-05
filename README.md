@@ -2,9 +2,8 @@
 Golang based home automation
 GoLang Home (gome)
 
-###Current Development Status:
-* Stable (it runs) Tuya schedules work. other device control endpoints work. 
-* ToDo: see issues. 
+   
+#### Still a work in progress, very much in Alpha.  It works with some bugs... :)
 
 ## About it
    I wanted to automate my home and all my IoT devices, I buy cheap and build from scratch.  There are many home
@@ -14,8 +13,6 @@ GoLang Home (gome)
 
    Starts up with a base devices.json loaded into redis from there endpoints to add/remove devices from the database 
    and update the json.
-   
-#### Still a work in progress as I contintue to learn GOLang.  but it works! :)
 
 ## Test it:
 

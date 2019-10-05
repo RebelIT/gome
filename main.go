@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/runner"
+	"github.com/rebelit/gome/runners"
 	"github.com/rebelit/gome/web"
 	"log"
 	"net/http"
@@ -15,13 +15,7 @@ func main(){
 	devices.LoadDevices()
 	time.Sleep(time.Second *2)
 
-	go runner.GoGoDeviceStatus()
-	time.Sleep(time.Second *5)
-
-	go runner.GoGoScheduler()
-	time.Sleep(time.Second *5)
-
-	go runner.GoGoSQS()
+	runners.Launch()
 
 	start(listenOn)
 
