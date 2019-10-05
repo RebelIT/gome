@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/database"
+	db "github.com/rebelit/gome/database"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -13,100 +13,109 @@ import (
 
 // *****************************************************************
 // General device functions
-func GetAllDevicesFromDb() (devices []string, err error){  //Gets a full inventory of devices from redis
-	keySearch := "*_device"
-	keys, err := database.DbGetKeys(keySearch)
-	if err != nil{
+func GetAllDevicesFromDb() (devices []string, err error) { //Gets a full inventory of devices from the database
+	keySearch := "_device"
+	devices = []string{}
+	keys, err := db.GetAll()
+	if err != nil {
 		return nil, err
 	}
-	return keys, nil
+	for _, key := range keys {
+		if strings.Contains(key, keySearch) {
+			devices = append(devices, key)
+		}
+	}
+
+	return devices, nil
 }
 
-func GetDevice (deviceName string) (deviceDetails Devices, error error){  //Gets the device status from redis
+func GetDevice(deviceName string) (deviceDetails Devices, error error) { //Gets the device status from the database
 	key := ""
-	if strings.Contains(deviceName, "_device"){
+	if strings.Contains(deviceName, "_device") {
 		key = deviceName
-	}else{
-		key = deviceName+"_device"
+	} else {
+		key = deviceName + "_device"
 	}
 
 	d := Devices{}
 
-	value, err := database.DbGet(key)
-	if err != nil{
+	value, err := db.Get(key)
+	if err != nil {
 		return d, err
 	}
 
-	json.Unmarshal([]byte(value), &d)
+	if err := json.Unmarshal([]byte(value), &d); err != nil {
+		return d, err
+	}
 
 	return d, nil
 }
 
-func UpdateDevice (d* Devices) error{  //Gets the device status from redis
-	key := d.Name+"_device"
+func UpdateDevice(d *Devices) error { //Gets the device status from the database
+	key := d.Name + "_device"
 
 	value, err := json.Marshal(d)
-	if err != nil{
+	if err != nil {
 		log.Println(err)
 	}
 
-	if err := database.DbSet(key, value); err != nil{
+	if err := db.Add(key, string(value)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetDeviceAliveState (deviceName string) (status string, error error){  //Gets the device status from redis
-	key := deviceName+"_alive"
+func GetDeviceAliveState(deviceName string) (status string, error error) { //Gets the device status from the database
+	key := deviceName + "_alive"
 
-	value, err := database.DbGet(key)
-	if err != nil{
+	value, err := db.Get(key)
+	if err != nil {
 		return "", err
 	}
 
 	return value, nil
 }
 
-func UpdateDeviceAliveState(deviceName string, status bool) error{  //Update the device status in redis
-	key := deviceName+"_alive"
+func UpdateDeviceAliveState(deviceName string, status bool) error { //Update the device status in the database
+	key := deviceName + "_alive"
 	value := []byte(strconv.FormatBool(status))
 
-	if err := database.DbSet(key,value); err != nil{
+	if err := db.Add(key, string(value)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GetDeviceComponentState(deviceName string, component string) (status string, error error){  //Gets the device component status from redis
-	key := deviceName+"_"+component+"_state"
+func GetDeviceComponentState(deviceName string, component string) (status string, error error) { //Gets the device component status from the database
+	key := deviceName + "_" + component + "_state"
 
-	value, err := database.DbGet(key)
-	if err != nil{
+	value, err := db.Get(key)
+	if err != nil {
 		return "", err
 	}
 
 	return value, nil
 }
 
-func UpdateDeviceComponentState(deviceName string, component string, state bool) error{  //Update the device component state in redis
-	key := deviceName+"_"+component+"_state"
+func UpdateDeviceComponentState(deviceName string, component string, state bool) error { //Update the device component state in the database
+	key := deviceName + "_" + component + "_state"
 	value := []byte(strconv.FormatBool(state))
-	if err := database.DbSet(key,value); err != nil{
+	if err := db.Add(key, string(value)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func LoadDevices() error{  //Load Devices into redis from devices.json file
+func LoadDevices() error { //Load Devices into redis from devices.json file
 	log.Printf("[INFO] device loader, starting")
 	i, err := ReadDeviceFile()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
-	if len(i.Devices) == 0{
+	if len(i.Devices) == 0 {
 		log.Printf("[WARN] device loader, no devices to load, skipping")
 		return nil
 	}
@@ -114,7 +123,7 @@ func LoadDevices() error{  //Load Devices into redis from devices.json file
 	for _, d := range i.Devices {
 		log.Printf("[INFO] device loader, loading %s under '%s_device'", d.Name, d.Name)
 
-		if err := UpdateDevice(&d); err != nil{
+		if err := UpdateDevice(&d); err != nil {
 			return err
 		}
 	}
@@ -122,23 +131,22 @@ func LoadDevices() error{  //Load Devices into redis from devices.json file
 	return nil
 }
 
-func ReadDeviceFile()(Inputs, error){  //Read the devices.json
+func ReadDeviceFile() (Inputs, error) { //Read the devices.json
 	var in Inputs
 	deviceFile, err := ioutil.ReadFile(common.FILE)
 	if err != nil {
 		return in, err
 	}
-	if err := json.Unmarshal(deviceFile, &in); err != nil{
+	if err := json.Unmarshal(deviceFile, &in); err != nil {
 		return in, err
 	}
 
 	return in, nil
 }
 
-
 // *****************************************************************
 // Runner device functions
-func GetDeviceStatus(d* Devices) {
+func GetDeviceStatus(d *Devices) {
 	delay := randomizeCollection()
 
 	switch d.Device {
@@ -156,12 +164,12 @@ func GetDeviceStatus(d* Devices) {
 	}
 }
 
-func DoScheduledAction(device string, deviceName string, deviceComponent string, deviceStatus string){
+func DoScheduledAction(device string, deviceName string, deviceComponent string, deviceStatus string) {
 	switch device {
 	case "tuya":
-		if deviceComponent == "power"{
+		if deviceComponent == "power" {
 			newStatus := false
-			if deviceStatus == "on"{
+			if deviceStatus == "on" {
 				newStatus = true
 			}
 			if err := TuyaPowerControl(deviceName, newStatus); err != nil {
@@ -172,17 +180,17 @@ func DoScheduledAction(device string, deviceName string, deviceComponent string,
 			doScheduleOk(deviceName, deviceComponent, deviceStatus)
 			return
 		}
-		log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceComponent)
+		log.Printf("[WARN] DoScheduledAction, %s no action %s found\n", deviceName, deviceComponent)
 		return
 
 	case "pi":
-		if deviceComponent == "display"{  //scheduler switch for rPioT display controls
-			if err := rpIotDisplayToggle(deviceName, deviceStatus); err != nil{
+		if deviceComponent == "display" { //scheduler switch for rPioT display controls
+			if err := rpIotDisplayToggle(deviceName, deviceStatus); err != nil {
 				doScheduleEror(deviceName, deviceComponent, deviceStatus)
 				return
 			}
-		} else{
-			log.Printf("[WARN] DoScheduledAction, %s no action %s found: %s\n", deviceName, deviceComponent)
+		} else {
+			log.Printf("[WARN] DoScheduledAction, %s no action %s found\n", deviceName, deviceComponent)
 			return
 		}
 		doScheduleOk(deviceName, deviceComponent, deviceStatus)
@@ -194,24 +202,24 @@ func DoScheduledAction(device string, deviceName string, deviceComponent string,
 	}
 }
 
-func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error{
+func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) error {
 	action := false
 
-	common.MetricAws("alexa", "doAction", "nil",deviceName, deviceAction)
+	common.MetricAws("alexa", "doAction", "nil", deviceName, deviceAction)
 
-	switch deviceType{
+	switch deviceType {
 	case "tuya":
-		if deviceAction == "on"{
+		if deviceAction == "on" {
 			action = true
 		}
-		if err := TuyaPowerControl(deviceName, action); err != nil{
+		if err := TuyaPowerControl(deviceName, action); err != nil {
 			return err
 		}
 		return nil
 
 	case "pi":
 		_, err := PiPost(deviceName, deviceAction)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 
@@ -223,12 +231,12 @@ func DoWhatAlexaSays(deviceType string, deviceName string, deviceAction string) 
 	return nil
 }
 
-func doScheduleEror(deviceName string, deviceComponent string, deviceState string){
+func doScheduleEror(deviceName string, deviceComponent string, deviceState string) {
 	common.SendSlackAlert("Scheduler failed to do a scheduled action\n" +
-		""+deviceName+" - "+deviceComponent+" - "+deviceState)
+		"" + deviceName + " - " + deviceComponent + " - " + deviceState)
 }
 
-func doScheduleOk(deviceName string, deviceComponent string, deviceState string){
+func doScheduleOk(deviceName string, deviceComponent string, deviceState string) {
 	common.SendSlackAlert("Scheduler did it's thing!\n" +
-		""+deviceName+" - "+deviceComponent+" - "+deviceState)
+		"" + deviceName + " - " + deviceComponent + " - " + deviceState)
 }
