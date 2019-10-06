@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:df416aef14f1103aea76c44be36073f8765565aba08e8acb37cde8c15f28bf33"
+  name = "github.com/AndreasBriese/bbloom"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "46b345b51c9667fcbaad862a370d73bd7aa802b6"
+
+[[projects]]
   digest = "1:cab591cfa0f987c4e2d4e2750329fb2ce3971c713d3340c88f83e618e0f9687e"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -44,15 +52,43 @@
   version = "v1.25.6"
 
 [[projects]]
-  digest = "1:38ec74012390146c45af1f92d46e5382b50531247929ff3a685d2b2be65155ac"
-  name = "github.com/gomodule/redigo"
+  digest = "1:6be8582a4f52ba2851d8a039eb9c3a3b90334b2820563d71e97de35580da128e"
+  name = "github.com/dgraph-io/badger"
   packages = [
-    "internal",
-    "redis",
+    ".",
+    "options",
+    "pb",
+    "skl",
+    "table",
+    "y",
   ]
   pruneopts = "UT"
-  revision = "9c11da706d9b7902c6da69c592f75637793fe121"
-  version = "v2.0.0"
+  revision = "2fa005c9d4bf695277ab5214c1fbce3735b9562a"
+  version = "v1.6.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6e8109ce247a59ab1eeb5330166c12735f6590de99c9647b6162d11518d32c9a"
+  name = "github.com/dgryski/go-farm"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6a90982ecee230ff6cba02d5bd386acc030be9d3"
+
+[[projects]]
+  digest = "1:6f9339c912bbdda81302633ad7e99a28dfa5a639c864061f1929510a9a64aa74"
+  name = "github.com/dustin/go-humanize"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:573ca21d3669500ff845bdebee890eb7fc7f0f50c59f2132f2a0c6b03d85086a"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  pruneopts = "UT"
+  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
+  version = "v1.3.2"
 
 [[projects]]
   digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
@@ -70,12 +106,79 @@
   revision = "c2b33e84"
 
 [[projects]]
+  branch = "master"
+  digest = "1:b0eb641b43b44b196880360efaf95e5916cb2bea747935932694b7003ea8adb3"
+  name = "github.com/mmcloughlin/avo"
+  packages = [
+    "attr",
+    "build",
+    "buildtags",
+    "gotypes",
+    "internal/prnt",
+    "internal/stack",
+    "ir",
+    "operand",
+    "pass",
+    "printer",
+    "reg",
+    "src",
+    "x86",
+  ]
+  pruneopts = "UT"
+  revision = "15d6a9a17e5386cb169227dd4dea9a23100a5029"
+
+[[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
   revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
   version = "v0.8.1"
+
+[[projects]]
+  digest = "1:fe2f15c1980dc4b4bd390e4a2586d4d7efa2fafb1ed3974a16141de23ecc0a4a"
+  name = "github.com/rebelit/gome_badger"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "8be77990297f53078f9dfe278d7bc523231e72f6"
+  version = "v1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:e0efd295a10a5703f556a97b7f90f9b3a02ee5080b26ee5374d100a6131aea68"
+  name = "golang.org/x/net"
+  packages = [
+    "internal/timeseries",
+    "trace",
+  ]
+  pruneopts = "UT"
+  revision = "d98b1b4438230571bd7fbc5aaa89843e92937bd3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:84ed4fd3f7c52941feec4832e385f61377a01b4c98a0f868f16f10c2469fc0fe"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  pruneopts = "UT"
+  revision = "c178f38b412c7b426e4e97be2e75d11ff7b8d4d4"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6db6b3d8d0cfe99d898e8ee1cdd86dc2b772ea11cfa27513721a0abeb55a934c"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/gcimporter",
+    "go/internal/packagesdriver",
+    "go/packages",
+    "go/types/typeutil",
+    "internal/fastwalk",
+    "internal/gopathwalk",
+    "internal/semver",
+  ]
+  pruneopts = "UT"
+  revision = "c9f9432ec4b21a28c4d47f172513698febb68e9c"
 
 [[projects]]
   digest = "1:38b469493eb173db9c03321d64adcad4c7991ea0a19b5edc5bdc094f0e8c7384"
@@ -94,9 +197,9 @@
     "github.com/aws/aws-sdk-go/aws/credentials",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/sqs",
-    "github.com/gomodule/redigo/redis",
     "github.com/gorilla/mux",
     "github.com/pkg/errors",
+    "github.com/rebelit/gome_badger",
     "gopkg.in/alexcesaro/statsd.v2",
   ]
   solver-name = "gps-cdcl"

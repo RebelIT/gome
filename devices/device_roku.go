@@ -3,7 +3,7 @@ package devices
 import (
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
-	"github.com/rebelit/gome/database"
+	db "github.com/rebelit/gome/database"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,7 +20,7 @@ const GOOGLE_PLAY = 50025
 const HBOGO = 8378
 const YOUTUBE = 837
 
-func getAppId(app string)(string, error){
+func getAppId(app string) (string, error) {
 	id := 0
 	switch app {
 	case "netflix":
@@ -40,14 +40,14 @@ func getAppId(app string)(string, error){
 	case "youtube":
 		id = YOUTUBE
 	default:
-		return "", errors.New("no app "+app+" found")
+		return "", errors.New("no app " + app + " found")
 	}
 
 	return strconv.Itoa(id), nil
 }
 
 func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
-	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+	log.Printf("[INFO] %s device collection delayed +%d sec\n", deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
 
 	uriPart := "/"
@@ -56,7 +56,7 @@ func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	resp, err := rokuGet(uriPart, deviceName)
 	if err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+		if err := db.Add(deviceName+"_"+"status", string([]byte(strconv.FormatBool(alive)))); err != nil {
 			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 			return
 		}
@@ -68,7 +68,7 @@ func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 		alive = true
 	}
 
-	if err := database.DbSet(deviceName+"_"+"status", []byte(strconv.FormatBool(alive))); err != nil{
+	if err := db.Add(deviceName+"_"+"status", string([]byte(strconv.FormatBool(alive)))); err != nil {
 		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
 		return
 	}
@@ -79,31 +79,30 @@ func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 
 func launchApp(deviceName string, app string) error {
 	id, err := getAppId(app)
-	if err != nil{
+	if err != nil {
 		return err
 	}
-	uri := "/launch/"+id
+	uri := "/launch/" + id
 	resp, err := rokuPost(uri, deviceName)
-	if err != nil{
+	if err != nil {
 		return err
 	}
-	if resp.StatusCode != 200{
+	if resp.StatusCode != 200 {
 		return errors.New("non-200 status code return")
 	}
 	return nil
 }
 
-
 // http wrappers
 func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 	d, err := GetDevice(deviceName)
-	if err != nil{
+	if err != nil {
 		return http.Response{}, err
 	}
-	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+	url := "http://" + d.Addr + ":" + d.NetPort + uriPart
 
-	resp, err := common.HttpPost(url,nil,nil)
-	if err != nil{
+	resp, err := common.HttpPost(url, nil, nil)
+	if err != nil {
 		return http.Response{}, err
 	}
 
@@ -112,13 +111,13 @@ func rokuPost(uriPart string, deviceName string) (http.Response, error) {
 
 func rokuGet(uriPart string, deviceName string) (http.Response, error) {
 	d, err := GetDevice(deviceName)
-	if err != nil{
+	if err != nil {
 		return http.Response{}, err
 	}
-	url := "http://"+d.Addr+":"+d.NetPort+uriPart
+	url := "http://" + d.Addr + ":" + d.NetPort + uriPart
 
 	resp, err := common.HttpGet(url, nil)
-	if err != nil{
+	if err != nil {
 		return http.Response{}, err
 	}
 
