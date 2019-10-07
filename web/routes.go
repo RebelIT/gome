@@ -20,8 +20,8 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	//Devices Endpoints
-	Route{"device", "GET", "/api/devices", devices.GetDevices},
+	//DevicesOld Endpoints
+	Route{"device", "GET", "/api/device", devices.GetDevices},
 	Route{"device", "POST", "/api/devices/new", devices.AddDevice},
 	Route{"device", "POST", "/api/tuya/{name}/{state}", devices.TuyaControl},
 	Route{"device", "POST", "/api/roku/{name}/app/{app}", devices.RokuLaunchApp},

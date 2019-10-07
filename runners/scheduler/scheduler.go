@@ -13,7 +13,7 @@ func GoGoScheduler() error {
 	for {
 		processSchedules := true
 
-		devs, err := devices.GetAllDevicesFromDb()
+		devs, err := devices.GetAllDeviceNames()
 		if err != nil{
 			log.Printf("[WARN] schedule runner, get all devices: %s", err)
 			processSchedules = false
@@ -70,7 +70,7 @@ func GoGoScheduler() error {
 	}
 }
 
-func doSchedule(device devices.Devices, schedules []Schedule) {
+func doSchedule(device devices.DevicesOld, schedules []Schedule) {
 	_, iTime, day, _ := splitTime()  //custom parse date/time
 
 	for _, schedule := range schedules {

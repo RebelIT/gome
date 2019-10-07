@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/rebelit/gome/devices"
 	"github.com/rebelit/gome/runners"
 	"github.com/rebelit/gome/web"
 	"log"
@@ -12,7 +11,7 @@ import (
 func main(){
 
 	listenOn := "6660"
-	devices.LoadDevices()
+	
 	time.Sleep(time.Second *2)
 
 	runners.Launch()

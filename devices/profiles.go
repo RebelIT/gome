@@ -2,10 +2,10 @@ package devices
 
 //Universal Smart Things Profiles
 type Devices struct {
-	Device []Device `json:"device"`
+	Profiles []Profile `json:"device"`
 }
 
-type Device struct {
+type Profile struct {
 	Make        string   `json:"make"`
 	Model       string   `json:"model"`
 	Name        string   `json:"name"`

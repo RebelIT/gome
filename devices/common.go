@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
-	"io/ioutil"
 	"log"
 	"strconv"
 	"strings"
@@ -13,23 +12,7 @@ import (
 
 // *****************************************************************
 // General device functions
-func GetAllDevicesFromDb() (devices []string, err error) { //Gets a full inventory of devices from the database
-	keySearch := "_device"
-	devices = []string{}
-	keys, err := db.GetAll()
-	if err != nil {
-		return nil, err
-	}
-	for _, key := range keys {
-		if strings.Contains(key, keySearch) {
-			devices = append(devices, key)
-		}
-	}
-
-	return devices, nil
-}
-
-func GetDevice(deviceName string) (deviceDetails Devices, error error) { //Gets the device status from the database
+func GetDevice(deviceName string) (deviceDetails DevicesOld, error error) { //Gets the device status from the database
 	key := ""
 	if strings.Contains(deviceName, "_device") {
 		key = deviceName
@@ -37,7 +20,7 @@ func GetDevice(deviceName string) (deviceDetails Devices, error error) { //Gets 
 		key = deviceName + "_device"
 	}
 
-	d := Devices{}
+	d := DevicesOld{}
 
 	value, err := db.Get(key)
 	if err != nil {
@@ -49,20 +32,6 @@ func GetDevice(deviceName string) (deviceDetails Devices, error error) { //Gets 
 	}
 
 	return d, nil
-}
-
-func UpdateDevice(d *Devices) error { //Gets the device status from the database
-	key := d.Name + "_device"
-
-	value, err := json.Marshal(d)
-	if err != nil {
-		log.Println(err)
-	}
-
-	if err := db.Add(key, string(value)); err != nil {
-		return err
-	}
-	return nil
 }
 
 func GetDeviceAliveState(deviceName string) (status string, error error) { //Gets the device status from the database
@@ -108,48 +77,13 @@ func UpdateDeviceComponentState(deviceName string, component string, state bool)
 	return nil
 }
 
-func LoadDevices() error { //Load Devices into redis from devices.json file
-	log.Printf("[INFO] device loader, starting")
-	i, err := ReadDeviceFile()
-	if err != nil {
-		return err
-	}
-
-	if len(i.Devices) == 0 {
-		log.Printf("[WARN] device loader, no devices to load, skipping")
-		return nil
-	}
-
-	for _, d := range i.Devices {
-		log.Printf("[INFO] device loader, loading %s under '%s_device'", d.Name, d.Name)
-
-		if err := UpdateDevice(&d); err != nil {
-			return err
-		}
-	}
-	log.Println("[INFO] device loader, all done")
-	return nil
-}
-
-func ReadDeviceFile() (Inputs, error) { //Read the devices.json
-	var in Inputs
-	deviceFile, err := ioutil.ReadFile(common.FILE)
-	if err != nil {
-		return in, err
-	}
-	if err := json.Unmarshal(deviceFile, &in); err != nil {
-		return in, err
-	}
-
-	return in, nil
-}
 
 // *****************************************************************
 // Runner device functions
-func GetDeviceStatus(d *Devices) {
+func GetDeviceStatus(d *Profile) {
 	delay := randomizeCollection()
 
-	switch d.Device {
+	switch d.Make {
 	case "pi":
 		go RpIotDeviceStatus(d.Name, delay)
 

@@ -2,13 +2,13 @@ package runners
 
 import (
 	"github.com/rebelit/gome/runners/aws"
+	"github.com/rebelit/gome/runners/inventory"
 	"github.com/rebelit/gome/runners/scheduler"
-	"github.com/rebelit/gome/runners/status"
 	"time"
 )
 
 func Launch(){
-	go status.GoGoDeviceStatus()
+	go inventory.GomeStatus()
 	time.Sleep(time.Second *2)
 
 	go scheduler.GoGoScheduler()

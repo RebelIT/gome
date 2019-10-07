@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/runners/inventory"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -59,7 +60,7 @@ func GetDevices(w http.ResponseWriter,r *http.Request){
 }
 
 func AddDevice(w http.ResponseWriter,r *http.Request){
-	var i Devices
+	var i DevicesOld
 	fullDevs := &Inputs{}
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -117,10 +118,7 @@ func AddDevice(w http.ResponseWriter,r *http.Request){
 	}
 
 	//Re-run device loader to add to DB cache
-	if err := LoadDevices(); err != nil{
-		common.ReturnInternalError(w,r)
-		return
-	}
+	inventory.LoadDevices()
 
 	common.ReturnOk(w,r,i)
 	return
