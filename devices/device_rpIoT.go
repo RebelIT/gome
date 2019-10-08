@@ -2,6 +2,7 @@ package devices
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
@@ -11,6 +12,29 @@ import (
 	"strconv"
 	"time"
 )
+
+/// new functions
+func StateControlRpIot(profile Profile, powerstate bool) error {
+	var control = ""
+	if powerstate{
+		control = "on"
+	} else{
+		control = "off"
+	}
+	url := fmt.Sprintf("http://%s:%s/api/%s/%s",profile.Metadata.NetAddr, profile.Metadata.Port, profile.Action, control)
+
+	resp, err := common.HttpPost(url, nil, rpIotHeaders())
+	if err != nil {
+
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return errors.Errorf("%s returned %d for %s", profile.Name, resp.StatusCode, url)
+	}
+
+	return nil
+}
 
 func RpIotDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n", deviceName, collectionDelayMin)
@@ -77,30 +101,6 @@ func rpIotDisplayStatus(deviceName string) {
 	return
 }
 
-func rpIotDisplayToggle(deviceName string, toggle string) error {
-	uriPart := "/api/display/" + toggle
-
-	resp, err := PiPost(deviceName, uriPart)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		return errors.Errorf("%s returned %d for %s", deviceName, resp.StatusCode, uriPart)
-	}
-
-	state := false
-	if toggle == "on" {
-		state = true
-	}
-
-	if err := db.Add(deviceName+"_display"+"_state", string([]byte(strconv.FormatBool(state)))); err != nil {
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return errors.Errorf("%s failed to set device status after issuing display %s", deviceName, toggle)
-	}
-
-	return nil
-}
 
 // http wrappers
 func PiGet(uriPart string, deviceName string) (response http.Response, err error) {

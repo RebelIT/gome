@@ -20,9 +20,13 @@ func NewRouter() *mux.Router {
 }
 
 var routes = Routes{
-	//DevicesOld Endpoints
-	Route{"device", "GET", "/api/device", devices.GetDevices},
-	Route{"device", "POST", "/api/devices/new", devices.AddDevice},
+	//IoT Device Endpoints
+	Route{"device", "GET", "/device", devices.GetDevices},
+	Route{"device", "GET", "/device/{name}", devices.GetDeviceByName},
+	Route{"device", "DELETE", "/device/{name}", devices.RemoveDevice},
+	Route{"device", "POST", "/device", devices.AddUpdateDevice},
+	Route{"device", "POST", "/device/{name}/{bool}", devices.ToggleDevice},
+
 	Route{"device", "POST", "/api/tuya/{name}/{state}", devices.TuyaControl},
 	Route{"device", "POST", "/api/roku/{name}/app/{app}", devices.RokuLaunchApp},
 	Route{"device", "POST", "/api/pi/{name}/{component}", devices.RpIotControl},

@@ -13,7 +13,7 @@ type Profile struct {
 	Region      string   `json:"region"`
 	Location    string   `json:"location"`
 	Metadata    Metadata `json:"meta"`
-	Actions     []string `json:"actions"`
+	Action      Action `json:"action"`
 	State       State    `json:"state"`
 }
 
@@ -32,6 +32,13 @@ type Metadata struct {
 type State struct {
 	Alive  bool `json:"alive"`
 	Status bool `json:"status"`
+}
+
+type Action struct{
+	Component string `json:"component"`
+	Arg1 string `json:"arg_1"`
+	Arg2 string `json:"arg_2"`
+	Arg3 string `json:"arg_3"`
 }
 
 type Inputs struct {

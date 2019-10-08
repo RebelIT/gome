@@ -10,6 +10,31 @@ import (
 	"time"
 )
 
+///New functions
+func StateControlTuya(profile Profile, value bool) error {
+	args := []string{
+		"set",
+		"--set", strconv.FormatBool(value), "--ip", profile.Metadata.NetAddr,
+		"--id", profile.Metadata.Id,
+		"--key", profile.Metadata.Key,
+		"--dps", profile.Metadata.Dps,
+	}
+
+	log.Printf("[INFO] issuing power control for %s\n", profile.Name)
+	cmdOut, err := tuyaCliWrapper("tuya-cli", args)
+	if err != nil{
+		return err
+	}
+	if cmdOut != "ok"{
+		common.SendSlackAlert(fmt.Sprintf("Tuya PowerControl failed to set %s to %s", profile.Name,strconv.FormatBool(value)))
+		return err
+	}
+
+	common.SendSlackAlert(fmt.Sprintf("PowerControlTuya changed %s to %s",profile.Name, strconv.FormatBool(value)))
+	return nil
+}
+
+
 func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
@@ -57,33 +82,7 @@ func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
 }
 
 // device wrappers
-func TuyaPowerControl(deviceName string, value bool) error {
-	d, err := GetDevice(deviceName)
-	if err != nil{
-		return err
-	}
 
-	cliArgs, err := generateSetCliArgs(d, value)
-	if err != nil{
-		return err
-	}
-
-	log.Printf("[INFO] issuing power control for %s\n", deviceName)
-	cmdOut, err := tuyaCliWrapper("tuya-cli", cliArgs)
-	if err != nil{
-		return err
-	}
-	if cmdOut != "ok"{
-		common.SendSlackAlert("Tuya PowerControl failed for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
-		return err
-	}
-	if err := UpdateDeviceComponentState(deviceName,"power", value); err != nil{
-		log.Printf("[ERROR] Update Profile Status, %s : %s", deviceName, err)
-	}
-
-	common.SendSlackAlert("Tuya PowerControl initiated for "+d.Name+"("+d.NameFriendly+") to "+strconv.FormatBool(value)+"")
-	return nil
-}
 
 func tuyaCliWrapper(cmdName string, args []string) (cmdReturn string, error error){
 	cmdOut, err := common.TryCommand(cmdName, args,5)
@@ -107,21 +106,12 @@ func tuyaCliWrapper(cmdName string, args []string) (cmdReturn string, error erro
 	}
 }
 
-func generateSetCliArgs(deviceDetails DevicesOld, pwrState bool)(cliArg []string, err error){
+func generateSetCliArgs(profile Profile, pwrState bool)(cliArg []string, err error){
 	args := []string{}
-	fmt.Printf("%+v\n",deviceDetails)
-	switch deviceDetails.Type{
-		case "outlet":
-			args = []string{"set", "--set", strconv.FormatBool(pwrState), "--ip", deviceDetails.Addr,
-							"--id", deviceDetails.Id, "--key", deviceDetails.Key}
-
-		case "switch":
-			args = []string{"set", "--set", strconv.FormatBool(pwrState), "--ip", deviceDetails.Addr,
+	args = []string{"set", "--set", strconv.FormatBool(pwrState), "--ip", deviceDetails.Addr,
 				"--id", deviceDetails.Id, "--key", deviceDetails.Key, "--dps", deviceDetails.Dps}
 
-		default:
-			return args, errors.New("no device type "+deviceDetails.Type+" found in cli args switch")
-	}
+
 	return args, nil
 }
 

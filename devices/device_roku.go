@@ -1,6 +1,7 @@
 package devices
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
@@ -45,6 +46,29 @@ func getAppId(app string) (string, error) {
 
 	return strconv.Itoa(id), nil
 }
+
+/// new functions
+func StateControlRoku(profile Profile, powerstate bool) error {
+	var control = ""
+	if powerstate{
+		control = "PowerOn"
+	} else{
+		control = "PowerOff"
+	}
+
+	url := fmt.Sprintf("http://%s:%s/keypress/%s", profile.Metadata.NetAddr, profile.Metadata.Port, control)
+
+	resp, err := common.HttpPost(url, nil, nil)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200{
+		return err
+	}
+
+	return nil
+}
+
 
 func RokuDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
 	log.Printf("[INFO] %s device collection delayed +%d sec\n", deviceName, collectionDelayMin)
