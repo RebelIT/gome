@@ -1,12 +1,9 @@
 package devices
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,110 +11,75 @@ import (
 )
 
 /// new functions
-func StateControlRpIot(profile Profile, powerstate bool) error {
-	var control = ""
-	if powerstate{
-		control = "on"
-	} else{
-		control = "off"
-	}
-	url := fmt.Sprintf("http://%s:%s/api/%s/%s",profile.Metadata.NetAddr, profile.Metadata.Port, profile.Action, control)
+func ActionRpIot(profile Profile, action Action) error {
+	actionUri := action.constructAction()
+	url := fmt.Sprintf("http://%s:%s/%s", profile.Metadata.NetAddr, profile.Metadata.Port, actionUri)
 
-	resp, err := common.HttpPost(url, nil, rpIotHeaders())
+	resp, err := common.HttpPost(url, nil, nil)
 	if err != nil {
-
 		return err
 	}
-
-	if resp.StatusCode != 200 {
-		return errors.Errorf("%s returned %d for %s", profile.Name, resp.StatusCode, url)
+	if resp.StatusCode != 200{
+		return err
 	}
 
 	return nil
 }
 
-func RpIotDeviceStatus(deviceName string, collectionDelayMin time.Duration) {
-	log.Printf("[INFO] %s device collection delayed +%d sec\n", deviceName, collectionDelayMin)
+func StateRpIot(name string, collectionDelayMin time.Duration) {
+	log.Printf("[INFO] %s device collection delayed +%d sec\n", name, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
-
-	rpIotAliveStatus(deviceName)
-	rpIotDisplayStatus(deviceName)
-
-	log.Printf("[INFO] %s device status : done\n", deviceName)
-	return
-}
-
-func rpIotAliveStatus(deviceName string) {
-	uriPart := "/api/alive"
 	alive := false
 
-	resp, err := PiGet(uriPart, deviceName)
+	value, err := db.Get(name)
 	if err != nil {
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		if err := db.Add(deviceName+"_"+"status", string([]byte(strconv.FormatBool(alive)))); err != nil {
-			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-			return
-		}
+		log.Printf("[WARN] %s not found for status collection, is it orphaned: %s", name, err)
 		return
 	}
-	defer resp.Body.Close()
+
+	p, err := stringToStruct(value)
+	if err != nil {
+		log.Printf("[WARN] %s does not have a valid profile in the database: %s", name, err)
+		return
+	}
+
+	url := fmt.Sprintf("http://%s:%s/api/alive", p.Metadata.NetAddr, p.Metadata.Port,)
+
+	headers := map[string]string{
+		"X-API-User":  p.Metadata.Username,
+		"X-API-Token": p.Metadata.Password,
+		"accept": "application/json",
+		"contentType": "application/json",
+	}
+
+	resp, err := common.HttpGet(url, headers)
+	if err != nil {
+		//dont do anything, let return code handle it
+	}
 
 	if resp.StatusCode == 200 {
 		alive = true
 	}
 
-	if err := db.Add(deviceName+"_"+"status", string([]byte(strconv.FormatBool(alive)))); err != nil {
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return
-	}
-	return
-}
+	p.State.Alive = alive
 
-func rpIotDisplayStatus(deviceName string) {
-	uriPart := "/api/display"
-	state := false
-
-	piBody := PiResponse{}
-
-	resp, err := PiGet(uriPart, deviceName)
-	if err != nil {
-		log.Printf("[ERROR] %s : hdmi status, %s\n", deviceName, err)
-		return
-	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	if err := json.Unmarshal(body, &piBody); err != nil {
+	if err := db.Add(name, p.structToString()); err != nil{
+		log.Printf("[WARN] %s unable to update the status with: %s", name, err)
 		return
 	}
 
-	if piBody.Message == "1" {
-		state = true
-	}
-
-	if err := db.Add(deviceName+"_display"+"_state", string([]byte(strconv.FormatBool(state)))); err != nil {
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		return
-	}
+	log.Printf("[INFO] %s status: %s done & done", name, strconv.FormatBool(alive))
 	return
 }
 
 
-// http wrappers
-func PiGet(uriPart string, deviceName string) (response http.Response, err error) {
-	d, err := GetDevice(deviceName)
-	if err != nil {
-		return http.Response{}, err
-	}
 
-	url := "http://" + d.Addr + ":" + d.NetPort + uriPart
 
-	resp, err := common.HttpGet(url, rpIotHeaders())
-	if err != nil {
-		return http.Response{}, err
-	}
 
-	return resp, nil
-}
+
+
+
+
 
 func PiPost(deviceName string, uriPart string) (response http.Response, err error) {
 	d, err := GetDevice(deviceName)
@@ -135,32 +97,6 @@ func PiPost(deviceName string, uriPart string) (response http.Response, err erro
 	return resp, nil
 }
 
-// helpers
-func compileUrl(uriPart string, d PiControl) (uri string, err error) {
-	switch uriPart {
-	case "power":
-		return uriPart + "/" + d.Action, nil
-
-	case "apt":
-		if d.Package == "" {
-			return uriPart + "/" + d.Action, nil
-		} else {
-			return uriPart + "/" + d.Package + "/" + d.Action, nil
-		}
-
-	case "service":
-		return uriPart + "/" + d.Service + "/" + d.Action, nil
-
-	case "display":
-		return uriPart + "/" + d.Action, nil
-
-	case "gpio":
-		return uriPart + "/" + d.PinNumber + "/" + d.Action, nil
-
-	default:
-		return "", errors.New("no pi component " + uriPart + " action found")
-	}
-}
 
 func rpIotHeaders() (headers map[string]string) {
 	s, err := common.GetSecrets()

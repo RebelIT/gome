@@ -13,13 +13,14 @@ type Profile struct {
 	Region      string   `json:"region"`
 	Location    string   `json:"location"`
 	Metadata    Metadata `json:"meta"`
-	Action      Action `json:"action"`
+	Actions     []Action   `json:"action"`
 	State       State    `json:"state"`
 }
 
 type Metadata struct {
 	NetAddr  string `json:"net_addr"`
 	Port     string `json:"port"`
+	UriPart  string `json:"uri_part"`
 	Id       string `json:"id"`
 	Key      string `json:"key"`
 	Dps      string `json:"dps"`
@@ -39,6 +40,8 @@ type Action struct{
 	Arg1 string `json:"arg_1"`
 	Arg2 string `json:"arg_2"`
 	Arg3 string `json:"arg_3"`
+	Arg4 string `json:"arg_4"`
+	Arg5 string `json:"arg_5"`
 }
 
 type Inputs struct {

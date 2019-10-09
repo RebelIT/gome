@@ -45,16 +45,6 @@ func GetDeviceAliveState(deviceName string) (status string, error error) { //Get
 	return value, nil
 }
 
-func UpdateDeviceAliveState(deviceName string, status bool) error { //Update the device status in the database
-	key := deviceName + "_alive"
-	value := []byte(strconv.FormatBool(status))
-
-	if err := db.Add(key, string(value)); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func GetDeviceComponentState(deviceName string, component string) (status string, error error) { //Gets the device component status from the database
 	key := deviceName + "_" + component + "_state"
@@ -67,16 +57,6 @@ func GetDeviceComponentState(deviceName string, component string) (status string
 	return value, nil
 }
 
-func UpdateDeviceComponentState(deviceName string, component string, state bool) error { //Update the device component state in the database
-	key := deviceName + "_" + component + "_state"
-	value := []byte(strconv.FormatBool(state))
-	if err := db.Add(key, string(value)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 
 // *****************************************************************
 // Runner device functions
@@ -85,13 +65,13 @@ func GetDeviceStatus(d *Profile) {
 
 	switch d.Make {
 	case "pi":
-		go RpIotDeviceStatus(d.Name, delay)
+		go StateRpIot(d.Name, delay)
 
 	case "roku":
-		go RokuDeviceStatus(d.Name, delay)
+		go StateRoku(d.Name, delay)
 
 	case "tuya":
-		go TuyaDeviceStatus(d.Name, delay)
+		go StateTuya(d.Name, delay)
 
 	default:
 		log.Printf("[WARN] GetDeviceStatus, no device types match %s", d.Name)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/rebelit/gome/common"
+	db "github.com/rebelit/gome/database"
 	"log"
 	"strconv"
 	"strings"
@@ -11,10 +12,11 @@ import (
 )
 
 ///New functions
-func StateControlTuya(profile Profile, value bool) error {
+func ToggleTuya(profile Profile, value bool) error {
 	args := []string{
 		"set",
-		"--set", strconv.FormatBool(value), "--ip", profile.Metadata.NetAddr,
+		"--set", strconv.FormatBool(value),
+		"--ip", profile.Metadata.NetAddr,
 		"--id", profile.Metadata.Id,
 		"--key", profile.Metadata.Key,
 		"--dps", profile.Metadata.Dps,
@@ -34,56 +36,57 @@ func StateControlTuya(profile Profile, value bool) error {
 	return nil
 }
 
-
-func TuyaDeviceStatus (deviceName string, collectionDelayMin time.Duration) {
-	log.Printf("[INFO] %s device collection delayed +%d sec\n",deviceName, collectionDelayMin)
+func StateTuya (name string, collectionDelayMin time.Duration) {
+	log.Printf("[INFO] %s device collection delayed +%d sec\n",name, collectionDelayMin)
 	time.Sleep(time.Second * collectionDelayMin)
 
-	doStatus := true
 	alive := false
-	powerState := false
+	status := false
 
-	d, err := GetDevice(deviceName)
+	value, err := db.Get(name)
+	if err != nil {
+		log.Printf("[WARN] %s not found for status collection, is it orphaned: %s", name, err)
+		return
+	}
+
+	p, err := stringToStruct(value)
+	if err != nil {
+		log.Printf("[WARN] %s does not have a valid profile in the database: %s", name, err)
+		return
+	}
+
+	args := []string{
+		"get",
+		"--ip", p.Metadata.NetAddr,
+		"--id", p.Metadata.Id,
+		"--key", p.Metadata.Key,
+		"--dps", p.Metadata.Dps,
+	}
+
+	cmdOut, err := tuyaCliWrapper("tuya-cli", args)
 	if err != nil{
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		doStatus = false
+		log.Printf("[ERROR] %s : device status, %s\n", name, err)
+	}else{
+		alive = true
 	}
 
-	cliArgs, err := generateGetCliArgs(d)
-	if err != nil{
-		log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		doStatus = false
+	if cmdOut == "true"{
+		status = true
 	}
 
-	if doStatus{
-		cmdOut, err := tuyaCliWrapper("tuya-cli", cliArgs)
-		if err != nil{
-			log.Printf("[ERROR] %s : device status, %s\n", deviceName, err)
-		}else{
-			alive = true
-		}
+	p.State.Alive = alive
+	p.State.Status = status
 
-		if cmdOut == "true"{
-			powerState = true
-		}
-
-		//status = is on the network and accessible
-		if err := UpdateDeviceAliveState(deviceName, alive); err != nil{
-			log.Printf("[ERROR] %s : update device status, %s\n", deviceName, err)
-		}
-
-		if err := UpdateDeviceComponentState(deviceName, "power", powerState); err != nil{
-			log.Printf("[ERROR] %s : update device status, %s\n", deviceName, err)
-		}
+	if err := db.Add(name, p.structToString()); err != nil{
+		log.Printf("[ERROR] %s : update device state, %s\n", name, err)
+		return
 	}
 
-	log.Printf("[INFO] %s device status : done\n", deviceName)
+	log.Printf("[INFO] %s status: %s done & done", name, strconv.FormatBool(alive))
 	return
 }
 
-// device wrappers
-
-
+//tuya wrapper
 func tuyaCliWrapper(cmdName string, args []string) (cmdReturn string, error error){
 	cmdOut, err := common.TryCommand(cmdName, args,5)
 	if err != nil{
@@ -104,30 +107,4 @@ func tuyaCliWrapper(cmdName string, args []string) (cmdReturn string, error erro
 		return "",errors.Errorf("cmd returnes could not be formatted: returned %s", fmtOut)
 
 	}
-}
-
-func generateSetCliArgs(profile Profile, pwrState bool)(cliArg []string, err error){
-	args := []string{}
-	args = []string{"set", "--set", strconv.FormatBool(pwrState), "--ip", deviceDetails.Addr,
-				"--id", deviceDetails.Id, "--key", deviceDetails.Key, "--dps", deviceDetails.Dps}
-
-
-	return args, nil
-}
-
-func generateGetCliArgs(deviceDetails DevicesOld)(cliArg []string, err error){
-	args := []string{}
-
-	switch deviceDetails.Type{
-	case "outlet":
-		args = []string{"get", "--ip", deviceDetails.Addr, "--id", deviceDetails.Id, "--key", deviceDetails.Key}
-
-	case "switch":
-		args = []string{"get", "--ip", deviceDetails.Addr, "--id", deviceDetails.Id, "--key", deviceDetails.Key,
-						"--dps", deviceDetails.Dps}
-
-	default:
-		return args, errors.New("no device type "+deviceDetails.Type+" found in cli args switch")
-	}
-	return args, nil
 }

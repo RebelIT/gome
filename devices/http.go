@@ -3,7 +3,6 @@ package devices
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
 	"io/ioutil"
 	"log"
@@ -104,7 +103,7 @@ func AddUpdateDevice(w http.ResponseWriter,r *http.Request){
 	return
 }
 
-func ToggleDevice(w http.ResponseWriter,r *http.Request){
+func ToggleDevice(w http.ResponseWriter,r *http.Request){	//Toggle for simple on/off (true/false) IoT devices
 	vars := mux.Vars(r)
 	name := vars["name"]
 	state := vars["bool"]
@@ -114,7 +113,6 @@ func ToggleDevice(w http.ResponseWriter,r *http.Request){
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 
 	value, err := db.Get(name)
 	if err != nil {
@@ -129,7 +127,7 @@ func ToggleDevice(w http.ResponseWriter,r *http.Request){
 	}
 
 	if profile.State.Alive == false{
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 	}
 
 	if profile.State.Status == toggle{
@@ -138,44 +136,24 @@ func ToggleDevice(w http.ResponseWriter,r *http.Request){
 
 	switch profile.Make {
 	case "tuya":
-		if err := StateControlTuya(profile, toggle); err != nil {
+		if err := ToggleTuya(profile, toggle); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		profile.State.Status = true
-
-		if err := db.Add(profile.Name, profile.structToString()); err != nil{
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
 	case "roku":
-		if err := StateControlRoku(profile,toggle); err != nil {
+		if err := ToggleRoku(profile,toggle); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		profile.State.Status = true
-
-		if err := db.Add(profile.Name, profile.structToString()); err != nil{
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-	case "rpiot":
-		if err := StateControlRpIot(profile,toggle); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		profile.State.Status = true
-
-		if err := db.Add(profile.Name, profile.structToString()); err != nil{
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	profile.State.Status = toggle
+
+	if err := db.Add(profile.Name, profile.structToString()); err != nil{
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -183,118 +161,64 @@ func ToggleDevice(w http.ResponseWriter,r *http.Request){
 	return
 }
 
-
-
-
-
-func HandleDetails(w http.ResponseWriter,r *http.Request){
+func ActionDevice(w http.ResponseWriter,r *http.Request){	//Toggle for simple on/off (true/false) IoT devices
 	vars := mux.Vars(r)
-	deviceName := vars["device"]
+	name := vars["name"]
+	action := vars["action"]
 
-	details, err := GetDevice(deviceName)
+	doAction := Action{}
+	actionOk := false
+
+	value, err := db.Get(name)
 	if err != nil {
-		log.Printf("[ERROR] %s : details %s, %s", deviceName, r.Method, err)
-		common.ReturnInternalError(w,r)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	common.ReturnOk(w,r,details)
-	return
-}
-
-func HandleStatus(w http.ResponseWriter,r *http.Request) {
-	vars := mux.Vars(r)
-	deviceName := vars["device"]
-
-	status, err := GetDeviceAliveState(deviceName)
+	profile, err := stringToStruct(value)
 	if err != nil {
-		log.Printf("[ERROR] %s : status %s, %s", deviceName, r.Method, err)
-		common.ReturnInternalError(w,r)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	common.ReturnOk(w,r,status)
-	return
-}
+	if profile.State.Alive == false{
+		w.WriteHeader(http.StatusBadRequest)
+	}
 
 
-
-//**********************************************************************
-// tuya device endpoints
-func TuyaControl(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deviceName := vars["name"]
-	state := vars["state"]
-
-	action := false
-	if state == "on"{
-		action = true
-	} else if state == "off"{
-		action = false
-	} else{
-		common.ReturnBad(w,r)
+	for _, a := range profile.Actions{
+		if action == a.Component {
+			actionOk = true
+			doAction.Component = a.Component
+			doAction.Arg1 = a.Arg1
+			doAction.Arg2 = a.Arg2
+			doAction.Arg3 = a.Arg3
+			doAction.Arg4 = a.Arg4
+			doAction.Arg5 = a.Arg5
+		}
+	}
+	if !actionOk{
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	if err := TuyaPowerControl(deviceName, action); err != nil{
-		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
-		common.ReturnInternalError(w,r)
+	switch profile.Make {
+	case "roku":
+		if err := ActionRoku(profile,doAction); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	case "rpiot":
+		if err := ActionRpIot(profile,doAction); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	default:
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	common.ReturnOk(w,r, http.Response{})
-	return
-}
-
-//**********************************************************************
-// raspberryPi IoT device endpoints
-func RpIotControl(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deviceName := vars["device"]
-	component := vars["component"]
-
-	i := PiControl{}
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		common.ReturnBad(w, r)
-		return
-	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(body, &i); err != nil {
-		common.ReturnInternalError(w, r)
-		return
-	}
-
-	uri, err := compileUrl(component, i)
-	if err != nil{
-		common.ReturnBad(w, r)
-		return
-	}
-
-	resp, err := PiPost(deviceName,uri)
-	if err != nil{
-		log.Printf("[ERROR] %s : control %s, %s", deviceName, r.Method, err)
-		common.ReturnInternalError(w, r)
-		return
-	}
-
-	common.ReturnOk(w, r, resp)
-	return
-}
-
-//**********************************************************************
-// roku device endpoints
-func RokuLaunchApp(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deviceName := vars["device"]
-	appName := vars["app"]
-
-	if err := launchApp(deviceName,appName); err != nil{
-		common.ReturnInternalError(w,r)
-		return
-	}
-
-	common.ReturnOk(w,r,http.Response{})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	return
 }
