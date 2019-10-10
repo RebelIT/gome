@@ -15,6 +15,7 @@ type Profile struct {
 	Metadata    Metadata `json:"meta"`
 	Actions     []Action   `json:"action"`
 	State       State    `json:"state"`
+	Schedules	[]Schedule `json:"schedules"`
 }
 
 type Metadata struct {
@@ -36,8 +37,8 @@ type State struct {
 }
 
 type Action struct{
-	Component string `json:"component"`
-	Body	string `json:"body"`
+	Name string `json:"component"`
+	Body string `json:"body"`
 	Arg1 string `json:"arg_1"`
 	Arg2 string `json:"arg_2"`
 	Arg3 string `json:"arg_3"`
@@ -45,21 +46,35 @@ type Action struct{
 	Arg5 string `json:"arg_5"`
 }
 
-type Inputs struct {
-	Devices []DevicesOld
+type Schedule struct {
+	Enabled   bool `json:"enabled"`
+	Day       string `json:"day"`
+	Description      string `json:"description"`
+	Action    string `json:"action"`
+	ActionOn        string `json:"action_on"`
+	ActionOff       string `json:"action_off"`
 }
 
-type DevicesOld struct {
-	Device       string `json:"device"`
-	Type         string `json:"type"`
-	Name         string `json:"name"`
-	Addr         string `json:"address"`
-	NameFriendly string `json:"name_friendly"`
-	NetPort      string `json:"port"`
-	Id           string `json:"id"`
-	Key          string `json:"key"`
-	Dps          string `json:"dps"`
-}
+
+
+
+
+//
+//type Inputs struct {
+//	Devices []DevicesOld
+//}
+//
+//type DevicesOld struct {
+//	Device       string `json:"device"`
+//	Type         string `json:"type"`
+//	Name         string `json:"name"`
+//	Addr         string `json:"address"`
+//	NameFriendly string `json:"name_friendly"`
+//	NetPort      string `json:"port"`
+//	Id           string `json:"id"`
+//	Key          string `json:"key"`
+//	Dps          string `json:"dps"`
+//}
 
 type Status struct {
 	Alive bool   `json:"alive"`

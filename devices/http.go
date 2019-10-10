@@ -166,9 +166,6 @@ func ActionDevice(w http.ResponseWriter,r *http.Request){	//Toggle for simple on
 	name := vars["name"]
 	action := vars["action"]
 
-	doAction := Action{}
-	actionOk := false
-
 	value, err := db.Get(name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -185,21 +182,9 @@ func ActionDevice(w http.ResponseWriter,r *http.Request){	//Toggle for simple on
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-
-	for _, a := range profile.Actions{
-		if action == a.Component {
-			actionOk = true
-			doAction.Component = a.Component
-			doAction.Arg1 = a.Arg1
-			doAction.Arg2 = a.Arg2
-			doAction.Arg3 = a.Arg3
-			doAction.Arg4 = a.Arg4
-			doAction.Arg5 = a.Arg5
-		}
-	}
-	if !actionOk{
+	doAction, err := validateAction(profile,action)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return
 	}
 
 	switch profile.Make {
@@ -222,3 +207,4 @@ func ActionDevice(w http.ResponseWriter,r *http.Request){	//Toggle for simple on
 	w.WriteHeader(http.StatusOK)
 	return
 }
+

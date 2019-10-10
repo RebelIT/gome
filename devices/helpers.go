@@ -60,3 +60,24 @@ func (a *Action)constructAction() string{
 
 	return fmt.Sprintf("%s%s%s%s%s",p1,p2,p3,p4,p5)
 }
+
+func validateAction(profile Profile, actionName string)(action Action, error error){
+	action = Action{}
+	validated := false
+	for _, a := range profile.Actions{
+		if actionName == a.Name {
+			validated = true
+			actionName = a.Name
+			action.Arg1 = a.Arg1
+			action.Arg2 = a.Arg2
+			action.Arg3 = a.Arg3
+			action.Arg4 = a.Arg4
+			action.Arg5 = a.Arg5
+		}
+	}
+	if !validated{
+		return action, fmt.Errorf("unable to validate action: %s for %s", actionName, profile.Name)
+	}
+
+	return action, nil
+}

@@ -3,7 +3,7 @@ package listener
 import (
 	"github.com/gorilla/mux"
 	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/runners/scheduler"
+	"github.com/rebelit/gome/runners/cron"
 )
 func NewRouter() *mux.Router {
 
@@ -29,9 +29,9 @@ var routes = Routes{
 	Route{"device", "POST", "/device/{name}/action/{action}", devices.ActionDevice},
 
 	//Schedule Endpoints
-	Route{"schedule", "GET", "/api/schedule/{device}", scheduler.HandleScheduleGet},
-	Route{"schedule", "POST", "/api/schedule/{device}", scheduler.HandleScheduleSet},
-	Route{"schedule", "DELETE", "/api/schedule/{device}", scheduler.HandleScheduleDel},
-	Route{"schedule", "POST", "/api/schedule/{device}/{status}", scheduler.HandleScheduleUpdate},
+	Route{"schedule", "GET", "/api/schedule/{device}", cron.HandleScheduleGet},
+	Route{"schedule", "POST", "/api/schedule/{device}", cron.HandleScheduleSet},
+	Route{"schedule", "DELETE", "/api/schedule/{device}", cron.HandleScheduleDel},
+	Route{"schedule", "POST", "/api/schedule/{device}/{status}", cron.HandleScheduleUpdate},
 }
 
