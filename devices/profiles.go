@@ -37,6 +37,7 @@ type State struct {
 
 type Action struct{
 	Component string `json:"component"`
+	Body	string `json:"body"`
 	Arg1 string `json:"arg_1"`
 	Arg2 string `json:"arg_2"`
 	Arg3 string `json:"arg_3"`

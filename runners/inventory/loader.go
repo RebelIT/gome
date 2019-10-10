@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func LoadDevices() { //Load DevicesOld into redis from devices.json file
+func LoadDevices() { //Load Devices into the database
 	var fName = "gome loader"
 	log.Printf("[INFO] %s, starting", fName)
 	i, err := ReadDeviceFile()

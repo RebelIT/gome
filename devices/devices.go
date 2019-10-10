@@ -6,9 +6,85 @@ import (
 	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
 	"log"
-	"strconv"
 	"strings"
+	"time"
 )
+
+func GetDeviceStatus() {
+	//function checks each device if it is online and the toggle state, updates accordingly
+	for {
+		delay := randomizeCollection()
+		devices, err := GetAllProfiles()
+		if err != nil {
+			log.Printf("unable to get all devices for runner; %s", err)
+			continue
+		}
+
+		for _, p := range devices.Profiles{
+			switch p.Make {
+			case "pi":
+				go StateRpIot(p.Name, delay)
+
+			case "roku":
+				go StateRoku(p.Name, delay)
+
+			case "tuya":
+				go StateTuya(p.Name, delay)
+
+			//case "newDeviceHere":
+			//	go StateNewDevice(p.Name, delay)
+
+			default:
+				log.Printf("[WARN] GetDeviceStatus, no device types match %s", p.Name)
+			}
+		}
+		time.Sleep(time.Minute * common.INVENTORY_MIN)
+	}
+}
+
+func GetProfile(name string) (profile Profile, error error) { //Gets the device profile from the database
+	value, err := db.Get(name)
+	if err != nil {
+		return Profile{}, err
+	}
+
+	profile, err = stringToStruct(value)
+	if error != nil {
+		return Profile{}, nil
+	}
+
+	return profile, nil
+}
+
+func GetAllProfiles() (profiles Devices, err error) { //Gets the full inventory of device profiles from the database
+	profiles = Devices{}
+	list := []Profile{}
+
+	keys, err := db.GetAll()
+	if err != nil {
+		return Devices{}, err
+	}
+
+	for _, key := range keys {
+		p, err := GetProfile(key)
+		if err != nil {
+			continue
+		}
+		list = append(list, p)
+	}
+	profiles.Profiles = list
+
+	return profiles, nil
+}
+
+
+
+
+
+
+
+
+
 
 // *****************************************************************
 // General device functions
@@ -60,23 +136,7 @@ func GetDeviceComponentState(deviceName string, component string) (status string
 
 // *****************************************************************
 // Runner device functions
-func GetDeviceStatus(d *Profile) {
-	delay := randomizeCollection()
 
-	switch d.Make {
-	case "pi":
-		go StateRpIot(d.Name, delay)
-
-	case "roku":
-		go StateRoku(d.Name, delay)
-
-	case "tuya":
-		go StateTuya(d.Name, delay)
-
-	default:
-		log.Printf("[WARN] GetDeviceStatus, no device types match %s", d.Name)
-	}
-}
 
 func DoScheduledAction(device string, deviceName string, deviceComponent string, deviceStatus string) {
 	switch device {

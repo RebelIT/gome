@@ -8,7 +8,7 @@ import (
 )
 
 func Launch(){
-	go inventory.GomeStatus()
+	go inventory.GomeDevices()
 	time.Sleep(time.Second *2)
 
 	go scheduler.GoGoScheduler()

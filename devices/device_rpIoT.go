@@ -5,7 +5,6 @@ import (
 	"github.com/rebelit/gome/common"
 	db "github.com/rebelit/gome/database"
 	"log"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -81,33 +80,33 @@ func StateRpIot(name string, collectionDelayMin time.Duration) {
 
 
 
-func PiPost(deviceName string, uriPart string) (response http.Response, err error) {
-	d, err := GetDevice(deviceName)
-	if err != nil {
-		return http.Response{}, err
-	}
-
-	url := "http://" + d.Addr + ":" + d.NetPort + uriPart
-
-	resp, err := common.HttpPost(url, nil, rpIotHeaders())
-	if err != nil {
-		return http.Response{}, err
-	}
-
-	return resp, nil
-}
-
-
-func rpIotHeaders() (headers map[string]string) {
-	s, err := common.GetSecrets()
-	if err != nil {
-		log.Printf("[ERROR] unable to set RaspberryPi rpIoT headers")
-		return
-	}
-
-	h := map[string]string{
-		"X-API-User":  s.RpiotUser,
-		"X-API-Token": s.RpiotToken,
-	}
-	return h
-}
+//func PiPost(deviceName string, uriPart string) (response http.Response, err error) {
+//	d, err := GetDevice(deviceName)
+//	if err != nil {
+//		return http.Response{}, err
+//	}
+//
+//	url := "http://" + d.Addr + ":" + d.NetPort + uriPart
+//
+//	resp, err := common.HttpPost(url, nil, rpIotHeaders())
+//	if err != nil {
+//		return http.Response{}, err
+//	}
+//
+//	return resp, nil
+//}
+//
+//
+//func rpIotHeaders() (headers map[string]string) {
+//	s, err := common.GetSecrets()
+//	if err != nil {
+//		log.Printf("[ERROR] unable to set RaspberryPi rpIoT headers")
+//		return
+//	}
+//
+//	h := map[string]string{
+//		"X-API-User":  s.RpiotUser,
+//		"X-API-Token": s.RpiotToken,
+//	}
+//	return h
+//}
