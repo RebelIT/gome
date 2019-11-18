@@ -2,18 +2,12 @@ package database
 
 import (
 	"fmt"
-	"github.com/rebelit/gome/common"
+	"github.com/rebelit/gome/util/config"
 	db "github.com/rebelit/gome_badger"
-
 )
 
-//type Profile struct {
-//	path string
-//	name string
-//}
-
 func Get(name string) (data string, error error) {
-	conn, err := db.Open(common.DBPATH)
+	conn, err := db.Open(config.App.DbPath)
 	if err != nil {
 		return "", fmt.Errorf("open database: %s", err)
 	}
@@ -27,7 +21,7 @@ func Get(name string) (data string, error error) {
 }
 
 func Add(key, value string) error {
-	conn, err := db.Open(common.DBPATH)
+	conn, err := db.Open(config.App.DbPath)
 	if err != nil {
 		return fmt.Errorf("open database: %s", err)
 	}
@@ -40,7 +34,7 @@ func Add(key, value string) error {
 }
 
 func Del(key string) error {
-	conn, err := db.Open(common.DBPATH)
+	conn, err := db.Open(config.App.DbPath)
 	if err != nil {
 		return fmt.Errorf("open database: %s", err)
 	}
@@ -53,7 +47,7 @@ func Del(key string) error {
 }
 
 func GetAll() (data []string, error error) {
-	conn, err := db.Open(common.DBPATH)
+	conn, err := db.Open(config.App.DbPath)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %s", err)
 	}

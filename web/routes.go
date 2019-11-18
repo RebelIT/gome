@@ -2,9 +2,10 @@ package listener
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/rebelit/gome/devices"
-	"github.com/rebelit/gome/runners/cron"
+	"github.com/rebelit/gome/iot/devices"
+	"github.com/rebelit/gome/iot/runners/cron"
 )
+
 func NewRouter() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
@@ -34,4 +35,3 @@ var routes = Routes{
 	Route{"schedule", "DELETE", "/api/schedule/{device}", cron.HandleScheduleDel},
 	Route{"schedule", "POST", "/api/schedule/{device}/{status}", cron.HandleScheduleUpdate},
 }
-

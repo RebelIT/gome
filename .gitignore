@@ -2,6 +2,7 @@
 *.retry
 *secrets.yml
 */dev/*
+*/archive/*
 *.idea
 devices.json
 secrets.json
