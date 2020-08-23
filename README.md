@@ -1,3 +1,6 @@
+# Archiving this for a full re-write into something better. 
+
+
 # gome
 Golang based home automation
 GoLang Home (gome)
